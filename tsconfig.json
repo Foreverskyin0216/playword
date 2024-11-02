@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "moduleResolution": "Node",
+    "module": "CommonJS",
+    "noEmit": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "strict": true,
+    "target": "ES2023",
+    "useUnknownInCatchVariables": false
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,86 @@
+{
+  "name": "playword",
+  "version": "1.0.3",
+  "description": "PlayWord lets you effortlessly write web automation tests in natural language, making testing more intuitive and accessible!",
+  "scripts": {
+    "build": "tsup",
+    "release": "semantic-release",
+    "test": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier .",
+    "format:fix": "prettier . --write",
+    "husky": "[ -d '.husky' ] && husky || (mkdir .husky && husky); echo 'npx --no-install commitlint --edit $1' > .husky/commit-msg; echo 'npm run pre-commit' > .husky/pre-commit; echo 'npm run pre-push' > .husky/pre-push",
+    "pre-commit": "lint-staged",
+    "pre-push": "npm run test"
+  },
+  "author": "Zong-Wei Lu",
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "automated test",
+    "langchain",
+    "openai",
+    "playwright"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Foreverskyin0216/playword.git"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@langchain/core": "^0.3.18",
+    "@langchain/langgraph": "^0.2.20",
+    "@langchain/openai": "^0.3.13",
+    "jsdom": "^25.0.1",
+    "langchain": "^0.3.6",
+    "openai": "^4.72.0",
+    "sanitize-html": "^2.13.1",
+    "uuid": "^11.0.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@eslint/js": "^9.15.0",
+    "@playwright/test": "^1.48.2",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@types/eslint__js": "^8.42.3",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.9.0",
+    "@types/sanitize-html": "^2.13.0",
+    "@types/uuid": "^10.0.0",
+    "@vitest/coverage-v8": "^2.1.5",
+    "eslint": "9.14.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "playwright": "^1.48.2",
+    "prettier": "^3.3.3",
+    "semantic-release": "^24.2.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.14.0",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.5"
+  },
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "tag": "latest"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
