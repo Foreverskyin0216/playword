@@ -1,0 +1,27 @@
+# MacOS files
+.DS_Store
+
+# packages
+node_modules
+
+# build files
+dist
+
+# Test artifacts
+coverage
+
+# Environment variables
+.env
+.env.*
+
+# Configuration
+.npmrc
+.vscode
+
+# Artifacts
+.playword
+!test/**/.playword
+test-results
+playwright-report
+blob-report
+playwright/.cache/
