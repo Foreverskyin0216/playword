@@ -4,6 +4,9 @@
 # packages
 node_modules
 
+# build files
+dist
+
 # Test artifacts
 coverage
 
@@ -11,14 +14,12 @@ coverage
 .env
 .env.*
 
-# Serverless artifacts
-.serverless
-
-# Editor configuration
+# Configuration
+.npmrc
 .vscode
 
 # Playwright artifacts
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
+test-results
+playwright-report
+blob-report
+playwright/.cache/
