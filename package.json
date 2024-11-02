@@ -1,0 +1,60 @@
+{
+  "name": "vespera",
+  "version": "1.0.0",
+  "description": "Vespera is an AI-powered automation testing tool that converts your commands into actual actions",
+  "scripts": {
+    "test": "npm run test:coverage -- --passWithNoTests",
+    "test:coverage": "vitest run --coverage --silent=false",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier .",
+    "format:fix": "prettier . --write",
+    "husky:add": "chmod +x ./husky-setup.sh && ./husky-setup.sh",
+    "pre-commit": "lint-staged",
+    "pre-push": "npm run test"
+  },
+  "author": "Zong-Wei Lu",
+  "license": "ISC",
+  "keywords": [
+    "ai",
+    "playwright",
+    "openai"
+  ],
+  "dependencies": {
+    "@langchain/core": "^0.3.17",
+    "@langchain/langgraph": "^0.2.19",
+    "@langchain/openai": "^0.3.11",
+    "@playwright/test": "^1.48.2",
+    "openai": "^4.70.2",
+    "playwright": "^1.48.2",
+    "sanitize-html": "^2.13.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@eslint/js": "^9.14.0",
+    "@types/eslint__js": "^8.42.3",
+    "@types/node": "^22.8.6",
+    "@types/sanitize-html": "^2.13.0",
+    "@vitest/coverage-v8": "^2.1.4",
+    "eslint": "^9.14.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.12.2",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  },
+  "engines": {
+    "node": "^22",
+    "npm": "^10"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+# MacOS files
+.DS_Store
+
+# packages
+node_modules
+
+# Test artifacts
+coverage
+
+# Environment variables
+.env
+.env.*
+
+# Serverless artifacts
+.serverless
+
+# Editor configuration
+.vscode
+
+# Playwright artifacts
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
