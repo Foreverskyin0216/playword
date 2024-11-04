@@ -1,4 +1,4 @@
-import { type CDPSession, type Page } from '@playwright/test'
+import type { CDPSession, Page } from '@playwright/test'
 import { v4 as uuidV4 } from 'uuid'
 
 /**
@@ -7,17 +7,14 @@ import { v4 as uuidV4 } from 'uuid'
 export type ScrollTarget = 'top' | 'bottom' | 'up' | 'down'
 
 /**
- * A unique key to identify elements in the CDP.
- */
-export const CDP_ELEMENT_KEY = `cdp-element-${uuidV4()}`
-
-/**
  * Get an instance of the CDPSession for a given page.
  */
 export class CDP {
-  sessionMap: Map<Page, CDPSession>
+  private elementKey: string
+  private sessionMap: Map<Page, CDPSession>
 
   constructor() {
+    this.elementKey = 'cdp-element-' + uuidV4()
     this.sessionMap = new Map()
   }
 
@@ -69,8 +66,8 @@ export class CDP {
         return { value: arg }
       }
 
-      if (type === 'object' && arg && Reflect.has(arg, CDP_ELEMENT_KEY)) {
-        return { objectId: (arg as { [key: string]: string })[CDP_ELEMENT_KEY] }
+      if (type === 'object' && arg && Reflect.has(arg, this.elementKey)) {
+        return { objectId: (arg as Record<string, string>)[this.elementKey] }
       }
 
       return { value: undefined }
@@ -87,7 +84,7 @@ export class CDP {
 
     switch (call.result.className) {
       case 'HTMLHtmlElement': {
-        return { [CDP_ELEMENT_KEY]: call.result.objectId }
+        return { [this.elementKey]: call.result.objectId }
       }
 
       case 'NodeList': {
@@ -96,7 +93,7 @@ export class CDP {
           ownProperties: true
         })
         const validProperties = properties.result.filter(({ name }) => !isNaN(parseInt(name)))
-        return validProperties.map(({ value }) => ({ [CDP_ELEMENT_KEY]: value?.objectId }))
+        return validProperties.map(({ value }) => ({ [this.elementKey]: value?.objectId }))
       }
 
       default: {
@@ -121,7 +118,7 @@ export class CDP {
 
     const nodes = await Promise.all(nodeIds.map((nodeId) => session.send('DOM.resolveNode', { nodeId })))
 
-    return nodes.map((node) => ({ [CDP_ELEMENT_KEY]: node.object.objectId }))
+    return nodes.map((node) => ({ [this.elementKey]: node.object.objectId }))
   }
 
   public async focusElement(page: Page, params: { backendNodeId: number }) {
@@ -180,15 +177,6 @@ export class CDP {
       this.sessionMap.set(page, session)
     }
     return this.sessionMap.get(page) as CDPSession
-  }
-
-  public async getSnapshot(page: Page) {
-    const session = await this.getSession(page)
-    return session.send('DOMSnapshot.captureSnapshot', {
-      computedStyles: ['background-color', 'visibility', 'opacity', 'z-index', 'overflow'],
-      includeDOMRects: true,
-      includePaintOrder: true
-    })
   }
 
   public async getTagName(page: Page, params: { backendNodeId: number }) {
