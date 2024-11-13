@@ -1,48 +1,65 @@
+import 'dotenv/config'
+
+import type { HumanMessage } from '@langchain/core/messages'
+import type { Page } from 'playwright'
+import type { ActionState } from './types'
+
 import { Document } from '@langchain/core/documents'
 import { OpenAIEmbeddings } from '@langchain/openai'
 
 import { MemoryVectorStore } from 'langchain/vectorstores/memory'
+import { OpenAI } from 'openai'
+import { zodResponseFormat } from 'openai/helpers/zod'
 
-import { chromium } from 'playwright'
+import { getElementLocations, sanitize } from './htmlUtils'
+import { CLASSIFICATION_PROMPT } from './prompts'
+import { CLASSIFICATION_OUTPUTS } from './structuredOutputs'
 
-import { Playwright } from './lib/playwright'
-import { generateXPath } from './utils/xpathGenerator'
-;(async () => {
-  const playwright = await Playwright.from(chromium, { headless: false })
+export class Vespera {
+  private page: Page
+  private snapshot: string = ''
+  private store: MemoryVectorStore | null = null
 
-  await playwright.navigate('https://www.google.com')
-
-  const snapshot = await playwright.getSnapshot()
-
-  const elementPaths = generateXPath(snapshot, ['a', 'div', 'button', 'input', 'select', 'textarea'])
-
-  const docs = elementPaths.map(
-    ({ element, xpath, source }) =>
-      new Document({
-        id: xpath,
-        pageContent: element,
-        metadata: source ? { source } : {}
-      })
-  )
-
-  const start = Date.now()
-  const vectorStore = await MemoryVectorStore.fromDocuments(
-    docs,
-    new OpenAIEmbeddings({ modelName: 'text-embedding-3-small' })
-  )
-  const retriever = vectorStore.asRetriever(5)
-  const end = Date.now()
-  console.log('Time:', (end - start) / 1000)
-
-  const question = 'Gmail a button div input select textarea'
-  const retrievedDocs = await retriever.invoke(question)
-  console.log(retrievedDocs)
-
-  for (const doc of retrievedDocs) {
-    const locator = playwright.getPage().locator(doc.id!).first()
-    const [visible, enabled] = await Promise.all([locator.isVisible(), locator.isEnabled()])
-    console.log(doc.id, visible && enabled)
+  constructor(page: Page) {
+    this.page = page
   }
 
-  await playwright.close()
-})()
+  private async embedSnapshot() {
+    if (this.store) {
+      await this.store.delete()
+    }
+
+    const sanitized = sanitize(this.snapshot)
+    const elems = getElementLocations(sanitized)
+
+    const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+    const docs = elems.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
+    this.store = await MemoryVectorStore.fromDocuments(docs, embedder)
+  }
+
+  public async shouldInvoke({ messages }: ActionState) {
+    const message = messages[messages.length - 1] as HumanMessage
+
+    const openAI = new OpenAI()
+    const completion = await openAI.beta.chat.completions.parse({
+      model: 'gpt-4o-mini',
+      temperature: 0,
+      messages: [
+        { role: 'system', content: CLASSIFICATION_PROMPT },
+        { role: 'user', content: message.content.toString() }
+      ],
+      response_format: zodResponseFormat(CLASSIFICATION_OUTPUTS, 'intent')
+    })
+    const { intent } = completion.choices[0].message.parsed!
+
+    return intent
+  }
+
+  public async auto() {
+    const snapshot = await this.page.content()
+    if (snapshot !== this.snapshot) {
+      this.snapshot = snapshot
+      await this.embedSnapshot()
+    }
+  }
+}

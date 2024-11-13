@@ -1,5 +1,4 @@
 import type { Locator, Page } from '@playwright/test'
-import type { Browser, BrowserType, LaunchOptions } from 'playwright'
 
 /**
  * Supported scroll targets for the scrollElement method.
@@ -10,29 +9,34 @@ type ScrollTarget = 'top' | 'bottom' | 'up' | 'down'
  * A class used to perform actions on a page using the Playwright API.
  */
 export class Playwright {
-  constructor(
-    private browser: Browser,
-    private page: Page
-  ) {}
-
-  static async from({ launch }: BrowserType, options?: LaunchOptions) {
-    const browser = await launch(options)
-    const page = await browser.newPage()
-    return new Playwright(browser, page)
-  }
+  constructor(private page: Page) {}
 
   // Browser actions
   public async close() {
-    await this.browser.close()
+    await this.page.close()
   }
 
   // Page actions
-  public getPage() {
+  public _getPage() {
     return this.page
   }
 
-  public async getSnapshot() {
+  public async _getSnapshot() {
     return this.page.content()
+  }
+
+  public async _isEnabled(locator: Locator | string) {
+    const element = typeof locator === 'string' ? this.page.locator(locator) : locator
+    return element.isEnabled()
+  }
+
+  public async _isVisible(locator: Locator | string) {
+    const element = typeof locator === 'string' ? this.page.locator(locator) : locator
+    return element.isVisible()
+  }
+
+  public async getTitle() {
+    return this.page.title()
   }
 
   public async navigate(url: string) {
@@ -85,16 +89,6 @@ export class Playwright {
     await element.hover()
     await element.click()
     await element.fill(value)
-  }
-
-  public async isEnabled(locator: Locator | string) {
-    const element = typeof locator === 'string' ? this.page.locator(locator) : locator
-    return element.isEnabled()
-  }
-
-  public async isVisible(locator: Locator | string) {
-    const element = typeof locator === 'string' ? this.page.locator(locator) : locator
-    return element.isVisible()
   }
 
   public async scrollElement(locator: Locator | string, scrollTarget: ScrollTarget) {

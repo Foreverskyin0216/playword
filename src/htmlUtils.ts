@@ -1,32 +1,14 @@
+import type { ElementLocation } from './types'
 import { JSDOM } from 'jsdom'
 import sanitizeHtml from 'sanitize-html'
 
-interface ElementPath {
-  element: string
-  xpath: string
-  source?: string
-}
-
-const sanitize = (html: string) => {
-  return sanitizeHtml(html, {
-    allowedAttributes: {
-      '*': ['aria-label', 'class', 'href', 'id', 'placeholder', 'title', 'type', 'value']
-    },
-    allowedTags: false,
-    allowedStyles: { '*': { '*': [] } },
-    allowVulnerableTags: true,
-    exclusiveFilter: (frame) => ['head', 'script', 'style', 'svg'].includes(frame.tag)
-  })
-}
-
-export const generateXPath = (html: string, targets: string[] = []) => {
+export const getElementLocations = (html: string, targets: string[] = []) => {
   const allowedTags = JSON.stringify(targets).toUpperCase()
-
-  const dom = new JSDOM(sanitize(html), { runScripts: 'dangerously' })
+  const dom = new JSDOM(html, { runScripts: 'dangerously' })
 
   dom.window.eval(`
     const elements = document.querySelectorAll('*:not(script):not(style)')
-    const elementPaths = []
+    const locations = []
 
     const isTarget = (element) => ${allowedTags}.includes(element.tagName)
 
@@ -53,8 +35,11 @@ export const generateXPath = (html: string, targets: string[] = []) => {
     }
 
     for (const element of elements) {
-      if (!isTarget(element)) continue
+      if (!isTarget(element)) {
+        continue
+      }
 
+      const xpath = getElementXPath(element)
       const clone = element.cloneNode(true)
       let text = ''
 
@@ -64,17 +49,22 @@ export const generateXPath = (html: string, targets: string[] = []) => {
       text = text.trim()
 
       clone.innerHTML = text
-      const xpath = getElementXPath(element)
 
-      elementPaths.push({
-        element: clone.outerHTML,
-        xpath,
-        ...(text && { source: text })
-      })
+      locations.push({ xpath, element: clone.outerHTML })
     }
 
-    window.elementPaths = elementPaths
+    window.locations = locations
   `)
 
-  return dom.window.elementPaths as ElementPath[]
+  return dom.window.locations as ElementLocation[]
+}
+
+export const sanitize = (html: string) => {
+  return sanitizeHtml(html, {
+    allowedAttributes: { '*': ['aria-label', 'class', 'href', 'id', 'placeholder', 'title', 'type'] },
+    allowedStyles: { '*': { '*': [] } },
+    allowedTags: false,
+    allowVulnerableTags: true,
+    exclusiveFilter: (frame) => ['head', 'script', 'style'].includes(frame.tag)
+  })
 }
