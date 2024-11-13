@@ -8,3 +8,5 @@ export interface ElementLocation {
   element: string
   xpath: string
 }
+
+export type ScrollTarget = 'top' | 'bottom' | 'up' | 'down'
