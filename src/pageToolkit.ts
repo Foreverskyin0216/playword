@@ -1,17 +1,20 @@
-import type { Page } from '@playwright/test'
-import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
+import type { PlayWord } from './types'
 
+import { Document } from '@langchain/core/documents'
 import { tool } from '@langchain/core/tools'
+import { OpenAIEmbeddings } from '@langchain/openai'
 
+import { MemoryVectorStore } from 'langchain/vectorstores/memory'
 import { z } from 'zod'
+
+import { getElementLocations, sanitize } from './htmlUtils'
 
 export const toolkit = [
   tool(
     async (_, { configurable }) => {
-      const page = (configurable?.page as Page) ?? null
-      if (!page) {
-        return 'No page found'
-      }
+      const ref = configurable.ref as PlayWord
+      const page = ref.getPage()
+      await page.waitForLoadState('domcontentloaded')
 
       return await page.title()
     },
@@ -24,13 +27,11 @@ export const toolkit = [
 
   tool(
     async ({ url }, { configurable }) => {
-      const page = (configurable?.page as Page) ?? null
-      if (!page) {
-        return 'No page found'
-      }
+      const ref = configurable.ref as PlayWord
+      const page = ref.getPage()
+      await page.waitForLoadState('domcontentloaded')
 
       await page.goto(url)
-      configurable.page = page
 
       return 'Navigated to ' + url
     },
@@ -45,10 +46,9 @@ export const toolkit = [
 
   tool(
     async ({ keys }, { configurable }) => {
-      const page = (configurable?.page as Page) ?? null
-      if (!page) {
-        return 'No page found'
-      }
+      const ref = configurable.ref as PlayWord
+      const page = ref.getPage()
+      await page.waitForLoadState('domcontentloaded')
 
       await page.keyboard.press(keys)
 
@@ -65,13 +65,24 @@ export const toolkit = [
 
   tool(
     async ({ target }, { configurable }) => {
-      const page = (configurable?.page as Page) ?? null
-      const vecStore = (configurable?.vecStore as MemoryVectorStore) ?? null
-      if (!page || !vecStore) {
-        return 'No page or vector store found'
+      const ref = configurable.ref as PlayWord
+      const page = ref.getPage()
+      await page.waitForLoadState('domcontentloaded')
+      await page.waitForLoadState('networkidle')
+
+      const oldSnapshot = ref.getSnapshot()
+      const newSnapshot = await page.content()
+
+      if (newSnapshot !== oldSnapshot) {
+        const clickable = ['a', 'button', 'img', 'label', 'input', 'select', 'textarea']
+        const elements = getElementLocations(sanitize(newSnapshot), clickable)
+        const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
+        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        ref.setStore(await MemoryVectorStore.fromDocuments(docs, embedder))
+        ref.setSnapshot(newSnapshot)
       }
 
-      const retriever = vecStore.asRetriever()
+      const retriever = ref.getStore().asRetriever()
       const retrieved = await retriever.invoke(target)
 
       for (const { id } of retrieved) {
@@ -98,13 +109,24 @@ export const toolkit = [
 
   tool(
     async ({ target }, { configurable }) => {
-      const page = (configurable?.page as Page) ?? null
-      const vecStore = (configurable?.vecStore as MemoryVectorStore) ?? null
-      if (!page) {
-        return 'No page found'
+      const ref = configurable.ref as PlayWord
+      const page = ref.getPage()
+      await page.waitForLoadState('domcontentloaded')
+      await page.waitForLoadState('networkidle')
+
+      const oldSnapshot = ref.getSnapshot()
+      const newSnapshot = await page.content()
+
+      if (newSnapshot !== oldSnapshot) {
+        const clickable = ['a', 'button', 'img', 'label', 'input', 'select', 'textarea']
+        const elements = getElementLocations(sanitize(newSnapshot), clickable)
+        const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
+        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        ref.setStore(await MemoryVectorStore.fromDocuments(docs, embedder))
+        ref.setSnapshot(newSnapshot)
       }
 
-      const retriever = vecStore.asRetriever()
+      const retriever = ref.getStore().asRetriever()
       const retrieved = await retriever.invoke(target)
 
       for (const { id } of retrieved) {
@@ -130,13 +152,23 @@ export const toolkit = [
 
   tool(
     async ({ target, text }, { configurable }) => {
-      const page = (configurable?.page as Page) ?? null
-      const vecStore = (configurable?.vecStore as MemoryVectorStore) ?? null
-      if (!page) {
-        return 'No page found'
+      const ref = configurable.ref as PlayWord
+      const page = ref.getPage()
+      await page.waitForLoadState('domcontentloaded')
+      await page.waitForLoadState('networkidle')
+
+      const oldSnapshot = ref.getSnapshot()
+      const newSnapshot = await page.content()
+
+      if (newSnapshot !== oldSnapshot) {
+        const elements = getElementLocations(sanitize(newSnapshot), ['input', 'select', 'textarea'])
+        const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
+        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        ref.setStore(await MemoryVectorStore.fromDocuments(docs, embedder))
+        ref.setSnapshot(newSnapshot)
       }
 
-      const retriever = vecStore.asRetriever()
+      const retriever = ref.getStore().asRetriever()
       const retrieved = await retriever.invoke(target)
 
       for (const { id } of retrieved) {
@@ -165,10 +197,9 @@ export const toolkit = [
 
   tool(
     async ({ direction }, { configurable }) => {
-      const page = (configurable?.page as Page) ?? null
-      if (!page) {
-        return 'No page found'
-      }
+      const ref = configurable.ref as PlayWord
+      const page = ref.getPage()
+      await page.waitForLoadState('domcontentloaded')
 
       switch (direction) {
         case 'top':
@@ -200,13 +231,23 @@ export const toolkit = [
 
   tool(
     async ({ target, option }, { configurable }) => {
-      const page = (configurable?.page as Page) ?? null
-      const vecStore = (configurable?.vecStore as MemoryVectorStore) ?? null
-      if (!page) {
-        return 'No page found'
+      const ref = configurable.ref as PlayWord
+      const page = ref.getPage()
+      await page.waitForLoadState('domcontentloaded')
+      await page.waitForLoadState('networkidle')
+
+      const oldSnapshot = ref.getSnapshot()
+      const newSnapshot = await page.content()
+
+      if (newSnapshot !== oldSnapshot) {
+        const elements = getElementLocations(sanitize(newSnapshot), ['input', 'select', 'textarea'])
+        const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
+        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        ref.setStore(await MemoryVectorStore.fromDocuments(docs, embedder))
+        ref.setSnapshot(newSnapshot)
       }
 
-      const retriever = vecStore.asRetriever()
+      const retriever = ref.getStore().asRetriever()
       const retrieved = await retriever.invoke(target)
 
       for (const { id } of retrieved) {
@@ -229,6 +270,25 @@ export const toolkit = [
       schema: z.object({
         target: z.string().describe('The name of the dropdown element.'),
         option: z.string().describe('The option to select.')
+      })
+    }
+  ),
+
+  tool(
+    async ({ text }, { configurable }) => {
+      const ref = configurable.ref as PlayWord
+      const page = ref.getPage()
+      await page.waitForLoadState('domcontentloaded')
+
+      await page.waitForSelector(`text=${text}`, { state: 'visible', timeout: 30000 })
+
+      return 'Found text: ' + text
+    },
+    {
+      name: 'WaitForText',
+      description: 'Call to wait for text to appear on the page',
+      schema: z.object({
+        text: z.string().describe('The text to wait for.')
       })
     }
   )

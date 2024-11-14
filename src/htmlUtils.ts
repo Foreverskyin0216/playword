@@ -61,7 +61,7 @@ export const getElementLocations = (html: string, targets: string[] = []) => {
 
 export const sanitize = (html: string) => {
   return sanitizeHtml(html, {
-    allowedAttributes: { '*': ['aria-label', 'class', 'data-*', 'href', 'id', 'title', 'type'] },
+    allowedAttributes: { '*': ['aria-*', 'class', 'data-*', 'href', 'id', 'placeholder', 'title', 'type'] },
     allowedStyles: { '*': { '*': [] } },
     allowedTags: false,
     allowVulnerableTags: true,
