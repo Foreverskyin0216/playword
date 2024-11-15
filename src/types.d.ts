@@ -4,32 +4,37 @@ export interface ActionState {
   messages: BaseMessage[]
 }
 
+export interface LocatorBox {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export interface ElementLocation {
+  /**
+   * The entire content of the element. Including the tags, attributes, and text.
+   */
   element: string
+  /**
+   * The XPath to the element.
+   */
   xpath: string
 }
 
 export interface PlayWord {
   /**
-   * Return the current page.
+   * The page to perform actions on.
    */
-  getPage(): import('playwright').Page
+  page: import('playwright').Page
   /**
-   * Return the current snapshot.
+   * The vector store to save embedded element locations.
    */
-  getSnapshot(): string
+  store: import('langchain/vectorstores/memory').MemoryVectorStore | null
   /**
-   * Return the vector store that includes all embedded element locations.
+   * The snapshot of the current page.
    */
-  getStore(): import('langchain/vectorstores/memory').MemoryVectorStore
-  /**
-   * Set a new memory vector store for embedded element locations.
-   */
-  setStore(store: import('langchain/vectorstores/memory').MemoryVectorStore): void
-  /**
-   * Set a new snapshot for the current page.
-   */
-  setSnapshot(snapshot: string): void
+  snapshot: string
   /**
    * Say something to perform actions.
    */

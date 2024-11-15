@@ -9,7 +9,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": false,
     "strict": true,
-    "target": "ES2022",
+    "target": "ES2023",
     "useUnknownInCatchVariables": false
   },
   "include": ["src"]
