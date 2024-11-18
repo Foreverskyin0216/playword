@@ -1,6 +1,6 @@
 # PlayWord
 
-[![Release Notes](https://img.shields.io/badge/release-1.0.3-blue)](https://github.com/Foreverskyin0216/playword/releases)
+[![Release Notes](https://img.shields.io/badge/release-1.0.4-blue)](https://github.com/Foreverskyin0216/playword/releases)
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](https://opensource.org/licenses/MIT)
 
