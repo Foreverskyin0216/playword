@@ -1,3 +1,5 @@
+## [1.0.4](https://github.com/Foreverskyin0216/playword/compare/v1.0.3...v1.0.4) (2024-11-18)
+
 ## [1.0.3](https://github.com/Foreverskyin0216/playword/compare/v1.0.2...v1.0.3) (2024-11-18)
 
 ## [1.0.3](https://github.com/Foreverskyin0216/playword/compare/v1.0.2...v1.0.3) (2024-11-18)
