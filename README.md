@@ -4,7 +4,7 @@
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](https://opensource.org/licenses/MIT)
 
-Transform your intentions into Playwright actions using AI!
+Convert your intentions into Playwright actions using AI!
 
 ## 📦 Installation
 
