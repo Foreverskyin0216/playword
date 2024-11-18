@@ -1,17 +1,22 @@
 # PlayWord
 
-[![Release Notes](https://img.shields.io/badge/release-1.0.4-blue)](https://github.com/Foreverskyin0216/playword/releases)
+[![NPM Version](https://img.shields.io/npm/v/playword)
+](https://www.npmjs.com/package/playword)
+[![Release Notes](https://img.shields.io/github/release/Foreverskyin0216/playword)](https://github.com/Foreverskyin0216/playword/releases)
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-MIT-yellow)](https://opensource.org/licenses/MIT)
+[![GitHub License](https://img.shields.io/github/license/Foreverskyin0216/playword)
+](https://opensource.org/licenses/MIT)
 
 Convert your intentions into Playwright actions using AI!
 
 ## 📦 Installation
 
-Install `playword` package using npm:
+Install `playword` package using any package manager you prefer.
 
-```bash
-npm install playword
+```llvm
+npm  add playword
+yarn add playword
+pnpm add playword
 ```
 
 ## 🚀 Usage
