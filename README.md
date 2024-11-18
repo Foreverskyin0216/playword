@@ -1,11 +1,9 @@
 # PlayWord
 
-[![NPM Version](https://img.shields.io/npm/v/playword)
-](https://www.npmjs.com/package/playword)
+[![NPM Version](https://img.shields.io/npm/v/playword)](https://www.npmjs.com/package/playword)
 [![Release Notes](https://img.shields.io/github/release/Foreverskyin0216/playword)](https://github.com/Foreverskyin0216/playword/releases)
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
-[![GitHub License](https://img.shields.io/github/license/Foreverskyin0216/playword)
-](https://opensource.org/licenses/MIT)
+[![GitHub License](https://img.shields.io/github/license/Foreverskyin0216/playword)](https://opensource.org/licenses/MIT)
 
 Convert your intentions into Playwright actions using AI!
 
