@@ -18,7 +18,8 @@ coverage
 .npmrc
 .vscode
 
-# Playwright artifacts
+# Artifacts
+.playword
 test-results
 playwright-report
 blob-report

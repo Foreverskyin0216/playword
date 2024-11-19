@@ -1,3 +1,5 @@
+import type { ClientOptions } from 'openai'
+
 export interface ElementLocation {
   /**
    * Content of the element. Include the tags, attributes, and text.
@@ -10,6 +12,10 @@ export interface ElementLocation {
 }
 
 export interface PlayWordOptions {
+  /**
+   * OpenAI options to configure the client. See {@link ClientOptions}.
+   */
+  openAIOptions?: ClientOptions
   /**
    * Whether to record the actions performed.
    *
@@ -29,7 +35,7 @@ export interface PlayWordOptions {
    * ```
    * @default false
    */
-  record: boolean | string
+  record?: boolean | string
 }
 
 export interface PlayWordProperties {
@@ -38,13 +44,17 @@ export interface PlayWordProperties {
    */
   lastInput: string
   /**
+   * OpenAI options to configure the client.
+   */
+  openAIOptions: ClientOptions
+  /**
    * The page to perform actions on.
    */
   page: import('playwright').Page
   /**
    * Whether to record the actions performed.
    */
-  record: boolean | string
+  record: boolean | string | undefined
   /**
    * The recordings of the actions performed.
    */
