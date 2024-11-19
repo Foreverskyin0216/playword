@@ -150,28 +150,29 @@ const playword = new PlayWord(page, { apiKey: '...', baseURL: 'https://<custom-e
 
 ## Why PlayWord?
 
-| Aspect      | Traditional Testing                      | PlayWord                                       |
-| ----------- | ---------------------------------------- | ---------------------------------------------- |
-| Development | Need to locate elements for each action  | Automatically locates elements with AI         |
-| Readability | Test code is not always easy to read     | No need to read code. Just read the test cases |
-| Maintenance | Should maintain both test cases and code | Maintain only test cases                       |
-| Flexibility | Any changes in the code require updates  | Changes can be automatically handled by AI     |
-| Debugging   | Need to trace the coe and look into logs | AI provides the reason for failure             |
+| Aspect      | Traditional Testing                       | PlayWord                                        |
+| ----------- | ----------------------------------------- | ----------------------------------------------- |
+| Development | Need to locate elements for each action.  | Automatically locates elements with AI.         |
+| Readability | Test code is not always easy to read.     | No need to read code. Just read the test cases. |
+| Maintenance | Should maintain both test cases and code. | Maintain only test cases.                       |
+| Flexibility | Any changes in the code require updates.  | Changes can be automatically handled by AI.     |
+| Debugging   | Need to trace the coe and look into logs. | AI provides the reason for failure.             |
 
 ## Compare PlayWord with other tools
 
-| Criteria           | Auto-Playwright               | ZeroStep            | PlayWord                          |
-| ------------------ | ----------------------------- | ------------------- | --------------------------------- |
-| API                | OpenAI API                    | ZeroStep API        | OpenAI API                        |
-| Snapshot           | Sanitized HTML                | Screenshots and DOM | Sanitized HTML                    |
-| Locator generation | By AI                         | CDP                 | Similarity search with embeddings |
-| Parallelism        | No                            | Yes                 | Yes, implemented by LangGraph     |
-| Record             | No                            | No                  | Yes                               |
-| Intent detection   | Determined by AI              | Determined by AI    | Determined by keywords and AI     |
-| Supported Browsers | Playwright supported browsers | Chrome Only         | Playwright supported browsers     |
-| Implementation     | Function calls                | Function calls      | Class instantiation               |
-| Price              | Free                          | Paid                | Free                              |
-| License            | MIT                           | MIT                 | MIT                               |
+| Criteria           | Auto-Playwright               | ZeroStep            | PlayWord                            |
+| ------------------ | ----------------------------- | ------------------- | ----------------------------------- |
+| API                | OpenAI API                    | ZeroStep API        | OpenAI API                          |
+| Snapshot           | Sanitized HTML                | Screenshots and DOM | Sanitized HTML                      |
+| Locator generation | By AI                         | CDP                 | Similarity search with embeddings   |
+| Parallelism        | No                            | Yes                 | Yes, implemented by LangGraph       |
+| Record             | No                            | No                  | Yes                                 |
+| Intent detection   | Determined by AI              | Determined by AI    | Determined by keywords and AI       |
+| Supported Browsers | Playwright supported browsers | Chrome Only         | Playwright supported browsers       |
+| Implementation     | Function calls                | Function calls      | Class instantiation                 |
+| Price              | Low (OpenAI API tokens)       | High (ZeroStep API) | Low (OpenAI API tokens)             |
+| Token Consumption  | High (use full HTML)          | N/A                 | Low (use similarity search results) |
+| License            | MIT                           | MIT                 | MIT                                 |
 
 ## Supported browsers
 
