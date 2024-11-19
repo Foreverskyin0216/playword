@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Foreverskyin0216/playword/compare/v1.0.7...v1.1.0) (2024-11-19)
+
+
+### Features
+
+* add the functionality to customize endpoints ([d43c873](https://github.com/Foreverskyin0216/playword/commit/d43c87333e4a86629032314897955e0ce2abd5f6))
+
 ## [1.0.7](https://github.com/Foreverskyin0216/playword/compare/v1.0.6...v1.0.7) (2024-11-19)
 
 ## [1.0.6](https://github.com/Foreverskyin0216/playword/compare/v1.0.5...v1.0.6) (2024-11-18)
