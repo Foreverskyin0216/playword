@@ -1,4 +1,6 @@
 import type { BaseMessage } from '@langchain/core/messages'
+import type { LangGraphRunnableConfig } from '@langchain/langgraph'
+import type { PlayWordProperties } from './types'
 
 import { AIMessage } from '@langchain/core/messages'
 import { Annotation, MemorySaver, StateGraph, messagesStateReducer } from '@langchain/langgraph'
@@ -13,22 +15,31 @@ import { toolkit as assertTools } from './assertToolkit'
 import { toolkit as pageTools } from './pageToolkit'
 import { assertionPattern } from './resources'
 
-const invokeAssertAgent = async ({ messages }: { messages: BaseMessage[] }) => {
-  const chatOpenAI = new ChatOpenAI({ modelName: 'gpt-4o-mini' }).bindTools(assertTools)
+interface ActionState {
+  messages: BaseMessage[]
+}
+
+const invokeAssertAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
+  const { openAIOptions } = configurable?.ref as PlayWordProperties
+  const chatOpenAI = new ChatOpenAI({ modelName: 'gpt-4o-mini', ...openAIOptions }, openAIOptions).bindTools(
+    assertTools
+  )
   const response = await chatOpenAI.invoke(messages)
   return { messages: [response] }
 }
 
-const invokePageAgent = async ({ messages }: { messages: BaseMessage[] }) => {
-  const chatOpenAI = new ChatOpenAI({ modelName: 'gpt-4o-mini' }).bindTools(pageTools)
+const invokePageAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
+  const { openAIOptions } = configurable?.ref as PlayWordProperties
+  const chatOpenAI = new ChatOpenAI({ modelName: 'gpt-4o-mini', ...openAIOptions }, openAIOptions).bindTools(pageTools)
   const response = await chatOpenAI.invoke(messages)
   return { messages: [response] }
 }
 
-const invokeResultAgent = async ({ messages }: { messages: BaseMessage[] }) => {
+const invokeResultAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
+  const { openAIOptions } = configurable?.ref as PlayWordProperties
   const question = messages.findLast((message) => message.getType() === 'human')
   const response = messages[messages.length - 1] as AIMessage
-  const openAI = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  const openAI = new OpenAI(openAIOptions)
   const { choices } = await openAI.beta.chat.completions.parse({
     model: 'gpt-4o-mini',
     temperature: 0,
@@ -50,17 +61,17 @@ const invokeResultAgent = async ({ messages }: { messages: BaseMessage[] }) => {
   return { messages: [new AIMessage(JSON.stringify(choices[0].message.parsed?.result))] }
 }
 
-const shouldInvoke = async ({ messages }: { messages: BaseMessage[] }) => {
+const shouldInvoke = async ({ messages }: ActionState) => {
   const message = messages[messages.length - 1] as AIMessage
   return assertionPattern.test(message.content.toString()) ? 'assert' : 'page'
 }
 
-const shouldInvokeAssertTools = ({ messages }: { messages: BaseMessage[] }) => {
+const shouldInvokeAssertTools = ({ messages }: ActionState) => {
   const { tool_calls } = messages[messages.length - 1] as AIMessage
   return tool_calls && tool_calls.length > 0 ? 'assertTools' : 'result'
 }
 
-const shouldInvokePageTools = ({ messages }: { messages: BaseMessage[] }) => {
+const shouldInvokePageTools = ({ messages }: ActionState) => {
   const { tool_calls } = messages[messages.length - 1] as AIMessage
   return tool_calls && tool_calls.length > 0 ? 'pageTools' : '__end__'
 }

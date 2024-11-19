@@ -1,5 +1,6 @@
 import type { AIMessage } from '@langchain/core/messages'
 import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
+import type { ClientOptions } from 'openai'
 import type { Page } from 'playwright'
 import type { PlayWordOptions, Recording, SayOptions } from './types'
 
@@ -31,13 +32,17 @@ export class PlayWord {
    */
   lastInput: string = ''
   /**
+   * OpenAI options to configure the client.
+   */
+  openAIOptions: ClientOptions = {}
+  /**
    * PlayWright page to perform actions on.
    */
   page: Page
   /**
    * Whether to record the actions performed.
    */
-  record: boolean | string = false
+  record: boolean | string | undefined = false
   /**
    * The recordings of the actions performed.
    */
@@ -57,6 +62,7 @@ export class PlayWord {
 
   constructor(page: Page, playwordOptions: PlayWordOptions = { record: false }) {
     this.page = page
+    this.openAIOptions = playwordOptions.openAIOptions || {}
     this.record = playwordOptions.record === true ? '.playword/recordings.json' : playwordOptions.record
   }
 
@@ -69,14 +75,16 @@ export class PlayWord {
     }
   }
 
-  private async beforeAction() {
-    if (this.record && (await this.checkPath(this.record as string))) {
-      const file = await readFile(this.record as string, 'utf-8')
+  private async beforeAll() {
+    const filePath = this.record as string
+    if (this.record && (await this.checkPath(filePath))) {
+      const file = await readFile(filePath, 'utf-8')
       this.recordings = JSON.parse(file)
+      await writeFile(filePath, JSON.stringify([], null, 2))
     }
   }
 
-  private async afterAction() {
+  private async afterEach() {
     if (this.record) {
       const filePath = this.record as string
       await mkdir(dirname(filePath), { recursive: true })
@@ -122,7 +130,7 @@ export class PlayWord {
     options: SayOptions = { withoutRecordings: false }
   ): Promise<boolean | string | void | null> {
     if (this.step === 0) {
-      await this.beforeAction()
+      await this.beforeAll()
     }
     this.lastInput = input
 
@@ -150,7 +158,7 @@ export class PlayWord {
       result = ['true', 'false'].includes(message) ? message === 'true' : message
     }
 
-    await this.afterAction()
+    await this.afterEach()
 
     return result
   }

@@ -29,7 +29,11 @@ export const toolkit = [
       if (snapshot !== ref.snapshot) {
         const elements = getElementLocations(sanitize(snapshot), clickableTags)
         const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
-        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        const embedder = new OpenAIEmbeddings({
+          ...ref.openAIOptions,
+          configuration: ref.openAIOptions,
+          modelName: 'text-embedding-3-large'
+        })
         ref.store = await MemoryVectorStore.fromDocuments(docs, embedder)
         ref.snapshot = snapshot
       }
@@ -64,7 +68,11 @@ export const toolkit = [
       if (snapshot !== ref.snapshot) {
         const elements = getElementLocations(sanitize(snapshot), clickableTags)
         const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
-        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        const embedder = new OpenAIEmbeddings({
+          ...ref.openAIOptions,
+          configuration: ref.openAIOptions,
+          modelName: 'text-embedding-3-large'
+        })
         ref.store = await MemoryVectorStore.fromDocuments(docs, embedder)
         ref.snapshot = snapshot
       }
@@ -99,7 +107,11 @@ export const toolkit = [
       if (snapshot !== ref.snapshot) {
         const elements = getElementLocations(sanitize(snapshot), clickableTags)
         const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
-        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        const embedder = new OpenAIEmbeddings({
+          ...ref.openAIOptions,
+          configuration: ref.openAIOptions,
+          modelName: 'text-embedding-3-large'
+        })
         ref.store = await MemoryVectorStore.fromDocuments(docs, embedder)
         ref.snapshot = snapshot
       }

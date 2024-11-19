@@ -14,13 +14,16 @@ export const toolkit = [
   tool(
     async ({ target }, { configurable }) => {
       const ref = configurable.ref as PlayWordProperties
-      const page = ref.page
       const snapshot = await getSnapshot(ref)
 
       if (snapshot !== ref.snapshot) {
         const elements = getElementLocations(sanitize(snapshot), clickableTags)
         const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
-        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        const embedder = new OpenAIEmbeddings({
+          ...ref.openAIOptions,
+          configuration: ref.openAIOptions,
+          modelName: 'text-embedding-3-large'
+        })
         ref.store = await MemoryVectorStore.fromDocuments(docs, embedder)
         ref.snapshot = snapshot
       }
@@ -32,7 +35,7 @@ export const toolkit = [
       for (const doc of retrieved) {
         if (!doc.id) continue
 
-        const locator = page.locator(doc.id).first()
+        const locator = ref.page.locator(doc.id).first()
         const [visible, enabled] = await Promise.all([locator.isVisible(), locator.isEnabled()])
         if (visible && enabled) {
           const text = await locator.textContent()
@@ -64,13 +67,16 @@ export const toolkit = [
   tool(
     async ({ target }, { configurable }) => {
       const ref = configurable.ref as PlayWordProperties
-      const page = ref.page
       const snapshot = await getSnapshot(ref)
 
       if (snapshot !== ref.snapshot) {
         const elements = getElementLocations(sanitize(snapshot), ['a'])
         const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
-        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        const embedder = new OpenAIEmbeddings({
+          ...ref.openAIOptions,
+          configuration: ref.openAIOptions,
+          modelName: 'text-embedding-3-large'
+        })
         ref.store = await MemoryVectorStore.fromDocuments(docs, embedder)
         ref.snapshot = snapshot
       }
@@ -82,7 +88,7 @@ export const toolkit = [
       for (const doc of retrieved) {
         if (!doc.id) continue
 
-        const locator = page.locator(doc.id).first()
+        const locator = ref.page.locator(doc.id).first()
         const [visible, enabled] = await Promise.all([locator.isVisible(), locator.isEnabled()])
         if (visible && enabled) {
           const text = await locator.textContent()
@@ -112,13 +118,16 @@ export const toolkit = [
   tool(
     async ({ target }, { configurable }) => {
       const ref = configurable.ref as PlayWordProperties
-      const page = ref.page
       const snapshot = await getSnapshot(ref)
 
       if (snapshot !== ref.snapshot) {
         const elements = getElementLocations(sanitize(snapshot), clickableTags)
         const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
-        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        const embedder = new OpenAIEmbeddings({
+          ...ref.openAIOptions,
+          configuration: ref.openAIOptions,
+          modelName: 'text-embedding-3-large'
+        })
         ref.store = await MemoryVectorStore.fromDocuments(docs, embedder)
         ref.snapshot = snapshot
       }
@@ -130,7 +139,7 @@ export const toolkit = [
       for (const doc of retrieved) {
         if (!doc.id) continue
 
-        const locator = page.locator(doc.id).first()
+        const locator = ref.page.locator(doc.id).first()
         const [visible, enabled] = await Promise.all([locator.isVisible(), locator.isEnabled()])
         if (visible && enabled) {
           const text = await locator.textContent()
@@ -162,13 +171,16 @@ export const toolkit = [
   tool(
     async ({ target, text }, { configurable }) => {
       const ref = configurable.ref as PlayWordProperties
-      const page = ref.page
       const snapshot = await getSnapshot(ref)
 
       if (snapshot !== ref.snapshot) {
         const elements = getElementLocations(sanitize(snapshot), ['input', 'textarea'])
         const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
-        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        const embedder = new OpenAIEmbeddings({
+          ...ref.openAIOptions,
+          configuration: ref.openAIOptions,
+          modelName: 'text-embedding-3-large'
+        })
         ref.store = await MemoryVectorStore.fromDocuments(docs, embedder)
         ref.snapshot = snapshot
       }
@@ -179,7 +191,7 @@ export const toolkit = [
       for (const doc of retrieved) {
         if (!doc.id) continue
 
-        const locator = page.locator(doc.id).first()
+        const locator = ref.page.locator(doc.id).first()
         const [visible, enabled] = await Promise.all([locator.isVisible(), locator.isEnabled()])
         if (visible && enabled) {
           await input(ref, { xpath: doc.id, text })
@@ -253,13 +265,16 @@ export const toolkit = [
   tool(
     async ({ target, option }, { configurable }) => {
       const ref = configurable.ref as PlayWordProperties
-      const page = ref.page
       const snapshot = await getSnapshot(ref)
 
       if (snapshot !== ref.snapshot) {
         const elements = getElementLocations(sanitize(snapshot), ['select'])
         const docs = elements.map(({ element, xpath }) => new Document({ id: xpath, pageContent: element }))
-        const embedder = new OpenAIEmbeddings({ modelName: 'text-embedding-3-large' })
+        const embedder = new OpenAIEmbeddings({
+          ...ref.openAIOptions,
+          configuration: ref.openAIOptions,
+          modelName: 'text-embedding-3-large'
+        })
         ref.store = await MemoryVectorStore.fromDocuments(docs, embedder)
         ref.snapshot = snapshot
       }
@@ -270,7 +285,7 @@ export const toolkit = [
       for (const doc of retrieved) {
         if (!doc.id) continue
 
-        const locator = page.locator(doc.id).first()
+        const locator = ref.page.locator(doc.id).first()
         const [visible, enabled] = await Promise.all([locator.isVisible(), locator.isEnabled()])
         if (visible && enabled) {
           await select(ref, { xpath: doc.id, option })

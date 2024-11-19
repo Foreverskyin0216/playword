@@ -5,11 +5,11 @@
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
 [![GitHub License](https://img.shields.io/github/license/Foreverskyin0216/playword)](https://opensource.org/licenses/MIT)
 
-Convert your intentions into Playwright actions using AI!
+Convert your intentions into Playwright actions with AI!
 
 ## 📦 Installation
 
-Install `playword` package using any package manager you prefer.
+Install `playword` package with any package manager you prefer.
 
 ```llvm
 npm  add playword
@@ -34,7 +34,6 @@ After setting up the API key, import this package and use it as shown below.
 ```javascript
 import { chromium } from 'playwright'
 import { PlayWord } from 'playword'
-
 ;(async () => {
   const browser = await chromium.launch()
   const page = await browser.newPage()
@@ -139,6 +138,18 @@ If you don't want to use the recording in some steps, you can disable it by sett
 ```javascript
 await playword.say('Navigate to https://www.google.com', { withoutRecordings: true })
 ```
+
+## Customizing Endpoint for OpenAI API
+
+Pass the `baseURL` and the `apiKey` to PlayWord options to connect to a custom endpoint. You can also set other OpenAI options with this method.
+
+```javascript
+const playword = new PlayWord(page, { apiKey: '...', baseURL: 'https://<custom-endpoint>' })
+```
+
+## Supported browsers
+
+PlayWord supports any browser that Playwright supports.
 
 ## Supported actions in PlayWord
 
