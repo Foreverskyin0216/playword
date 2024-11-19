@@ -174,10 +174,6 @@ const playword = new PlayWord(page, { apiKey: '...', baseURL: 'https://<custom-e
 | Token Consumption  | High (use full HTML)          | N/A                 | Low (use similarity search results) |
 | License            | MIT                           | MIT                 | MIT                                 |
 
-## Supported browsers
-
-PlayWord supports any browser that Playwright supports.
-
 ## Supported actions in PlayWord
 
 Currently, PlayWord supports the following actions:
