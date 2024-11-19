@@ -34,6 +34,7 @@ After setting up the API key, import this package and use it as shown below.
 ```javascript
 import { chromium } from 'playwright'
 import { PlayWord } from 'playword'
+
 ;(async () => {
   const browser = await chromium.launch()
   const page = await browser.newPage()
@@ -146,12 +147,12 @@ Currently, PlayWord supports the following actions:
 ### Browser actions
 
 - Click on an element
-- Get the full page content
 - Hover over an element
 - Input text in an element
 - Navigate to a URL
-- Scroll page
-- Select options
+- Press keys
+- Scroll on the page
+- Select an option
 - Wait for a specific text to appear
 
 ### Assertion
