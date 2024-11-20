@@ -150,13 +150,13 @@ const playword = new PlayWord(page, { apiKey: '...', baseURL: 'https://<custom-e
 
 ## Why PlayWord?
 
-| Aspect      | Traditional Testing                       | PlayWord                                        |
-| ----------- | ----------------------------------------- | ----------------------------------------------- |
-| Development | Need to locate elements for each action.  | Automatically locates elements with AI.         |
-| Readability | Test code is not always easy to read.     | No need to read code. Just read the test cases. |
-| Maintenance | Should maintain both test cases and code. | Maintain only test cases.                       |
-| Flexibility | Any changes in the code require updates.  | Changes can be automatically handled by AI.     |
-| Debugging   | Need to trace the coe and look into logs. | AI provides the reason for failure.             |
+| Aspect      | Traditional Testing                        | PlayWord                                        |
+| ----------- | ------------------------------------------ | ----------------------------------------------- |
+| Development | Need to locate elements for each action.   | Automatically locates elements with AI.         |
+| Readability | Test code is not always easy to read.      | No need to read code. Just read the test cases. |
+| Maintenance | Should maintain both test cases and code.  | Maintain only test cases.                       |
+| Flexibility | Any changes in the code require updates.   | Changes can be automatically handled by AI.     |
+| Debugging   | Need to trace the code and look into logs. | AI provides the reason for failure.             |
 
 ## Compare PlayWord with other tools
 
