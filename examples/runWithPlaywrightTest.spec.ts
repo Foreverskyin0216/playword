@@ -1,16 +1,16 @@
 /**
  * This example demonstrates how to use PlayWord in a Playwright test.
  *
- * You can use the command `npx playwright test` to run this example.
+ * Run this example in this directory with the command `npx playwright test`
  */
 import { test, expect } from '@playwright/test'
-import { PlayWord } from '../../src'
+import PlayWord from '../src'
 
 // Replace 'sk-...' with your OpenAI API key
-process.env.OPENAI_API_KEY = 'sk-...'
+const openAIOptions = { apiKey: 'sk-...' }
 
 test('An example of using PlayWord in a Playwright test', async ({ page }) => {
-  const playword = new PlayWord(page)
+  const playword = new PlayWord(page, { debug: true, openAIOptions })
 
   await playword.say('Navigate to https://www.google.com')
   await playword.say('Input "Hello, World" in the search field')
