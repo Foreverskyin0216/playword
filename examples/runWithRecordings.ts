@@ -1,18 +1,18 @@
 /**
- * This example demonstrates how to use the PlayWord with custom endpoint.
+ * This example demonstrates how to record a series of actions and then replay them.
  *
- * You can use the command `npx tsx playword.example.ts` to run this example.
+ * Run this example in this directory with the command `npx tsx use-recordings.example.ts`
  */
 import { chromium } from 'playwright'
-import { PlayWord } from '../../src'
+import PlayWord from '../src'
 
-// Replace apiKey and baseURL with your own OpenAI API key and endpoint.
-const openAIOptions = { apiKey: '<OPENAI_API_KEY>', baseURL: 'https://<ENDPOINT>' }
+// Replace 'sk-...' with your OpenAI API key
+const openAIOptions = { apiKey: 'sk-...' }
 
 const run = async () => {
   const browser = await chromium.launch({ headless: false })
   const page = await browser.newPage()
-  const playword = new PlayWord(page, { openAIOptions })
+  const playword = new PlayWord(page, { debug: true, openAIOptions, record: true })
 
   await playword.say('Navigate to https://www.google.com')
   await playword.say('Input "Hello, World" in the search field')

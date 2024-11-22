@@ -1,82 +1,101 @@
-import type { BaseMessage } from '@langchain/core/messages'
 import type { LangGraphRunnableConfig } from '@langchain/langgraph'
-import type { PlayWordProperties } from './types'
+import type { ActionState, PlayWordInterface } from './types'
 
 import { AIMessage } from '@langchain/core/messages'
 import { Annotation, MemorySaver, StateGraph, messagesStateReducer } from '@langchain/langgraph'
 import { ToolNode } from '@langchain/langgraph/prebuilt'
-import { ChatOpenAI } from '@langchain/openai'
 
-import { OpenAI } from 'openai'
-import { zodResponseFormat } from 'openai/helpers/zod'
-import { z } from 'zod'
-
-import { toolkit as assertTools } from './assertToolkit'
-import { toolkit as pageTools } from './pageToolkit'
+import { AI } from './ai'
+import assertTools from './assertTools'
+import pageTools from './pageTools'
 import { assertionPattern } from './resources'
 
-interface ActionState {
-  messages: BaseMessage[]
-}
+/**
+ * State annotation for the action graph.
+ */
+const annotation = Annotation.Root({ messages: Annotation({ reducer: messagesStateReducer }) })
 
+/**
+ * Node for the assertion agent.
+ *
+ * @returns The result from the assertion agent.
+ */
 const invokeAssertAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
-  const { openAIOptions } = configurable?.ref as PlayWordProperties
-  const chatOpenAI = new ChatOpenAI({ modelName: 'gpt-4o-mini', ...openAIOptions }, openAIOptions).bindTools(
-    assertTools
-  )
-  const response = await chatOpenAI.invoke(messages)
+  const { openAIOptions } = configurable?.ref as PlayWordInterface
+  const ai = new AI(openAIOptions)
+  const response = await ai.useTools(assertTools, messages)
   return { messages: [response] }
 }
 
+/**
+ * Node for the page agent.
+ *
+ * @returns The result from the page agent.
+ */
 const invokePageAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
-  const { openAIOptions } = configurable?.ref as PlayWordProperties
-  const chatOpenAI = new ChatOpenAI({ modelName: 'gpt-4o-mini', ...openAIOptions }, openAIOptions).bindTools(pageTools)
-  const response = await chatOpenAI.invoke(messages)
+  const ai = new AI(configurable?.ref?.openAIOptions)
+  const response = await ai.useTools(pageTools, messages)
   return { messages: [response] }
 }
 
+/**
+ * Node for the result agent.
+ *
+ * @returns The result from the result agent.
+ */
 const invokeResultAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
-  const { openAIOptions } = configurable?.ref as PlayWordProperties
-  const question = messages.findLast((message) => message.getType() === 'human')
-  const response = messages[messages.length - 1] as AIMessage
-  const openAI = new OpenAI(openAIOptions)
-  const { choices } = await openAI.beta.chat.completions.parse({
-    model: 'gpt-4o-mini',
-    temperature: 0,
-    messages: [
-      { role: 'system', content: "Determines if the response is passed on the user's input." },
-      { role: 'user', content: question!.content.toString() },
-      { role: 'assistant', content: response.content.toString() }
-    ],
-    response_format: zodResponseFormat(
-      z.object({
-        result: z
-          .boolean()
-          .describe('The result of the assertion. Return true if the assertion passes, false otherwise.')
-      }),
-      'result'
-    )
-  })
-
-  return { messages: [new AIMessage(JSON.stringify(choices[0].message.parsed?.result))] }
+  const ai = new AI(configurable?.ref?.openAIOptions)
+  const response = await ai.getAssertionResult(messages)
+  return { messages: [response] }
 }
 
+/**
+ * Determine if the assertion agent should be invoked.
+ *
+ * @returns The name of the agent to invoke.
+ */
 const shouldInvoke = async ({ messages }: ActionState) => {
   const message = messages[messages.length - 1] as AIMessage
-  return assertionPattern.test(message.content.toString()) ? 'assert' : 'page'
+  const shouldInvoke = assertionPattern.test(message.content.toString())
+  return shouldInvoke ? 'assert' : 'page'
 }
 
+/**
+ * Determine if the assertion tools should be invoked.
+ *
+ * @returns The name of the agent to invoke.
+ */
 const shouldInvokeAssertTools = ({ messages }: ActionState) => {
   const { tool_calls } = messages[messages.length - 1] as AIMessage
   return tool_calls && tool_calls.length > 0 ? 'assertTools' : 'result'
 }
 
+/**
+ * Determine if the page tools should be invoked.
+ *
+ * @returns The name of the agent to invoke.
+ */
 const shouldInvokePageTools = ({ messages }: ActionState) => {
   const { tool_calls } = messages[messages.length - 1] as AIMessage
   return tool_calls && tool_calls.length > 0 ? 'pageTools' : '__end__'
 }
 
-const annotation = Annotation.Root({ messages: Annotation({ reducer: messagesStateReducer }) })
+/**
+ * The action graph includes the following nodes:
+ * - **assert**: Invoke the assertion agent.
+ * - **page**: Invoke the page agent.
+ * - **result**: Invoke the result agent.
+ * - **assertTools**: Invoke the assertion tools.
+ * - **pageTools**: Invoke the page tools.
+ *
+ * If you want to look at the process of the action graph, you can use the following code to generate a mermaid diagram.
+ * ```typescript
+ * const graph = await actionGraph.getGraphAsync()
+ * const blob = await graph.drawMermaidPng()
+ * const buffer = await blob.arrayBuffer()
+ * await writeFile('diagram.png', Buffer.from(buffer))
+ * ```
+ */
 export const actionGraph = new StateGraph(annotation)
   .addNode('assert', invokeAssertAgent)
   .addNode('page', invokePageAgent)

@@ -12,7 +12,7 @@
     ]
   },
   {
-    "input": "Check if the functionality works when performing multiple actions",
+    "input": "Check if PlayWord works when performing multiple actions",
     "actions": [
       {
         "name": "assertElementContentEquals",

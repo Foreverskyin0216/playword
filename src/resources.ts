@@ -1,4 +1,14 @@
-export const clickableTags = [
+/**
+ * Pattern to match assertion keywords.
+ */
+export const assertionPattern = new RegExp(
+  /^\b(?:assert|assure|check|compare|confirm|ensure|expect|guarantee|is|match|satisfy|should|test|then|validate|verify)\b/i
+)
+
+/**
+ * List of generic tags that are allowed to fetch locations from.
+ */
+export const genericTags = [
   'a',
   'button',
   'div',
@@ -11,14 +21,8 @@ export const clickableTags = [
   'img',
   'input',
   'label',
-  'option',
   'p',
   'select',
-  'summary',
   'span',
   'textarea'
 ]
-
-export const assertionPattern = new RegExp(
-  /^\b(?:assert|assure|check|compare|confirm|ensure|expect|guarantee|is|match|satisfy|should|test|then|validate|verify)\b/i
-)
