@@ -12,17 +12,6 @@
     ]
   },
   {
-    "input": "assertElementInvisible",
-    "actions": [
-      {
-        "name": "assertElementInvisible",
-        "params": {
-          "xpath": "mock-xpath"
-        }
-      }
-    ]
-  },
-  {
     "input": "assertElementVisible",
     "actions": [
       {
@@ -89,13 +78,23 @@
     ]
   },
   {
-    "input": "getLink",
+    "input": "getAttribute",
     "actions": [
       {
-        "name": "getLink",
+        "name": "getAttribute",
         "params": {
-          "xpath": "mock-xpath"
+          "xpath": "mock-xpath",
+          "attribute": "mock-attribute"
         }
+      }
+    ]
+  },
+  {
+    "input": "getScreenshot",
+    "actions": [
+      {
+        "name": "getScreenshot",
+        "params": {}
       }
     ]
   },
@@ -105,6 +104,17 @@
       {
         "name": "getSnapshot",
         "params": {}
+      }
+    ]
+  },
+  {
+    "input": "goto",
+    "actions": [
+      {
+        "name": "goto",
+        "params": {
+          "url": "mock-url"
+        }
       }
     ]
   },
@@ -132,12 +142,13 @@
     ]
   },
   {
-    "input": "navigate",
+    "input": "mark",
     "actions": [
       {
-        "name": "navigate",
+        "name": "mark",
         "params": {
-          "url": "mock-url"
+          "xpath": "mock-xpath",
+          "order": 1
         }
       }
     ]
@@ -215,7 +226,30 @@
         "name": "select",
         "params": {
           "xpath": "mock-xpath",
-          "option": "mock-value"
+          "option": "mock-option"
+        }
+      }
+    ]
+  },
+  {
+    "input": "sleep",
+    "actions": [
+      {
+        "name": "sleep",
+        "params": {
+          "duration": 1000
+        }
+      }
+    ]
+  },
+  {
+    "input": "unmark",
+    "actions": [
+      {
+        "name": "unmark",
+        "params": {
+          "xpath": "mock-xpath",
+          "order": 1
         }
       }
     ]

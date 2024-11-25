@@ -15,14 +15,29 @@ export const getElementLocations = (html: string, targets: string[] = []) => {
   const dom = new JSDOM(html, { runScripts: 'dangerously' })
 
   dom.window.eval(`
-    const elements = document.querySelectorAll('*:not(script):not(style)')
+    const elements = document.querySelectorAll('*:not(head):not(script):not(style)')
     const locations = []
 
-    const isTarget = (element) => ${allowedTags}.includes(element.tagName)
+    const getElementXPath = (element, text) => {
+      switch (true) {
+        case Boolean(element && element.id):
+          return '//*[@id="' + element.id + '"]'
 
-    const getElementXPath = (element) => {
-      if (element && element.id) return '//*[@id="' + element.id + '"]'
-      else return getElementTreeXPath(element)
+        case Boolean(element && element.hasAttribute('data-testid')):
+          return '//*[@data-testid="' + element.getAttribute('data-testid') + '"]'
+
+        case Boolean(element && element.hasAttribute('data-qa')):
+          return '//*[@data-qa="' + element.getAttribute('data-qa') + '"]'
+
+        case Boolean(element && element.tagName === 'A' && element.href && element.href.startsWith('http')):
+          return '//a[@href="' + element.href + '"]'
+
+        case Boolean(element && element.tagName === 'DIV'):
+          return '//div[@class="' + element.className + '" and text()="' + text + '"]'
+
+        default:
+          return getElementTreeXPath(element)
+      }
     }
 
     const getElementTreeXPath = (element) => {
@@ -42,12 +57,21 @@ export const getElementLocations = (html: string, targets: string[] = []) => {
       return paths.length ? '//' + paths.join('/') : null
     }
 
-    for (const element of elements) {
-      if (!isTarget(element)) {
-        continue
-      }
+    const isTarget = (element) => ${allowedTags}.includes(element.tagName)
 
-      const xpath = getElementXPath(element)
+    const isVisibleInViewport = (element) => {
+      const rect = element.getBoundingClientRect()
+      return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+      )
+    }
+
+    for (const element of elements) {
+      if (!isTarget(element) || !isVisibleInViewport(element)) continue
+
       const clone = element.cloneNode(true)
       let text = ''
 
@@ -55,8 +79,10 @@ export const getElementLocations = (html: string, targets: string[] = []) => {
         text += nodeType === 3 ? nodeValue : ''
       }
       text = text.trim()
+      if (element.tagName === 'DIV' && text.length === 0) continue
 
       clone.innerHTML = text
+      const xpath = getElementXPath(element, text)
 
       locations.push({ xpath, element: clone.outerHTML })
     }

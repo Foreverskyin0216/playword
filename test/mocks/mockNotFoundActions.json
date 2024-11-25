@@ -1,0 +1,72 @@
+[
+  {
+    "input": "click",
+    "actions": [
+      {
+        "name": "click",
+        "params": {
+          "xpath": "mock-xpath"
+        }
+      }
+    ]
+  },
+  {
+    "input": "getAttribute",
+    "actions": [
+      {
+        "name": "getAttribute",
+        "params": {
+          "xpath": "mock-xpath",
+          "attribute": "mock-attribute"
+        }
+      }
+    ]
+  },
+  {
+    "input": "hover",
+    "actions": [
+      {
+        "name": "hover",
+        "params": {
+          "xpath": "mock-xpath"
+        }
+      }
+    ]
+  },
+  {
+    "input": "input",
+    "actions": [
+      {
+        "name": "input",
+        "params": {
+          "xpath": "mock-xpath",
+          "text": "mock-text"
+        }
+      }
+    ]
+  },
+  {
+    "input": "mark",
+    "actions": [
+      {
+        "name": "mark",
+        "params": {
+          "xpath": "mock-xpath",
+          "order": 1
+        }
+      }
+    ]
+  },
+  {
+    "input": "select",
+    "actions": [
+      {
+        "name": "select",
+        "params": {
+          "xpath": "mock-xpath",
+          "option": "mock-option"
+        }
+      }
+    ]
+  }
+]

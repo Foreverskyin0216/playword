@@ -1,4 +1,48 @@
+import type { Document } from '@langchain/core/documents'
+import type { BaseMessage } from '@langchain/core/messages'
+import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
 import type { ClientOptions } from 'openai'
+import type { Frame, Page } from 'playwright'
+
+export interface Action {
+  /**
+   * The predefined action name.
+   */
+  name: string
+  /**
+   * The parameters to pass to the action.
+   */
+  params: ActionParams
+}
+
+/**
+ * All types of parameters for the actions.
+ */
+export interface ActionParams {
+  attribute?: string
+  direction?: 'up' | 'down' | 'top' | 'bottom'
+  duration?: number
+  frameNumber?: number
+  keys?: string
+  option?: string
+  order?: number
+  pattern?: string
+  text?: string
+  url?: string
+  xpath?: string
+}
+
+/**
+ * The result type of the actions.
+ */
+export type ActionResult = Document[] | boolean | string | undefined
+
+/**
+ * State for the action graph.
+ */
+export interface ActionState {
+  messages: BaseMessage[]
+}
 
 export interface ElementLocation {
   /**
@@ -13,7 +57,22 @@ export interface ElementLocation {
 
 export interface PlayWordOptions {
   /**
+   * Whether to enable debug mode.
+   */
+  debug?: boolean
+  /**
    * OpenAI options to configure the client. See {@link ClientOptions}.
+   *
+   * @example
+   * **Use a custom OpenAI endpoint**
+   * ```ts
+   * const playword = new PlayWord(page, {
+   *   openAIOptions: {
+   *     apiKey: '<your-api-key>',
+   *     baseURL: 'https://api.my-openai-clone.com/v1'
+   *   }
+   * })
+   * ```
    */
   openAIOptions?: ClientOptions
   /**
@@ -26,23 +85,51 @@ export interface PlayWordOptions {
    * **true**: Record the actions. The recordings will be saved in `.playword/recordings.json` as default.
    *
    * **false**: Do not record the actions.
+   *
    * @example
+   * **Save recordings to '.playword/recordings.json' by default**
    * ```ts
    * const playword = new PlayWord(page, { record: true })
+   * ```
+   *
+   * **Save recordings to a custom path**
+   * ```ts
    * const playword = new PlayWord(page, {
    *  record: 'path/to/recordings.json'
    * })
    * ```
-   * @default false
    */
   record?: boolean | string
+  /**
+   * Whether to use screenshots to help AI understand the page.
+   *
+   * When enabled, PlayWord will label the candidates of the retrieved elements on the page, then refer to the labels when choosing the best candidate.
+   * After the best candidate is chosen, all labels will be removed from the candidates.
+   *
+   * **NOTE:** This option will consume more tokens and take longer time to perform actions.
+   *
+   * @example
+   * **Enable screenshot reference**
+   * ```ts
+   * const playword = new PlayWord(page, { useScreenshot: true })
+   * ```
+   */
+  useScreenshot?: boolean
 }
 
-export interface PlayWordProperties {
+export interface PlayWordInterface {
+  /**
+   * Whether to enable debug mode.
+   */
+  debug: boolean
+  /**
+   * The current frame.
+   */
+  frame: Frame | undefined
   /**
    * The last input message.
    */
-  lastInput: string
+  input: string
   /**
    * OpenAI options to configure the client.
    */
@@ -50,7 +137,7 @@ export interface PlayWordProperties {
   /**
    * The page to perform actions on.
    */
-  page: import('playwright').Page
+  page: Page
   /**
    * Whether to record the actions performed.
    */
@@ -70,13 +157,19 @@ export interface PlayWordProperties {
   /**
    * The vector store to save embedded element locations.
    */
-  store: import('langchain/vectorstores/memory').MemoryVectorStore | null
+  store: MemoryVectorStore | undefined
+  /**
+   * Whether to use screenshots to help AI understand the page.
+   */
+  useScreenshot: boolean
   /**
    * ### Perform actions on the page with natural language input.
    * The input will be converted to the corresponding action to operate on the page.
    *
    * @param input The action to perform on the page.
    * @param options Optional. See {@link SayOptions}.
+   * @returns See {@link ActionResult}.
+   *
    * @example
    * ```ts
    * const playword = new PlayWord(page)
@@ -90,30 +183,13 @@ export interface PlayWordProperties {
    * // Output: true
    *
    * const failure = await playword.say(
-   *  'Check if the page contains "Sign In"',
-   *  { withoutRecordings: true }
+   *  'Check if the page contains "Sign In"'
    * )
    * console.log(failure)
    * // Output: false
    * ```
-   * @returns ### The following are the possible return types:
-   *
-   * **boolean**: The result of the assertion action.
-   *
-   * **string**: The result of the normal action performed by AI.
-   *
-   * **void** | **null**: The result of the normal action performed by recordings.
    */
-  say(input: string, options: SayOptions): void
-}
-
-export interface SayOptions {
-  /**
-   * Whether to use the recordings for the current step when ebabling the record option.
-   *
-   * Default is **false**. If set to **true**, the step will be performed by AI.
-   */
-  withoutRecordings: boolean
+  say(input: string, options: SayOptions): Promise<ActionResult>
 }
 
 export interface Recording {
@@ -127,26 +203,26 @@ export interface Recording {
   actions: Action[]
 }
 
-export interface Action {
+export interface SayOptions {
   /**
-   * The predefined action name.
+   * Whether to use the recordings for the current step when ebabling the record option.
+   *
+   * @default false
    */
-  name: string
+  withoutRecordings: boolean
   /**
-   * The parameters to pass to the action.
+   * Whether to use screenshots for the current step when enabling the `useScreenshot` option.
+   *
+   * @default false
    */
-  params: ActionParams
+  withoutScreenshot: boolean
 }
 
 /**
- * All types of parameters for the actions.
+ * Custom configuration for tool calls.
  */
-export type ActionParams =
-  | { direction: 'up' | 'down' | 'top' | 'bottom' }
-  | { keys: string }
-  | { pattern: string }
-  | { text: string }
-  | { url: string }
-  | { xpath: string }
-  | { xpath: string; option: string }
-  | { xpath: string; text: string }
+export interface ToolConfig {
+  ref: PlayWordInterface
+  thread_id: string
+  use_screenshot: boolean
+}

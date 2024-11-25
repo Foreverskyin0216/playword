@@ -1,224 +1,434 @@
-import type { ActionParams, PlayWordProperties } from './types'
+import type { ActionParams, PlayWordInterface } from './types'
 
-export const assertElementContentEquals = async (ref: PlayWordProperties, params: ActionParams) => {
+import { Document } from '@langchain/core/documents'
+import { markElement, unmarkElement } from './actionUtils'
+
+/**
+ * Assert that the content of an element on the page or within the current frame is equal to a specific text.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the element.
+ * @param params.text - The text to compare with the element's content.
+ */
+export const assertElementContentEquals = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'assertElementContentEquals', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const locator = target.locator(params.xpath!).first()
 
-  const { xpath, text } = params as { xpath: string; text: string }
-  const locator = ref.page.locator(xpath).first()
   const content = await locator.textContent()
 
-  return Boolean(content && content.trim() === text)
+  return Boolean(content && content.trim() === params.text!.trim())
 }
 
-export const assertElementInvisible = async (ref: PlayWordProperties, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'assertElementInvisible', params })
-  }
-
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
-
-  const { xpath } = params as { xpath: string }
-  const locator = ref.page.locator(xpath).first()
-
-  return locator.isHidden()
-}
-
-export const assertElementVisible = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Assert that an element on the page or within the current frame is visible.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the element.
+ */
+export const assertElementVisible = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'assertElementVisible', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const locator = target.locator(params.xpath!).first()
 
-  const { xpath } = params as { xpath: string }
-  const locator = ref.page.locator(xpath).first()
-
-  return locator.isVisible()
+  return await locator.isVisible()
 }
 
-export const assertPageContains = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Assert that the page contains a specific text.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.text - The text to check if it exists on the page.
+ */
+export const assertPageContains = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'assertPageContains', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
 
-  const { text } = params as { text: string }
-  const content = await ref.page.content()
-
-  return content.includes(text)
+  return (await target.content()).includes(params.text!)
 }
 
-export const assertPageDoesNotContain = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Assert that the page does not contain a specific text.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.text - The text to check if it does not exist on the page.
+ */
+export const assertPageDoesNotContain = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'assertPageDoesNotContain', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
 
-  const { text } = params as { text: string }
-  const content = await ref.page.content()
-
-  return !content.includes(text)
+  return !(await target.content()).includes(params.text!)
 }
 
-export const assertPageTitleEquals = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Assert that the page title is equal to a specific text.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.text - The text to compare with the page title.
+ */
+export const assertPageTitleEquals = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'assertPageTitleEquals', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  await ref.page.waitForLoadState('load')
 
-  const { text } = params as { text: string }
-  const title = await ref.page.title()
-
-  return title === text
+  return (await ref.page.title()) === params.text!
 }
 
-export const assertPageUrlMatches = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Assert that the page URL matches a specific regular expression.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.pattern - The regular expression to match against the page URL.
+ */
+export const assertPageUrlMatches = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'assertPageUrlMatches', params })
   }
 
-  const { pattern } = params as { pattern: string }
-  return new RegExp(pattern).test(ref.page.url())
+  await ref.page.waitForLoadState('load')
+
+  return new RegExp(params.pattern!).test(ref.page.url())
 }
 
-export const click = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Click on an element on the page or within the current frame.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the clickable element.
+ */
+export const click = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'click', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const locator = target.locator(params.xpath!).first()
 
-  const { xpath } = params as { xpath: string }
-  const locator = ref.page.locator(xpath).first()
-  await locator.hover()
-  await locator.click()
-}
-
-export const getLink = async (ref: PlayWordProperties, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'getLink', params })
+  for (const element of await locator.all()) {
+    if (await element.isVisible()) {
+      await element.click({ force: true, trial: true })
+      return 'Clicked on ' + params.xpath!
+    }
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
-
-  const { xpath } = params as { xpath: string }
-  return ref.page.locator(xpath).first().getAttribute('href')
+  return 'No element found'
 }
 
-export const getSnapshot = async (ref: PlayWordProperties) => {
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
-  return ref.page.content()
-}
-
-export const hover = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Get the value of an attribute of an element on the page or within the current frame.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the element.
+ * @param params.attribute - The attribute to get the value of.
+ */
+export const getAttribute = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'hover', params })
+    ref.recordings[ref.step].actions.push({ name: 'getAttr', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const locator = target.locator(params.xpath!).first()
 
-  const { xpath } = params as { xpath: string }
-  await ref.page.locator(xpath).first().hover()
+  const attributeValue = await locator.getAttribute(params.attribute!)
+
+  return attributeValue ? 'Attribute value: ' + attributeValue : 'Attribute not found'
 }
 
-export const input = async (ref: PlayWordProperties, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'input', params })
+/**
+ * Get all frames on the page.
+ *
+ * @param ref - PlayWord instance.
+ * @returns The frame documents stored within the {@link Document} structure.
+ */
+export const getFrames = async (ref: PlayWordInterface) => {
+  await ref.page.waitForLoadState('load')
+
+  const frames = [] as Document[]
+
+  for (const frame of ref.page.frames()) {
+    await frame.waitForLoadState('load')
+    frames.push(new Document({ pageContent: JSON.stringify({ name: frame.name(), url: frame.url() }) }))
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
-
-  const { xpath, text } = params as { xpath: string; text: string }
-  const locator = ref.page.locator(xpath).first()
-  await locator.hover()
-  await locator.click()
-  await locator.fill(text)
+  return frames
 }
 
-export const navigate = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Get a base64-encoded JPEG screenshot of the page.
+ * It will return an empty string when the page is within a frame.
+ *
+ * @param ref - PlayWord instance.
+ */
+export const getScreenshot = async (ref: PlayWordInterface) => {
+  if (ref.frame) return ''
+  await ref.page.waitForLoadState('load')
+  const screenshot = await ref.page.screenshot()
+  return 'data:image/jpeg;base64,' + screenshot.toString('base64')
+}
+
+/**
+ * Get the HTML snapshot of the page or current frame.
+ *
+ * @param ref - PlayWord instance.
+ */
+export const getSnapshot = async (ref: PlayWordInterface) => {
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+
+  return await target.content()
+}
+
+/**
+ * Go to a specific URL.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.url - The URL to navigate to.
+ */
+export const goto = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'navigate', params })
+    ref.recordings[ref.step].actions.push({ name: 'goto', params })
   }
 
   const { url } = params as { url: string }
   await ref.page.goto(url)
+
+  return 'Navigated to ' + params.url!
 }
 
-export const pressKeys = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Hover over an element on the page or within the current frame.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the element.
+ */
+export const hover = async (ref: PlayWordInterface, params: ActionParams) => {
+  if (ref.record) {
+    ref.recordings[ref.step].actions.push({ name: 'hover', params })
+  }
+
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const locator = target.locator(params.xpath!).first()
+
+  for (const element of await locator.all()) {
+    if (await element.isVisible()) {
+      await element.hover()
+      return 'Hovered on ' + params.xpath!
+    }
+  }
+
+  return 'No element found'
+}
+
+/**
+ * Fill in an element on the page or within the current frame.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the input/textarea element.
+ * @param params.text - The text to fill in the element.
+ */
+export const input = async (ref: PlayWordInterface, params: ActionParams) => {
+  if (ref.record) {
+    ref.recordings[ref.step].actions.push({ name: 'input', params })
+  }
+
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const locator = target.locator(params.xpath!).first()
+
+  for (const element of await locator.all()) {
+    if (await element.isVisible()) {
+      await element.fill(params.text!)
+      return 'Filled in ' + params.xpath!
+    }
+  }
+
+  return 'No element found'
+}
+
+/**
+ * Mark an element on the page or within the current frame with a specific order.
+ * The label will be used to help AI understand the layout of the page and better
+ * achieve the requested actions.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the element to mark.
+ * @param params.order - The marker order.
+ */
+export const mark = async (ref: PlayWordInterface, params: ActionParams) => {
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const locator = target.locator(params.xpath!).first()
+
+  for (const element of await locator.all()) {
+    if (await element.isVisible()) {
+      await element.evaluate(markElement, params.order!)
+      return 'Marked ' + params.xpath! + ' with order ' + params.order!
+    }
+  }
+
+  return 'No element found'
+}
+
+/**
+ * Press specific keys on the keyboard.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.keys - The keys to press.
+ */
+export const pressKeys = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'pressKeys', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
 
-  const { keys } = params as { keys: string }
-  await ref.page.keyboard.press(keys)
+  await ref.page.keyboard.press(params.keys!)
+
+  return 'Pressed keys ' + params.keys!
 }
 
-export const scroll = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Scroll the page or current frame in a specific direction.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.direction - Supported values for `direction` are `up`, `down`, `top`, and `bottom`.
+ */
+export const scroll = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'scroll', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
 
-  const { direction } = params as { direction: 'up' | 'down' | 'top' | 'bottom' }
-  switch (direction) {
+  switch (params.direction) {
     case 'up':
-      await ref.page.evaluate(() => window.scrollBy({ top: -window.innerHeight }))
+      await target.evaluate(() => window.scrollBy({ top: -window.innerHeight }))
       return 'scrolled up'
     case 'down':
-      await ref.page.evaluate(() => window.scrollBy({ top: window.innerHeight }))
+      await target.evaluate(() => window.scrollBy({ top: window.innerHeight }))
       return 'scrolled down'
     case 'top':
-      await ref.page.evaluate(() => window.scrollTo({ top: 0 }))
+      await target.evaluate(() => window.scrollTo({ top: 0 }))
       return 'scrolled to top'
     case 'bottom':
-      await ref.page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight }))
+      await target.evaluate(() => window.scrollTo({ top: document.body.scrollHeight }))
       return 'scrolled to bottom'
     default:
-      return `Unsupported scroll target ${direction}`
+      return `Unsupported scroll target ${params.direction}`
   }
 }
 
-export const select = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Select an option from a dropdown element on the page or within the current frame.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the dropdown element.
+ * @param params.option - The option to select from the dropdown.
+ */
+export const select = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'select', params })
   }
 
-  await ref.page.waitForLoadState('domcontentloaded')
-  await ref.page.waitForLoadState('networkidle')
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const locator = target.locator(params.xpath!).first()
 
-  const { xpath, option } = params as { xpath: string; option: string }
-  const locator = ref.page.locator(xpath).first()
-  await locator.selectOption({ label: option })
+  for (const element of await locator.all()) {
+    if (await element.isVisible()) {
+      await element.selectOption({ label: params.option! })
+      return 'Selected ' + params.option!
+    }
+  }
+
+  return 'No element found'
 }
 
-export const waitForText = async (ref: PlayWordProperties, params: ActionParams) => {
+/**
+ * Sleep for a specific duration.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.duration - The number of seconds to sleep.
+ */
+export const sleep = async (ref: PlayWordInterface, params: ActionParams) => {
+  if (ref.record) {
+    ref.recordings[ref.step].actions.push({ name: 'sleep', params })
+  }
+
+  await ref.page.waitForTimeout(params.duration! * 1000)
+
+  return 'Slept for ' + params.duration! + ' seconds'
+}
+
+/**
+ * Switch to a specific frame on the page.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.frameNumber - The index of the frame to switch to.
+ */
+export const switchFrame = async (ref: PlayWordInterface, params: ActionParams) => {
+  if (ref.record) {
+    ref.recordings[ref.step].actions.push({ name: 'switchFrame', params })
+  }
+
+  ref.frame = ref.page.frames()[params.frameNumber!]
+
+  return 'Switched to frame'
+}
+
+/**
+ * Unmark an element on the page or within the current frame.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.order - The marker order.
+ */
+export const unmark = async (ref: PlayWordInterface, params: ActionParams) => {
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+
+  await target.evaluate(unmarkElement, params.order!)
+
+  return 'Unmarked ' + params.xpath! + ' with order ' + params.order!
+}
+
+/**
+ * Wait for a specific text to appear on the page or within the current frame.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.text - The text to wait for.
+ */
+export const waitForText = async (ref: PlayWordInterface, params: ActionParams) => {
   if (ref.record) {
     ref.recordings[ref.step].actions.push({ name: 'waitForText', params })
   }
 
-  const { text } = params as { text: string }
-  await ref.page.waitForSelector(`text=${text}`, { state: 'visible', timeout: 30000 })
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+
+  await target.waitForSelector(`text=${params.text}`, { state: 'visible', timeout: 30000 })
+
+  return 'Waited for text ' + params.text!
 }
