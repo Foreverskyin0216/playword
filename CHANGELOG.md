@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/Foreverskyin0216/playword/compare/v1.1.0...v1.2.0) (2024-11-25)
+
+
+### Features
+
+* implement screenshot reference ([df0d60b](https://github.com/Foreverskyin0216/playword/commit/df0d60bcc08cbf91cf8e15933e05cc27f650fd50))
+
 # [1.1.0](https://github.com/Foreverskyin0216/playword/compare/v1.0.7...v1.1.0) (2024-11-19)
 
 
