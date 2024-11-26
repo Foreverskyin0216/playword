@@ -88,15 +88,6 @@
     ]
   },
   {
-    "input": "getScreenshot",
-    "actions": [
-      {
-        "name": "getScreenshot",
-        "params": {}
-      }
-    ]
-  },
-  {
     "input": "getSnapshot",
     "actions": [
       {

@@ -5,9 +5,7 @@ import { tool } from '@langchain/core/tools'
 import { afterAll, beforeAll, describe, test, expect, vi } from 'vitest'
 import { actionGraph } from '../src/actionGraph'
 
-const { mockUseTools } = vi.hoisted(() => ({
-  mockUseTools: vi.fn()
-}))
+const { mockUseTools } = vi.hoisted(() => ({ mockUseTools: vi.fn() }))
 
 vi.mock('../src/ai', () => ({
   AI: vi.fn(() => ({

@@ -1,10 +1,9 @@
 import type { AIMessage } from '@langchain/core/messages'
 import type { Page } from 'playwright'
-import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording } from './types'
+import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording, SayOptions } from './types'
 
 import { access, mkdir, readFile, writeFile } from 'fs/promises'
 import { dirname } from 'path'
-import { setTimeout } from 'timers/promises'
 import { HumanMessage } from '@langchain/core/messages'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -44,6 +43,7 @@ export class PlayWord implements PlayWordInterface {
     this.page = page
     this.record = playwordOptions.record === true ? '.playword/recordings.json' : playwordOptions.record
     this.useScreenshot = playwordOptions.useScreenshot || false
+    this.say = this.say.bind(this)
   }
 
   /**
@@ -80,7 +80,7 @@ export class PlayWord implements PlayWordInterface {
     this.step++
   }
 
-  public async say(input: string, options = { withoutRecordings: false, withoutScreenshot: false }) {
+  public async say(input: string, options: SayOptions = {}) {
     if (this.step === 0) {
       await this.beforeAll()
     }
@@ -94,7 +94,6 @@ export class PlayWord implements PlayWordInterface {
     if (this.record && !options.withoutRecordings && matched) {
       for (const { name, params } of matched.actions) {
         result = await actions[name as keyof typeof actions](this, params)
-        await setTimeout(500)
       }
     } else {
       const { messages } = (await actionGraph.invoke(
