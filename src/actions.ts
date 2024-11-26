@@ -180,7 +180,6 @@ export const getFrames = async (ref: PlayWordInterface) => {
  * @param ref - PlayWord instance.
  */
 export const getScreenshot = async (ref: PlayWordInterface) => {
-  if (ref.frame) return ''
   await ref.page.waitForLoadState('load')
   const screenshot = await ref.page.screenshot()
   return 'data:image/jpeg;base64,' + screenshot.toString('base64')

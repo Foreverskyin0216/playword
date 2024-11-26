@@ -15,8 +15,6 @@ const { mockAll, mockConsoleLog, mockGetAttribute, mockInvoke } = vi.hoisted(() 
   mockInvoke: vi.fn()
 }))
 
-vi.mock('timers/promises', () => ({ setTimeout: vi.fn() }))
-
 vi.mock('fs/promises', async () => ({
   access: (await vi.importActual('fs/promises')).access,
   mkdir: vi.fn(),
@@ -269,9 +267,6 @@ describe('Spec: PlayWord Class', () => {
           expect(pageContent).toHaveProperty('name', 'mock-frame')
           expect(pageContent).toHaveProperty('url', 'mock-url')
 
-          result = await playword.say('getScreenshot')
-          expect(result).toBe('')
-
           result = await playword.say('getSnapshot')
           expect(result).toBe('mock-snapshot')
 
@@ -387,9 +382,7 @@ describe('Spec: PlayWord Class', () => {
         result = await playword.say('Test Message')
       })
 
-      afterAll(() => {
-        mockInvoke.mockRestore()
-      })
+      afterAll(() => mockInvoke.mockRestore())
 
       test('Then it should return the result with a screenshot', () => {
         expect(result).toBe('result')
