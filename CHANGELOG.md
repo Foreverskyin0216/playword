@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/Foreverskyin0216/playword/compare/v1.2.0...v1.2.1) (2024-11-26)
+
+
+### Bug Fixes
+
+* fix screenshot issues ([2a78638](https://github.com/Foreverskyin0216/playword/commit/2a786385975530c4138969fa27160cf6376397cc))
+
 # [1.2.0](https://github.com/Foreverskyin0216/playword/compare/v1.1.0...v1.2.0) (2024-11-25)
 
 
