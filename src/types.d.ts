@@ -206,16 +206,12 @@ export interface Recording {
 export interface SayOptions {
   /**
    * Whether to use the recordings for the current step when ebabling the record option.
-   *
-   * @default false
    */
-  withoutRecordings: boolean
+  withoutRecordings?: boolean
   /**
    * Whether to use screenshots for the current step when enabling the `useScreenshot` option.
-   *
-   * @default false
    */
-  withoutScreenshot: boolean
+  withoutScreenshot?: boolean
 }
 
 /**
