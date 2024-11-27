@@ -64,13 +64,13 @@ describe('Spec: AI', () => {
       })
     })
 
-    describe('When the getAssertionResult method is called', () => {
+    describe('When the parseResult method is called', () => {
       const messages = [new HumanMessage('Assertion')]
       let result: AIMessage
 
       beforeAll(async () => {
         mockParse.mockResolvedValue({ choices: [{ message: { parsed: { result: true } } }] })
-        result = await ai.getAssertionResult(messages)
+        result = await ai.parseResult(messages)
       })
 
       afterAll(() => mockParse.mockRestore())

@@ -19,9 +19,22 @@ export const assertElementContentEquals = async (ref: PlayWordInterface, params:
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
 
-  const content = await locator.textContent()
+  return (await locator.textContent())?.trim() === params.text?.trim()
+}
 
-  return Boolean(content && content.trim() === params.text!.trim())
+/**
+ * Assert that the content of an element on the page or within the current frame is not equal to a specific text.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the element.
+ * @param params.text - The text to compare with the element's content.
+ */
+export const assertElementContentNotEquals = async (ref: PlayWordInterface, params: ActionParams) => {
+  if (ref.record) {
+    ref.recordings[ref.step].actions.push({ name: 'assertElementContentNotEquals', params })
+  }
+
+  return !(await assertElementContentEquals(ref, params))
 }
 
 /**
@@ -43,6 +56,16 @@ export const assertElementVisible = async (ref: PlayWordInterface, params: Actio
 }
 
 /**
+ * Assert that an element on the page or within the current frame is not visible.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the element.
+ */
+export const assertElementNotVisible = async (ref: PlayWordInterface, params: ActionParams) => {
+  return !(await assertElementVisible(ref, params))
+}
+
+/**
  * Assert that the page contains a specific text.
  *
  * @param ref - PlayWord instance.
@@ -55,8 +78,9 @@ export const assertPageContains = async (ref: PlayWordInterface, params: ActionP
 
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
+  const locators = await target.getByText(params.text!).all()
 
-  return (await target.content()).includes(params.text!)
+  return (await Promise.all(locators.map((locator) => locator.isVisible()))).some((item) => item)
 }
 
 /**
@@ -70,10 +94,7 @@ export const assertPageDoesNotContain = async (ref: PlayWordInterface, params: A
     ref.recordings[ref.step].actions.push({ name: 'assertPageDoesNotContain', params })
   }
 
-  const target = ref.frame ? ref.frame : ref.page
-  await target.waitForLoadState('load')
-
-  return !(await target.content()).includes(params.text!)
+  return !(await assertPageContains(ref, params))
 }
 
 /**
@@ -89,7 +110,7 @@ export const assertPageTitleEquals = async (ref: PlayWordInterface, params: Acti
 
   await ref.page.waitForLoadState('load')
 
-  return (await ref.page.title()) === params.text!
+  return (await ref.page.title()) === params.text
 }
 
 /**
@@ -125,7 +146,7 @@ export const click = async (ref: PlayWordInterface, params: ActionParams) => {
 
   for (const element of await locator.all()) {
     if (await element.isVisible()) {
-      await element.click({ force: true, trial: true })
+      await element.click()
       return 'Clicked on ' + params.xpath!
     }
   }
@@ -151,7 +172,7 @@ export const getAttribute = async (ref: PlayWordInterface, params: ActionParams)
 
   const attributeValue = await locator.getAttribute(params.attribute!)
 
-  return attributeValue ? 'Attribute value: ' + attributeValue : 'Attribute not found'
+  return attributeValue ? 'Attribute value: ' + attributeValue : 'No element found'
 }
 
 /**

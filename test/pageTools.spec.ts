@@ -20,6 +20,7 @@ const {
   mockWaitForText
 } = vi.hoisted(() => ({
   mockClick: vi.fn(),
+  mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
   mockGetAttribute: vi.fn(),
   mockGetSnapshot: vi.fn(),
   mockGoTo: vi.fn(),
@@ -63,7 +64,7 @@ vi.mock('../src/ai', () => ({
 describe('Spec: Page Tools', () => {
   describe('Given the page tools', () => {
     const mockConfig = {
-      ref: { frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined },
+      ref: { debug: true, frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined },
       use_screenshot: true
     }
 
@@ -91,7 +92,14 @@ describe('Spec: Page Tools', () => {
       afterAll(() => {
         mockClick.mockRestore()
         mockInvoke.mockRestore()
-        mockConfig.ref = { frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined }
+        mockConfig.ref = {
+          debug: true,
+          frame: undefined,
+          input: 'test',
+          openAIOptions: {},
+          snapshot: '',
+          store: undefined
+        }
         mockConfig.use_screenshot = true
       })
 
@@ -128,7 +136,14 @@ describe('Spec: Page Tools', () => {
       afterAll(() => {
         mockGetAttribute.mockRestore()
         mockInvoke.mockRestore()
-        mockConfig.ref = { frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined }
+        mockConfig.ref = {
+          debug: true,
+          frame: undefined,
+          input: 'test',
+          openAIOptions: {},
+          snapshot: '',
+          store: undefined
+        }
         mockConfig.use_screenshot = true
       })
 
@@ -182,7 +197,14 @@ describe('Spec: Page Tools', () => {
       afterAll(() => {
         mockHover.mockRestore()
         mockInvoke.mockRestore()
-        mockConfig.ref = { frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined }
+        mockConfig.ref = {
+          debug: true,
+          frame: undefined,
+          input: 'test',
+          openAIOptions: {},
+          snapshot: '',
+          store: undefined
+        }
         mockConfig.use_screenshot = true
       })
 
@@ -216,7 +238,14 @@ describe('Spec: Page Tools', () => {
       afterAll(() => {
         mockInput.mockRestore()
         mockInvoke.mockRestore()
-        mockConfig.ref = { frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined }
+        mockConfig.ref = {
+          debug: true,
+          frame: undefined,
+          input: 'test',
+          openAIOptions: {},
+          snapshot: '',
+          store: undefined
+        }
         mockConfig.use_screenshot = true
       })
 
@@ -294,7 +323,14 @@ describe('Spec: Page Tools', () => {
       afterAll(() => {
         mockInvoke.mockRestore()
         mockSelect.mockRestore()
-        mockConfig.ref = { frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined }
+        mockConfig.ref = {
+          debug: true,
+          frame: undefined,
+          input: 'test',
+          openAIOptions: {},
+          snapshot: '',
+          store: undefined
+        }
         mockConfig.use_screenshot = true
       })
 

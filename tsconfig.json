@@ -2,6 +2,7 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "declaration": true,
+    "experimentalDecorators": true,
     "moduleResolution": "Node",
     "module": "CommonJS",
     "noEmit": true,

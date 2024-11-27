@@ -9,6 +9,51 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { actionGraph } from './actionGraph'
 import * as actions from './actions'
+import { divider, info } from './logger'
+
+const fixture = (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) => {
+  const originalMethod = descriptor.value
+
+  const checkPath = async (path: string) => {
+    try {
+      await access(path)
+      return path.endsWith('.json')
+    } catch {
+      return false
+    }
+  }
+
+  descriptor.value = async function (...args: unknown[]) {
+    const playword = this as PlayWord
+
+    if (playword.step === 0) {
+      const filePath = playword.record as string
+      if (playword.record && (await checkPath(filePath))) {
+        const file = await readFile(filePath, 'utf-8')
+        playword.recordings = JSON.parse(file)
+      }
+    }
+
+    if (playword.debug) {
+      divider()
+      info(`Step ${playword.step + 1}: ${args[0]}`)
+    }
+
+    playword.input = args[0] as string
+
+    const result = await originalMethod.apply(playword, args)
+
+    playword.step++
+
+    if (playword.record) {
+      const filePath = playword.record as string
+      await mkdir(dirname(filePath), { recursive: true })
+      await writeFile(filePath, JSON.stringify(playword.recordings.slice(0, playword.step), null, 2))
+    }
+
+    return result
+  }
+}
 
 /**
  * @class ### PlayWord
@@ -25,16 +70,17 @@ export class PlayWord implements PlayWordInterface {
    */
   private threadId: string = uuidv4()
 
-  public debug
   public frame = undefined
+  public store = undefined
+  public step = 0
   public input = ''
+  public snapshot = ''
+  public recordings = [] as Recording[]
+  public debug
   public openAIOptions
   public page
   public record
-  public recordings = [] as Recording[]
-  public snapshot = ''
-  public step = 0
-  public store = undefined
+  public retryOnFailure
   public useScreenshot
 
   constructor(page: Page, playwordOptions: PlayWordOptions = {}) {
@@ -42,82 +88,66 @@ export class PlayWord implements PlayWordInterface {
     this.openAIOptions = playwordOptions.openAIOptions || {}
     this.page = page
     this.record = playwordOptions.record === true ? '.playword/recordings.json' : playwordOptions.record
+    this.retryOnFailure = playwordOptions.retryOnFailure || false
     this.useScreenshot = playwordOptions.useScreenshot || false
     this.say = this.say.bind(this)
   }
 
-  /**
-   * Check if the path exists and is a JSON file.
-   */
-  private async checkPath(path: string) {
+  private async invokeAI() {
+    let result: ActionResult
+
+    const { messages } = (await actionGraph.invoke(
+      {
+        messages: [new HumanMessage(this.input)]
+      },
+      {
+        configurable: { ref: this, thread_id: this.threadId, use_screenshot: this.useScreenshot }
+      }
+    )) as { messages: AIMessage[] }
+
+    result = messages[messages.length - 1].content.toString()
+    result = ['true', 'false'].includes(result) ? result === 'true' : result
+
+    return result
+  }
+
+  private async invokeRecordings(recordings: Recording) {
     try {
-      await access(path)
-      return path.endsWith('.json')
-    } catch {
-      return false
+      let result: ActionResult
+
+      for (const { name, params } of recordings.actions) {
+        result = await actions[name as keyof typeof actions](this, params)
+
+        if (this.debug) info(result)
+
+        if (result === 'No element found' && this.retryOnFailure) {
+          info('Retrying with AI...')
+          return await this.invokeAI()
+        }
+      }
+
+      return result
+    } catch (error) {
+      if (this.retryOnFailure) {
+        info('Retrying with AI...')
+        return await this.invokeAI()
+      }
+      throw error
     }
   }
 
-  /**
-   * Perform one-time setup before any actions are performed.
-   */
-  private async beforeAll() {
-    const filePath = this.record as string
-    if (this.record && (await this.checkPath(filePath))) {
-      this.recordings = JSON.parse(await readFile(filePath, 'utf-8'))
-    }
-  }
-
-  /**
-   * Perform the teardown after each action is performed.
-   */
-  private async afterEach() {
-    if (this.record) {
-      const filePath = this.record as string
-      await mkdir(dirname(filePath), { recursive: true })
-      await writeFile(filePath, JSON.stringify(this.recordings.slice(0, this.step + 1), null, 2))
-    }
-    this.step++
-  }
-
+  @fixture
   public async say(input: string, options: SayOptions = {}) {
-    if (this.step === 0) {
-      await this.beforeAll()
-    }
-    this.input = input
-
     const matched = this.recordings.find((rec, index) => rec.input === input && index === this.step)
     let result: ActionResult
 
-    this.recordings[this.step] = { input, actions: [] }
+    this.recordings[this.step] = { actions: [], input }
 
     if (this.record && !options.withoutRecordings && matched) {
-      for (const { name, params } of matched.actions) {
-        result = await actions[name as keyof typeof actions](this, params)
-      }
+      result = await this.invokeRecordings(matched)
     } else {
-      const { messages } = (await actionGraph.invoke(
-        {
-          messages: [new HumanMessage(input)]
-        },
-        {
-          configurable: {
-            ref: this,
-            thread_id: this.threadId,
-            use_screenshot: this.useScreenshot && !options.withoutScreenshot
-          }
-        }
-      )) as { messages: AIMessage[] }
-
-      const message = messages[messages.length - 1].content.toString()
-      result = ['true', 'false'].includes(message) ? message === 'true' : message
+      result = await this.invokeAI()
     }
-
-    if (this.debug) {
-      console.log('\x1b[35m [DEBUG] \x1b[0m', '\x1b[32m ' + result + ' \x1b[0m')
-    }
-
-    await this.afterEach()
 
     return result
   }

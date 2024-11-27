@@ -8,6 +8,7 @@ import * as actions from './actions'
 import { AI } from './ai'
 import { getElementLocations, sanitize } from './htmlUtils'
 import { genericTags } from './resources'
+import { info } from './logger'
 
 /**
  * Tools for interacting with the page.
@@ -34,8 +35,10 @@ export default [
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
       if (snapshot !== ref.snapshot) {
+        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
         ref.snapshot = snapshot
         ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug) info('Snapshot embedded.')
       }
 
       const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
@@ -77,8 +80,10 @@ export default [
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
       if (snapshot !== ref.snapshot) {
+        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
         ref.snapshot = snapshot
         ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug) info('Snapshot embedded.')
       }
 
       const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
@@ -129,8 +134,10 @@ export default [
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
       if (snapshot !== ref.snapshot) {
+        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
         ref.snapshot = snapshot
         ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug) info('Snapshot embedded.')
       }
 
       const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
@@ -172,8 +179,10 @@ export default [
       const elements = getElementLocations(sanitize(snapshot), ['input', 'textarea'])
 
       if (snapshot !== ref.snapshot) {
+        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
         ref.snapshot = snapshot
         ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug) info('Snapshot embedded.')
       }
 
       const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
@@ -232,8 +241,10 @@ export default [
       const elements = getElementLocations(sanitize(snapshot), ['select'])
 
       if (snapshot !== ref.snapshot) {
+        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
         ref.snapshot = snapshot
         ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug) info('Snapshot embedded.')
       }
 
       const retrieved = await ref.store!.asRetriever(10).invoke(keywords)

@@ -5,12 +5,15 @@ import { tool } from '@langchain/core/tools'
 import { afterAll, beforeAll, describe, test, expect, vi } from 'vitest'
 import { actionGraph } from '../src/actionGraph'
 
-const { mockUseTools } = vi.hoisted(() => ({ mockUseTools: vi.fn() }))
+const { mockUseTools } = vi.hoisted(() => ({
+  mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
+  mockUseTools: vi.fn()
+}))
 
 vi.mock('../src/ai', () => ({
   AI: vi.fn(() => ({
     useTools: mockUseTools,
-    getAssertionResult: vi.fn().mockResolvedValue(new AIMessage('true'))
+    parseResult: vi.fn().mockResolvedValue(new AIMessage('true'))
   }))
 }))
 
@@ -35,7 +38,7 @@ describe('Spec: Action Graph', () => {
           {
             messages: [new HumanMessage('Page Action')]
           },
-          { configurable: { ref: { openAIOptions: {} }, thread_id: 'page-test-id' } }
+          { configurable: { ref: { debug: true, openAIOptions: {} }, thread_id: 'page-test-id' } }
         )
       })
 
@@ -43,7 +46,7 @@ describe('Spec: Action Graph', () => {
 
       test('Then the graph returns the expected result', async () => {
         expect(state.messages[0].content).toBe('Page Action')
-        expect(state.messages[state.messages.length - 1].content).toBe('Tool call result')
+        expect(state.messages.map(({ content }) => content)).toEqual(['Page Action', 'response', 'Tool call result'])
       })
     })
 
@@ -56,13 +59,18 @@ describe('Spec: Action Graph', () => {
         mockUseTools.mockResolvedValue(aiMessage)
         state = await actionGraph.invoke(
           { messages: [new HumanMessage('Test something...')] },
-          { configurable: { ref: { openAIOptions: {} }, thread_id: 'assertion-test-id' } }
+          { configurable: { ref: { debug: true, openAIOptions: {} }, thread_id: 'assertion-test-id' } }
         )
       })
 
       test('Then the graph returns the expected result', async () => {
         expect(state.messages[0].content).toBe('Test something...')
-        expect(state.messages[state.messages.length - 1].content).toBe('true')
+        expect(state.messages.map(({ content }) => content)).toEqual([
+          'Test something...',
+          'response',
+          'Tool call result',
+          'true'
+        ])
       })
     })
   })

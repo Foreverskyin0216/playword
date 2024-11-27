@@ -7,7 +7,9 @@ import assertTools from '../src/assertTools'
 
 const {
   mockAssertElementContentEquals,
+  mockAssertElementContentNotEquals,
   mockAssertElementVisible,
+  mockAssertElementNotVisible,
   mockAssertPageContains,
   mockAssertPageDoesNotContain,
   mockAssertPageTitleEquals,
@@ -16,18 +18,23 @@ const {
   mockInvoke
 } = vi.hoisted(() => ({
   mockAssertElementContentEquals: vi.fn(),
+  mockAssertElementContentNotEquals: vi.fn(),
   mockAssertElementVisible: vi.fn(),
+  mockAssertElementNotVisible: vi.fn(),
   mockAssertPageContains: vi.fn(),
   mockAssertPageDoesNotContain: vi.fn(),
   mockAssertPageTitleEquals: vi.fn(),
   mockAssertPageUrlMatches: vi.fn(),
+  mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
   mockGetSnapshot: vi.fn(),
   mockInvoke: vi.fn()
 }))
 
 vi.mock('../src/actions', () => ({
   assertElementContentEquals: mockAssertElementContentEquals,
+  assertElementContentNotEquals: mockAssertElementContentNotEquals,
   assertElementVisible: mockAssertElementVisible,
+  assertElementNotVisible: mockAssertElementNotVisible,
   assertPageContains: mockAssertPageContains,
   assertPageDoesNotContain: mockAssertPageDoesNotContain,
   assertPageTitleEquals: mockAssertPageTitleEquals,
@@ -48,7 +55,7 @@ vi.mock('../src/ai', () => ({
 describe('Spec: Assert Tools', () => {
   describe('Given the assert tools', () => {
     const mockConfig = {
-      ref: { frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined },
+      ref: { debug: true, frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined },
       use_screenshot: true
     }
 
@@ -84,7 +91,14 @@ describe('Spec: Assert Tools', () => {
       afterAll(() => {
         mockAssertElementContentEquals.mockRestore()
         mockInvoke.mockRestore()
-        mockConfig.ref = { frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined }
+        mockConfig.ref = {
+          debug: true,
+          frame: undefined,
+          input: 'test',
+          openAIOptions: {},
+          snapshot: '',
+          store: undefined
+        }
         mockConfig.use_screenshot = true
       })
 
@@ -101,8 +115,57 @@ describe('Spec: Assert Tools', () => {
       })
     })
 
+    describe('When the AssertElementContentNotEquals tool is used', () => {
+      const assertElementContentNotEqualsTool = assertTools[1]
+      let successWithScreenshot: string
+      let failureWithoutScreenshot: string
+
+      beforeAll(async () => {
+        mockAssertElementContentNotEquals.mockResolvedValue(true)
+        mockInvoke.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockConfig.use_screenshot = true
+        successWithScreenshot = await assertElementContentNotEqualsTool.invoke(
+          { keywords: 'test', text: 'ID' },
+          { configurable: mockConfig }
+        )
+
+        mockAssertElementContentNotEquals.mockResolvedValue(false)
+        mockConfig.use_screenshot = false
+        failureWithoutScreenshot = await assertElementContentNotEqualsTool.invoke(
+          { keywords: 'test', text: 'ID' },
+          { configurable: mockConfig }
+        )
+      })
+
+      afterAll(() => {
+        mockAssertElementContentNotEquals.mockRestore()
+        mockInvoke.mockRestore()
+        mockConfig.ref = {
+          debug: true,
+          frame: undefined,
+          input: 'test',
+          openAIOptions: {},
+          snapshot: '',
+          store: undefined
+        }
+        mockConfig.use_screenshot = true
+      })
+
+      test('Then the result is as expected', () => {
+        expect(successWithScreenshot).toBe('Element content is not equal to: ID')
+        expect(failureWithoutScreenshot).toBe('Element content is equal to: ID')
+      })
+
+      test('Then the actions are called as expected', () => {
+        expect(mockAssertElementContentNotEquals).toHaveBeenCalledWith(mockConfig.ref, {
+          text: 'ID',
+          xpath: '//*[@id="targetDiv"]'
+        })
+      })
+    })
+
     describe('When the AssertElementVisible tool is used', () => {
-      const assertElementVisibleTool = assertTools[1]
+      const assertElementVisibleTool = assertTools[2]
       let successWithScreenshot: string
       let failureWithoutScreenshot: string
 
@@ -126,7 +189,14 @@ describe('Spec: Assert Tools', () => {
       afterAll(() => {
         mockAssertElementVisible.mockRestore()
         mockInvoke.mockRestore()
-        mockConfig.ref = { frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined }
+        mockConfig.ref = {
+          debug: true,
+          frame: undefined,
+          input: 'test',
+          openAIOptions: {},
+          snapshot: '',
+          store: undefined
+        }
         mockConfig.use_screenshot = true
       })
 
@@ -140,8 +210,54 @@ describe('Spec: Assert Tools', () => {
       })
     })
 
+    describe('When the AssertElementNotVisible tool is used', () => {
+      const assertElementNotVisibleTool = assertTools[3]
+      let successWithScreenshot: string
+      let failureWithoutScreenshot: string
+
+      beforeAll(async () => {
+        mockAssertElementNotVisible.mockResolvedValue(true)
+        mockInvoke.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockConfig.use_screenshot = true
+        successWithScreenshot = await assertElementNotVisibleTool.invoke(
+          { keywords: 'test' },
+          { configurable: mockConfig }
+        )
+
+        mockAssertElementNotVisible.mockResolvedValue(false)
+        mockConfig.use_screenshot = false
+        failureWithoutScreenshot = await assertElementNotVisibleTool.invoke(
+          { keywords: 'test' },
+          { configurable: mockConfig }
+        )
+      })
+
+      afterAll(() => {
+        mockAssertElementNotVisible.mockRestore()
+        mockInvoke.mockRestore()
+        mockConfig.ref = {
+          debug: true,
+          frame: undefined,
+          input: 'test',
+          openAIOptions: {},
+          snapshot: '',
+          store: undefined
+        }
+        mockConfig.use_screenshot = true
+      })
+
+      test('Then the result is as expected', () => {
+        expect(successWithScreenshot).toBe('Element is invisible')
+        expect(failureWithoutScreenshot).toBe('Element is visible')
+      })
+
+      test('Then the actions are called as expected', () => {
+        expect(mockAssertElementNotVisible).toHaveBeenCalledWith(mockConfig.ref, { xpath: '//*[@id="targetDiv"]' })
+      })
+    })
+
     describe('When the AssertPageContains tool is used', () => {
-      const assertPageContainsTool = assertTools[2]
+      const assertPageContainsTool = assertTools[4]
       let success: string
       let failure: string
 
@@ -166,7 +282,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageDoesNotContain tool is used', () => {
-      const assertPageDoesNotContainTool = assertTools[3]
+      const assertPageDoesNotContainTool = assertTools[5]
       let success: string
       let failure: string
 
@@ -191,7 +307,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageTitleEquals tool is used', () => {
-      const assertPageTitleEqualsTool = assertTools[4]
+      const assertPageTitleEqualsTool = assertTools[6]
       let success: string
       let failure: string
 
@@ -216,7 +332,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageUrlMatches tool is used', () => {
-      const assertPageUrlMatchesTool = assertTools[5]
+      const assertPageUrlMatchesTool = assertTools[7]
       let success: string
       let failure: string
 
