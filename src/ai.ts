@@ -12,8 +12,8 @@ import { OpenAI } from 'openai'
 import { zodResponseFormat } from 'openai/helpers/zod'
 import { z } from 'zod'
 
-export const DETERMINE_ASSERTION_RESULT = `Determine if the response is passed on the user's input.
-Return true if the assertion passes, false otherwise.`
+export const DETERMINE_ASSERTION_RESULT =
+  "Determine if the response is passed on the user's input. Return true if the assertion passes, false otherwise."
 
 export const CANDIDATE_SCREENSHOT_REFERENCE = `I will provide you with some candidates of elements and a screenshot.
 Your goal is to find the most relevant candidate that user mentioned in the input and want to interact with.
@@ -78,7 +78,7 @@ export class AI {
    * @param messages The messages to send to the AI.
    * @returns The result from the assertion.
    */
-  public async getAssertionResult(messages: BaseMessage[]) {
+  public async parseResult(messages: BaseMessage[]) {
     const question = messages.findLast((message) => message.getType() === 'human')
     const response = messages[messages.length - 1] as AIMessage
     const openAI = new OpenAI(this.opts)

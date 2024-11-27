@@ -101,6 +101,10 @@ export interface PlayWordOptions {
    */
   record?: boolean | string
   /**
+   * Whether to retry the action with AI when the action fails.
+   */
+  retryOnFailure?: boolean
+  /**
    * Whether to use screenshots to help AI understand the page.
    *
    * When enabled, PlayWord will label the candidates of the retrieved elements on the page, then refer to the labels when choosing the best candidate.
@@ -147,6 +151,10 @@ export interface PlayWordInterface {
    */
   recordings: Recording[]
   /**
+   * Whether to retry the action with AI when the action fails.
+   */
+  retryOnFailure: boolean
+  /**
    * The snapshot of the page content.
    */
   snapshot: string
@@ -179,13 +187,11 @@ export interface PlayWordInterface {
    * const success = await playword.say(
    *  'Check if the page contains "Sign in"'
    * )
-   * console.log(success)
    * // Output: true
    *
    * const failure = await playword.say(
    *  'Check if the page contains "Sign In"'
    * )
-   * console.log(failure)
    * // Output: false
    * ```
    */
@@ -208,10 +214,6 @@ export interface SayOptions {
    * Whether to use the recordings for the current step when ebabling the record option.
    */
   withoutRecordings?: boolean
-  /**
-   * Whether to use screenshots for the current step when enabling the `useScreenshot` option.
-   */
-  withoutScreenshot?: boolean
 }
 
 /**

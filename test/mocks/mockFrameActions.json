@@ -23,10 +23,33 @@
     ]
   },
   {
+    "input": "assertElementContentNotEquals",
+    "actions": [
+      {
+        "name": "assertElementContentNotEquals",
+        "params": {
+          "xpath": "mock-xpath",
+          "text": "mock-text"
+        }
+      }
+    ]
+  },
+  {
     "input": "assertElementVisible",
     "actions": [
       {
         "name": "assertElementVisible",
+        "params": {
+          "xpath": "mock-xpath"
+        }
+      }
+    ]
+  },
+  {
+    "input": "assertElementNotVisible",
+    "actions": [
+      {
+        "name": "assertElementNotVisible",
         "params": {
           "xpath": "mock-xpath"
         }

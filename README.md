@@ -6,23 +6,21 @@
 ![Codecov](https://img.shields.io/codecov/c/github/Foreverskyin0216/playword)
 [![GitHub License](https://img.shields.io/github/license/Foreverskyin0216/playword)](https://opensource.org/licenses/MIT)
 
-Convert your intentions into Playwright actions with AI!
+Convert your intentions into Playwright actions with AI.
 
 ## 📦 Installation
 
-Install `playword` package with any package manager you prefer.
+Install `playword` with any package manager you prefer.
 
-```llvm
-npm  add playword
-yarn add playword
-pnpm add playword
+```bash
+npm install playword
 ```
 
 ## 📝 Usage
 
-Using PlayWord is very simple!
+Using PlayWord is very simple.
 
-First, this package requires calling OpenAI API. You need to export your API key as an environment or pass it to PlayWord options. You can see more details on how to get the API key [here](https://platform.openai.com/api-keys).
+This package requires calling OpenAI API. Therefore, you first need to export your API key as an environment variable or pass it to `openAIOptions`.
 
 ```bash
 export OPENAI_API_KEY="sk-..."
@@ -36,9 +34,11 @@ const playword = new PlayWord(page, {
 })
 ```
 
+See more details on getting the API key [here](https://platform.openai.com/api-keys).
+
 ### Use a custom endpoint
 
-Pass the `baseURL` and the `apiKey` to PlayWord options to connect to a custom endpoint. You can also set other OpenAI options with this method.
+If you want to use a custom endpoint, pass the `apiKey` and `baseURL` to `openAIOptions`.
 
 ```typescript
 const playword = new PlayWord(page, {
@@ -60,40 +60,38 @@ import PlayWord from 'playword'
 const browser = await chromium.launch()
 const page = await browser.newPage()
 
+// Pass the page you want to interact with to PlayWord
 const playword = new PlayWord(page)
 
 await playword.say('Navigate to https://www.google.com')
 
 await playword.say('Input "Hello, World" in the search field')
 
-const output = await playword.say('Press Enter')
-// Return the AI's response to the action
-
-console.log(output)
-// I pressed Enter, and the search results for "Hello, World" are now displayed. How can I assist you further?
+await playword.say('Press Enter')
+// Output: I pressed Enter, and the search results for "Hello, World" are now displayed. How can I assist you further?
 ```
 
-No need to worry about how to locate elements or how to interact with them. PlayWord will take care of that for you!
+No need to worry about how to locate elements or how to interact with them. PlayWord will take care of that for you.
 
 ### 🚀 Perform multiple actions in one sentence
 
-When you include multiple actions in one sentence, PlayWord will execute them in parallel.
+If your input contains multiple actions, they will be executed in parallel.
 
-**NOTE**: Since it is not possible to determine which step will be executed first, please use multiple actions only under the premise that the order of execution does not matter.
+**NOTE**: Since it is not possible to determine which step will be finished first, only use multiple actions under the premise that the order of execution does not matter.
 
 ```typescript
-await playword.say('Navigate to https://www.google.com')
+await playword.say('Navigate to https://github.com/')
 
-await playword.say('Input "Hello" in the search field and then input "World" in the search field')
+await playword.say('Click the "Sign in" link')
 
-await playword.say('Press Enter')
+await playword.say('Input "{EMAIL}" in the email field and "{PASSWORD}" in the password field')
+
+await playword.say('Click the "Sign in" button')
 ```
 
-### 🧪 Assertion
+### 🧪 assertion
 
-PlayWord supports assertions as well!
-
-Calling the method witn sentences that start with specific keywords will be treated as assertions.
+Calling the method with sentences that start with specific keywords will be treated as assertions.
 
 ```typescript
 import { test, expect } from '@playwright/test'
@@ -109,7 +107,6 @@ test('An example of using PlayWord in a Playwright test', async ({ page }) => {
   await playword.say('Press Enter')
 
   const result = await playword.say('Check if the page contains "HELLO WORLD"')
-  // Return true or false for assertions
 
   expect(result).toBe(true)
 })
@@ -140,55 +137,57 @@ When a sentence starts with any of the following keywords, the intent is judged 
 
 ### 🔴 Recordings
 
-PlayWord supports recording your tests and replaying them later.
+PlayWord supports recording the execution and replaying it later by setting `record` to **true**.
 
-When setting `record` to **true**, PlayWord will record the execution and save it in `.playword/recordings.json` as default.
+The recorded actions will be saved in `.playword/recordings.json` by default.
 
 ```typescript
 const playword = new PlayWord(page, { record: true })
 ```
 
-You can set a custom path as well. (**Should end with .json**)
+Or set a custom path. (**Should end with .json**)
 
 ```typescript
 const playword = new PlayWord(page, { record: 'path/to/recordings.json' })
 ```
 
-When the recording is complete and the test is run again in record mode, PlayWord will use the execution records from the recording for sentences that have the same **content** and **order**. If there are changes in order or content, it will switch back to using AI execution.
+After generating a recording using AI, you no longer need to consume tokens to execute your tests. Recordings can also be used as test code, allowing a test scenario to serve both as readable documentation and as executable tests.
 
-If you don't want to use the recording in some steps, you can disable it by setting the `withoutRecordings` option to **true**.
-
-```typescript
-await playword.say('Navigate to https://www.google.com', { withoutRecordings: true })
-```
-
-### 📸 Screenshot reference
-
-PlayWord supports using screenshots to help AI understand the page state and better meet your needs!
-
-**NOTE:** Using screenshot reference will increase the cost of the OpenAI API and take longer to process.
-
-To enable screenshot reference, set `useScreenshot` to **true**.
-```typescript
-const playword = new PlayWord(page, { useScreenshot: true })
-```
-You can also disable it for a specific step by setting `withoutScreenshot` to **true**.
+If you don't want to use the recording in some steps, setting `withoutRecordings` to **true** will disable the recording for those steps.
 
 ```typescript
-await playword.say('Input "Hello, World" in the search field', { withoutScreenshot: true })
+await playword.say('Input "Hello, World" in the search field', { withoutRecordings: true })
 ```
 
 ### 🔧 Debug mode
 
-Enable debug mode by setting `debug` to **true**. This will automatically print the AI's response during execution.
+Enable debug mode by setting `debug` to **true**. This will print the AI's responses during execution.
 
 ```typescript
 const playword = new PlayWord(page, { debug: true })
 ```
 
+### 🔄 Retry on failure
+
+Setting `retryOnFailure` to **true** will use AI to retry the failed action during replaying recordings.
+
+```typescript
+const playword = new PlayWord(page, { retryOnFailure: true })
+```
+
+### 📸 Screenshot reference
+
+Screenshot reference helps AI understand the page state and better meet your needs. However, it will increase the cost of the OpenAI API and take longer to process.
+
+To enable screenshot reference, set `useScreenshot` to **true**.
+
+```typescript
+const playword = new PlayWord(page, { useScreenshot: true })
+```
+
 ### 🖼️ Handle frames
 
-If you need to interact with frames, you can tell PlayWord which frame you want to switch to.
+If you need to interact with frames, just tell PlayWord which frame you want to switch to.
 
 ```typescript
 await playword.say('Go to https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe')
@@ -202,7 +201,7 @@ await playword.say('Click the "zoom-out" button')
 await playword.say('Go back to the main page')
 ```
 
-## 🤔 Why PlayWord?
+## 🤔 So why PlayWord?
 
 | Aspect      | Traditional Testing                        | PlayWord                                        |
 | ----------- | ------------------------------------------ | ----------------------------------------------- |
@@ -212,19 +211,19 @@ await playword.say('Go back to the main page')
 | Flexibility | Any changes in the code require updates.   | Changes can be automatically handled by AI.     |
 | Debugging   | Need to trace the code and look into logs. | AI provides the reason for failure.             |
 
-## Compare PlayWord with other tools
+## 🤝 Compare PlayWord with other tools
 
 | Criteria           | Auto-Playwright                   | ZeroStep            | PlayWord                            |
 | ------------------ | --------------------------------- | ------------------- | ----------------------------------- |
 | API                | OpenAI API                        | ZeroStep API        | OpenAI API                          |
-| Snapshot           | HTML                              | Screenshots and DOM | HTML and screenshots (optional)     |
+| Snapshot           | HTML                              | Screenshots and DOM | HTML                                |
 | Locator generation | By AI                             | CDP                 | RAG and screenshot reference        |
 | Parallelism        | No                                | Yes                 | Yes, implemented by LangGraph       |
 | Record and Replay  | No                                | No                  | Yes                                 |
 | Intent detection   | Determined by AI                  | Determined by AI    | Determined by keywords and AI       |
 | Supported Browsers | Any Playwright supported browsers | Chrome Only         | Any Playwright supported browsers   |
 | Implementation     | Function calls                    | Function calls      | Class instantiation                 |
-| Price              | Low (OpenAI API tokens)           | High (ZeroStep API) | Low (OpenAI API tokens)             |
+| Price              | Low (API tokens)                  | High (ZeroStep API) | Low (OpenAI API tokens)             |
 | Token Consumption  | High (use full HTML)              | N/A                 | Low (use RAG results)               |
 | License            | MIT                               | MIT                 | MIT                                 |
 
@@ -249,12 +248,12 @@ Currently, PlayWord supports the following actions:
 ### Assertion
 
 - Assert the content of an element is equal to specific text
+- Assert the content of an element is not equal to specific text
 - Assert the element is visible
+- Assert the element is not visible
 - Assert the page contains specific text
 - Assert the page does not contain specific text
 - Assert the page title is equal to specific text
 - Assert the URL matches specific RegExp patterns
 
 ### More actions will be supported in the future!
-
-## 🎉 Hope you enjoy using PlayWord!

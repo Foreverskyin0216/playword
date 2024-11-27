@@ -9,6 +9,7 @@ import { AI } from './ai'
 import assertTools from './assertTools'
 import pageTools from './pageTools'
 import { assertionPattern } from './resources'
+import { info } from './logger'
 
 /**
  * State annotation for the action graph.
@@ -21,9 +22,10 @@ const annotation = Annotation.Root({ messages: Annotation({ reducer: messagesSta
  * @returns The result from the assertion agent.
  */
 const invokeAssertAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
-  const { openAIOptions } = configurable?.ref as PlayWordInterface
+  const { debug, openAIOptions } = configurable?.ref as PlayWordInterface
   const ai = new AI(openAIOptions)
   const response = await ai.useTools(assertTools, messages)
+  if (debug && response.content) info('AI: ' + response.content.toString())
   return { messages: [response] }
 }
 
@@ -33,19 +35,21 @@ const invokeAssertAgent = async ({ messages }: ActionState, { configurable }: La
  * @returns The result from the page agent.
  */
 const invokePageAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
-  const ai = new AI(configurable?.ref?.openAIOptions)
+  const { debug, openAIOptions } = configurable?.ref as PlayWordInterface
+  const ai = new AI(openAIOptions)
   const response = await ai.useTools(pageTools, messages)
+  if (debug && response.content) info('AI: ' + response.content.toString())
   return { messages: [response] }
 }
 
 /**
- * Node for the result agent.
+ * This agent is used to parse the result from the assertion agent.
  *
- * @returns The result from the result agent.
+ * @returns The assertion result.
  */
 const invokeResultAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
   const ai = new AI(configurable?.ref?.openAIOptions)
-  const response = await ai.getAssertionResult(messages)
+  const response = await ai.parseResult(messages)
   return { messages: [response] }
 }
 
@@ -87,14 +91,6 @@ const shouldInvokePageTools = ({ messages }: ActionState) => {
  * - **result**: Invoke the result agent.
  * - **assertTools**: Invoke the assertion tools.
  * - **pageTools**: Invoke the page tools.
- *
- * If you want to look at the process of the action graph, you can use the following code to generate a mermaid diagram.
- * ```typescript
- * const graph = await actionGraph.getGraphAsync()
- * const blob = await graph.drawMermaidPng()
- * const buffer = await blob.arrayBuffer()
- * await writeFile('diagram.png', Buffer.from(buffer))
- * ```
  */
 export const actionGraph = new StateGraph(annotation)
   .addNode('assert', invokeAssertAgent)

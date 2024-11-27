@@ -8,6 +8,7 @@ import * as actions from './actions'
 import { AI } from './ai'
 import { getElementLocations, sanitize } from './htmlUtils'
 import { genericTags } from './resources'
+import { info } from './logger'
 
 /**
  * Tools for asserting conditions on the page.
@@ -29,8 +30,10 @@ export default [
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
       if (snapshot !== ref.snapshot) {
+        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
         ref.snapshot = snapshot
         ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug) info('Snapshot embedded.')
       }
 
       const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
@@ -66,6 +69,55 @@ export default [
   ),
 
   tool(
+    async ({ keywords, text }, { configurable }) => {
+      const { ref, use_screenshot } = configurable as ToolConfig
+      const openAI = new AI(ref.openAIOptions)
+      const snapshot = await actions.getSnapshot(ref)
+      const elements = getElementLocations(sanitize(snapshot), genericTags)
+
+      if (snapshot !== ref.snapshot) {
+        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
+        ref.snapshot = snapshot
+        ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug) info('Snapshot embedded.')
+      }
+
+      const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
+      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
+      }
+      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
+      const candidate = await openAI.getBestCandidate(ref.input, retrieved, screenshot)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
+      }
+
+      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
+
+      if (await actions.assertElementContentNotEquals(ref, { xpath, text })) {
+        return 'Element content is not equal to: ' + text
+      } else {
+        return 'Element content is equal to: ' + text
+      }
+    },
+    {
+      name: 'AssertElementContentNotEquals',
+      description: 'Call to verify that an element does not have a specific text',
+      schema: z.object({
+        keywords: z
+          .string()
+          .describe(
+            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
+          ),
+        text: z.string().describe('The text to verify on the element')
+      })
+    }
+  ),
+
+  tool(
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const openAI = new AI(ref.openAIOptions)
@@ -73,8 +125,10 @@ export default [
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
       if (snapshot !== ref.snapshot) {
+        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
         ref.snapshot = snapshot
         ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug) info('Snapshot embedded.')
       }
 
       const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
@@ -99,6 +153,52 @@ export default [
     {
       name: 'AssertElementVisible',
       description: 'Call to verify that an element is visible',
+      schema: z.object({
+        keywords: z
+          .string()
+          .describe(
+            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
+          )
+      })
+    }
+  ),
+
+  tool(
+    async ({ keywords }, { configurable }) => {
+      const { ref, use_screenshot } = configurable as ToolConfig
+      const openAI = new AI(ref.openAIOptions)
+      const snapshot = await actions.getSnapshot(ref)
+      const elements = getElementLocations(sanitize(snapshot), genericTags)
+
+      if (snapshot !== ref.snapshot) {
+        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
+        ref.snapshot = snapshot
+        ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug) info('Snapshot embedded.')
+      }
+
+      const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
+      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
+      }
+
+      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
+      const candidate = await openAI.getBestCandidate(ref.input, retrieved, screenshot)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
+      }
+
+      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
+
+      if (await actions.assertElementNotVisible(ref, { xpath })) return 'Element is invisible'
+      else return 'Element is visible'
+    },
+    {
+      name: 'AssertElementNotVisible',
+      description: 'Call to verify that an element is not visible',
       schema: z.object({
         keywords: z
           .string()
