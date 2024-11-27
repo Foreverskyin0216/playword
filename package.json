@@ -1,6 +1,6 @@
 {
   "name": "playword",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "PlayWord lets you effortlessly write web automation tests in natural language, making testing more intuitive and accessible!",
   "scripts": {
     "build": "tsup",
