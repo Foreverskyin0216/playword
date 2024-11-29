@@ -11,6 +11,9 @@ import { actionGraph } from './actionGraph'
 import * as actions from './actions'
 import { divider, info } from './logger'
 
+/**
+ * Decorator to handle the test fixture, including the setup process and teardown process.
+ */
 const fixture = (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) => {
   const originalMethod = descriptor.value
 
@@ -122,6 +125,7 @@ export class PlayWord implements PlayWordInterface {
 
         if (result === 'No element found' && this.retryOnFailure) {
           info('Retrying with AI...')
+          this.recordings[this.step].actions.pop()
           return await this.invokeAI()
         }
       }
