@@ -13,6 +13,13 @@ import { divider, info } from './logger'
 
 /**
  * Decorator to handle the test fixture, including the setup process and teardown process.
+ *
+ * Setup:
+ * - Read the recordings from the record file.
+ * - Increment the step.
+ *
+ * Teardown:
+ * - Write the recordings to the record file.
  */
 const fixture = (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) => {
   const originalMethod = descriptor.value
