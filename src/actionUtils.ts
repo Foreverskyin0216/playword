@@ -25,6 +25,11 @@ export const markElement = (element: HTMLElement, order: number) => {
   return span
 }
 
+/**
+ * Remove the label from an element.
+ *
+ * @param order - The order number of the label.
+ */
 export const unmarkElement = (order: number) => {
   const span = document.getElementById(`playword-label-${order}`)
   if (span) span.remove()
