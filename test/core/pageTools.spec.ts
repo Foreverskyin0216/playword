@@ -2,7 +2,7 @@ import { Document } from '@langchain/core/documents'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import pageTools from '../src/pageTools'
+import pageTools from '../../packages/core/src/pageTools'
 
 const {
   mockClick,
@@ -11,9 +11,9 @@ const {
   mockGoTo,
   mockHover,
   mockInput,
-  mockInvoke,
   mockPressKeys,
   mockScroll,
+  mockSearchDocuments,
   mockSelect,
   mockSleep,
   mockSwitchFrame,
@@ -26,16 +26,16 @@ const {
   mockGoTo: vi.fn(),
   mockHover: vi.fn(),
   mockInput: vi.fn(),
-  mockInvoke: vi.fn(),
   mockPressKeys: vi.fn(),
   mockScroll: vi.fn(),
+  mockSearchDocuments: vi.fn(),
   mockSelect: vi.fn(),
   mockSleep: vi.fn(),
   mockSwitchFrame: vi.fn(),
   mockWaitForText: vi.fn()
 }))
 
-vi.mock('../src/actions', () => ({
+vi.mock('../../packages/core/src/actions', () => ({
   click: mockClick,
   getAttribute: mockGetAttribute,
   getFrames: vi.fn(),
@@ -54,17 +54,23 @@ vi.mock('../src/actions', () => ({
   waitForText: mockWaitForText
 }))
 
-vi.mock('../src/ai', () => ({
-  AI: vi.fn(() => ({
-    embedDocuments: vi.fn(() => ({ asRetriever: vi.fn(() => ({ invoke: mockInvoke })) })),
-    getBestCandidate: vi.fn().mockResolvedValue(0)
-  }))
-}))
-
 describe('Spec: Page Tools', () => {
   describe('Given the page tools', () => {
     const mockConfig = {
-      ref: { debug: true, frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined },
+      ref: {
+        ai: {
+          embedDocuments: vi.fn(),
+          getBestCandidate: vi.fn().mockResolvedValue(0),
+          searchDocuments: mockSearchDocuments
+        },
+        debug: true,
+        input: 'test',
+        logger: { text: '' },
+        record: true,
+        recordings: [{ input: 'test', actions: [] }],
+        snapshot: '',
+        step: 0
+      },
       use_screenshot: true
     }
 
@@ -82,7 +88,7 @@ describe('Spec: Page Tools', () => {
 
       beforeAll(async () => {
         mockClick.mockResolvedValue('click-result')
-        mockInvoke.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
         mockConfig.use_screenshot = true
         resultWithScreenshot = await clickTool.invoke({ keywords: 'test' }, { configurable: mockConfig })
         mockConfig.use_screenshot = false
@@ -91,14 +97,20 @@ describe('Spec: Page Tools', () => {
 
       afterAll(() => {
         mockClick.mockRestore()
-        mockInvoke.mockRestore()
+        mockSearchDocuments.mockRestore()
         mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
           debug: true,
-          frame: undefined,
           input: 'test',
-          openAIOptions: {},
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
           snapshot: '',
-          store: undefined
+          step: 0
         }
         mockConfig.use_screenshot = true
       })
@@ -120,7 +132,7 @@ describe('Spec: Page Tools', () => {
 
       beforeAll(async () => {
         mockGetAttribute.mockResolvedValue('getAttribute-result')
-        mockInvoke.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
         mockConfig.use_screenshot = true
         resultWithScreenshot = await getAttributeTool.invoke(
           { attribute: 'id', keywords: 'test' },
@@ -135,14 +147,20 @@ describe('Spec: Page Tools', () => {
 
       afterAll(() => {
         mockGetAttribute.mockRestore()
-        mockInvoke.mockRestore()
+        mockSearchDocuments.mockRestore()
         mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
           debug: true,
-          frame: undefined,
           input: 'test',
-          openAIOptions: {},
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
           snapshot: '',
-          store: undefined
+          step: 0
         }
         mockConfig.use_screenshot = true
       })
@@ -187,7 +205,7 @@ describe('Spec: Page Tools', () => {
 
       beforeAll(async () => {
         mockHover.mockResolvedValue('hover-result')
-        mockInvoke.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
         mockConfig.use_screenshot = true
         resultWithScreenshot = await hoverTool.invoke({ keywords: 'test' }, { configurable: mockConfig })
         mockConfig.use_screenshot = false
@@ -196,14 +214,20 @@ describe('Spec: Page Tools', () => {
 
       afterAll(() => {
         mockHover.mockRestore()
-        mockInvoke.mockRestore()
+        mockSearchDocuments.mockRestore()
         mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
           debug: true,
-          frame: undefined,
           input: 'test',
-          openAIOptions: {},
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
           snapshot: '',
-          store: undefined
+          step: 0
         }
         mockConfig.use_screenshot = true
       })
@@ -225,7 +249,7 @@ describe('Spec: Page Tools', () => {
 
       beforeAll(async () => {
         mockInput.mockResolvedValue('input-result')
-        mockInvoke.mockResolvedValue([new Document({ pageContent: '<input type="text">' })])
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<input type="text">' })])
         mockConfig.use_screenshot = true
         resultWithScreenshot = await inputTool.invoke({ keywords: 'test', text: 'test' }, { configurable: mockConfig })
         mockConfig.use_screenshot = false
@@ -237,14 +261,20 @@ describe('Spec: Page Tools', () => {
 
       afterAll(() => {
         mockInput.mockRestore()
-        mockInvoke.mockRestore()
+        mockSearchDocuments.mockRestore()
         mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
           debug: true,
-          frame: undefined,
           input: 'test',
-          openAIOptions: {},
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
           snapshot: '',
-          store: undefined
+          step: 0
         }
         mockConfig.use_screenshot = true
       })
@@ -305,7 +335,7 @@ describe('Spec: Page Tools', () => {
       let resultWithoutScreenshot: string
 
       beforeAll(async () => {
-        mockInvoke.mockResolvedValue([new Document({ pageContent: '<select></select>' })])
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<select></select>' })])
         mockSelect.mockResolvedValue('select-result')
         mockConfig.use_screenshot = true
         resultWithScreenshot = await selectTool.invoke(
@@ -321,15 +351,21 @@ describe('Spec: Page Tools', () => {
       })
 
       afterAll(() => {
-        mockInvoke.mockRestore()
+        mockSearchDocuments.mockRestore()
         mockSelect.mockRestore()
         mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
           debug: true,
-          frame: undefined,
           input: 'test',
-          openAIOptions: {},
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
           snapshot: '',
-          store: undefined
+          step: 0
         }
         mockConfig.use_screenshot = true
       })
@@ -379,7 +415,7 @@ describe('Spec: Page Tools', () => {
 
       test('Then the result is as expected', () => {
         expect(enterFrameResult).toBe('switchFrame-result')
-        expect(returnToMainPageResult).toBe('Switched to main page')
+        expect(returnToMainPageResult).toBe('switchFrame-result')
       })
 
       test('Then the actions are called as expected', () => {

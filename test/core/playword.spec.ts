@@ -1,24 +1,20 @@
-import type { Page } from 'playwright'
-import type { ActionResult } from '../src/types'
+import type { Page } from 'playwright-core'
+import type { ActionResult } from '../../packages/core/src/types'
 
 import { AIMessage } from '@langchain/core/messages'
 import { join } from 'path'
-import { chromium } from 'playwright'
+import { chromium } from 'playwright-core'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
-import PlayWord from '../src'
+import PlayWord from '../../packages/core/src'
 
-const { mockAll, mockConsoleLog, mockGetAttribute, mockInvoke, mockIsVisible, mockWaitForLoadState } = vi.hoisted(
-  () => ({
-    mockAll: vi.fn(),
-    mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
-    mockGetAttribute: vi.fn(),
-    mockInvoke: vi.fn(),
-    mockIsVisible: vi.fn(),
-    mockWaitForLoadState: vi.fn()
-  })
-)
-
+const { mockAll, mockGetAttribute, mockInvoke, mockIsVisible, mockWaitForLoadState } = vi.hoisted(() => ({
+  mockAll: vi.fn(),
+  mockGetAttribute: vi.fn(),
+  mockInvoke: vi.fn(),
+  mockIsVisible: vi.fn(),
+  mockWaitForLoadState: vi.fn()
+}))
 vi.mock('fs/promises', async () => ({
   access: (await vi.importActual('fs/promises')).access,
   mkdir: vi.fn(),
@@ -26,7 +22,13 @@ vi.mock('fs/promises', async () => ({
   writeFile: vi.fn()
 }))
 
-vi.mock('playwright', () => ({
+vi.mock('../../packages/core/src/logger', () => ({
+  divider: vi.fn(),
+  info: vi.fn(),
+  startLog: vi.fn().mockReturnValue({ fail: vi.fn(), succeed: vi.fn() })
+}))
+
+vi.mock('playwright-core', () => ({
   chromium: {
     launch: vi.fn(() => ({
       newPage: vi.fn(() => ({
@@ -83,8 +85,8 @@ vi.mock('playwright', () => ({
   }
 }))
 
-vi.mock('../src/actionGraph', () => ({ actionGraph: { invoke: mockInvoke } }))
-vi.mock('../src/actionUtils', () => ({ markElement: vi.fn(), unmarkElement: vi.fn() }))
+vi.mock('../../packages/core/src/graph', () => ({ actionGraph: { invoke: mockInvoke } }))
+vi.mock('../../packages/core/src/actionUtils', () => ({ markElement: vi.fn(), unmarkElement: vi.fn() }))
 
 describe('Spec: PlayWord Class', () => {
   describe('Given a PlayWord instance', () => {
@@ -94,14 +96,17 @@ describe('Spec: PlayWord Class', () => {
     beforeAll(async () => {
       const browser = await chromium.launch()
       page = await browser.newPage()
+      process.env.OPENAI_API_KEY = 'test-api-key'
     })
+
+    afterAll(() => delete process.env.OPENAI_API_KEY)
 
     describe('And the record option is set to false', () => {
       beforeAll(async () => {
-        playword = new PlayWord(page, { record: false })
+        playword = new PlayWord(page, { debug: true, record: false })
       })
 
-      describe('When the say method is called', () => {
+      describe('When the say method return true', () => {
         let result: ActionResult
 
         beforeAll(async () => {
@@ -113,6 +118,21 @@ describe('Spec: PlayWord Class', () => {
 
         test('Then it should return the result', () => {
           expect(result).toBe(true)
+        })
+      })
+
+      describe('When the say method return false', () => {
+        let result: ActionResult
+
+        beforeAll(async () => {
+          mockInvoke.mockResolvedValue({ messages: [new AIMessage('false')] })
+          result = await playword.say('Test Message')
+        })
+
+        afterAll(() => mockInvoke.mockRestore())
+
+        test('Then it should return the result', () => {
+          expect(result).toBe(false)
         })
       })
     })
@@ -133,7 +153,7 @@ describe('Spec: PlayWord Class', () => {
           ])
           mockGetAttribute.mockResolvedValue('mock-attribute')
           mockIsVisible.mockResolvedValue(true)
-          playword = new PlayWord(page, { record: join(__dirname, 'mocks/mockActions.json') })
+          playword = new PlayWord(page, { debug: true, record: join(__dirname, 'mocks/mockActions.json') })
         })
 
         afterAll(() => {
@@ -265,6 +285,9 @@ describe('Spec: PlayWord Class', () => {
         })
 
         test('Then it should return the results for all of actions', async () => {
+          result = await playword.say('back to main frame')
+          expect(result).toBe('Switched to frame')
+
           result = await playword.say('switchFrame')
           expect(result).toBe('Switched to frame')
 
@@ -425,23 +448,6 @@ describe('Spec: PlayWord Class', () => {
 
       test('Then it should return the result with a screenshot', () => {
         expect(result).toBe('result')
-      })
-    })
-
-    describe('And the debug option is set to true', () => {
-      beforeAll(async () => {
-        mockInvoke.mockResolvedValue({ messages: [new AIMessage('result')] })
-        playword = new PlayWord(page, { debug: true, record: true })
-        await playword.say('Check if the element with xpath "mock-xpath" contains the text "mock-text"')
-      })
-
-      afterAll(() => mockInvoke.mockRestore())
-
-      test('Then it should log the result', () => {
-        expect(mockConsoleLog).toHaveBeenCalledWith(
-          '\x1b[35m [INFO] \x1b[0m',
-          '\x1b[32m Step 1: Check if the element with xpath "mock-xpath" contains the text "mock-text" \x1b[0m'
-        )
       })
     })
 

@@ -5,17 +5,12 @@ on:
       - main
 
 permissions:
-  contents: read # for checkout
+  contents: write # for checkout and publishing a GitHub release
 
 jobs:
   release:
     name: CI
     runs-on: ubuntu-latest
-    permissions:
-      contents: write      # to be able to publish a GitHub release
-      issues: write        # to be able to comment on released issues
-      pull-requests: write # to be able to comment on released pull requests
-      id-token: write      # to enable use of OIDC for npm provenance
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
       - name: Install dependencies
         run: npm install
       - name: Run tests
@@ -34,9 +29,9 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Build
-        run: npm run build
-      - name: Release
+        run: npx lerna run build --since origin/main
+      - name: Publish
+        run: npx lerna publish from-git --yes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release

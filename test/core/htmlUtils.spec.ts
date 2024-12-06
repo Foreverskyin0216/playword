@@ -1,9 +1,9 @@
-import type { ElementLocation } from '../src/types'
+import type { ElementLocation } from '../../packages/core/src/types'
 
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { beforeAll, describe, test, expect } from 'vitest'
-import { getElementLocations, sanitize } from '../src/htmlUtils'
+import { getElementLocations, sanitize } from '../../packages/core/src/htmlUtils'
 
 describe('Spec: HTML Utils', () => {
   describe('Given the getElementLocations function', () => {

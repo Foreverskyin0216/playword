@@ -1,5 +1,14 @@
 [
   {
+    "input": "back to main frame",
+    "actions": [
+      {
+        "name": "switchFrame",
+        "params": {}
+      }
+    ]
+  },
+  {
     "input": "switchFrame",
     "actions": [
       {

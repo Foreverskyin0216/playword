@@ -2,7 +2,7 @@
  * Pattern to match assertion keywords.
  */
 export const assertionPattern = new RegExp(
-  /^\b(?:assert|assure|check|compare|confirm|ensure|expect|guarantee|is|match|satisfy|should|test|then|validate|verify)\b/i
+  /^\b(?:are|assert|assure|can|check|compare|confirm|could|did|do|does|ensure|expect|guarantee|has|have|is|match|satisfy|shall|should|test|then|was|were|validate|verify)\b/i
 )
 
 /**

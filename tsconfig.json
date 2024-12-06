@@ -8,10 +8,10 @@
     "noEmit": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": false,
+    "noUnusedParameters": true,
     "strict": true,
     "target": "ES2023",
     "useUnknownInCatchVariables": false
   },
-  "include": ["src"]
+  "include": ["packages"]
 }

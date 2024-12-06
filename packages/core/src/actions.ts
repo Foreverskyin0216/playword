@@ -11,14 +11,9 @@ import { markElement, unmarkElement } from './actionUtils'
  * @param params.text - The text to compare with the element's content.
  */
 export const assertElementContentEquals = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'assertElementContentEquals', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
-
   return (await locator.textContent())?.trim() === params.text?.trim()
 }
 
@@ -30,10 +25,6 @@ export const assertElementContentEquals = async (ref: PlayWordInterface, params:
  * @param params.text - The text to compare with the element's content.
  */
 export const assertElementContentNotEquals = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'assertElementContentNotEquals', params })
-  }
-
   return !(await assertElementContentEquals(ref, params))
 }
 
@@ -44,15 +35,10 @@ export const assertElementContentNotEquals = async (ref: PlayWordInterface, para
  * @param params.xpath - XPath to locate the element.
  */
 export const assertElementVisible = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'assertElementVisible', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
-
-  return await locator.isVisible()
+  return locator.isVisible()
 }
 
 /**
@@ -72,14 +58,9 @@ export const assertElementNotVisible = async (ref: PlayWordInterface, params: Ac
  * @param params.text - The text to check if it exists on the page.
  */
 export const assertPageContains = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'assertPageContains', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locators = await target.getByText(params.text!).all()
-
   return (await Promise.all(locators.map((locator) => locator.isVisible()))).some((item) => item)
 }
 
@@ -90,10 +71,6 @@ export const assertPageContains = async (ref: PlayWordInterface, params: ActionP
  * @param params.text - The text to check if it does not exist on the page.
  */
 export const assertPageDoesNotContain = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'assertPageDoesNotContain', params })
-  }
-
   return !(await assertPageContains(ref, params))
 }
 
@@ -104,12 +81,7 @@ export const assertPageDoesNotContain = async (ref: PlayWordInterface, params: A
  * @param params.text - The text to compare with the page title.
  */
 export const assertPageTitleEquals = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'assertPageTitleEquals', params })
-  }
-
   await ref.page.waitForLoadState('load')
-
   return (await ref.page.title()) === params.text
 }
 
@@ -120,12 +92,7 @@ export const assertPageTitleEquals = async (ref: PlayWordInterface, params: Acti
  * @param params.pattern - The regular expression to match against the page URL.
  */
 export const assertPageUrlMatches = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'assertPageUrlMatches', params })
-  }
-
   await ref.page.waitForLoadState('load')
-
   return new RegExp(params.pattern!).test(ref.page.url())
 }
 
@@ -136,10 +103,6 @@ export const assertPageUrlMatches = async (ref: PlayWordInterface, params: Actio
  * @param params.xpath - XPath to locate the clickable element.
  */
 export const click = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'click', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
@@ -162,16 +125,10 @@ export const click = async (ref: PlayWordInterface, params: ActionParams) => {
  * @param params.attribute - The attribute to get the value of.
  */
 export const getAttribute = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'getAttr', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
-
   const attributeValue = await locator.getAttribute(params.attribute!)
-
   return attributeValue ? 'Attribute value: ' + attributeValue : 'No element found'
 }
 
@@ -214,8 +171,7 @@ export const getScreenshot = async (ref: PlayWordInterface) => {
 export const getSnapshot = async (ref: PlayWordInterface) => {
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
-
-  return await target.content()
+  return target.content()
 }
 
 /**
@@ -225,13 +181,8 @@ export const getSnapshot = async (ref: PlayWordInterface) => {
  * @param params.url - The URL to navigate to.
  */
 export const goto = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'goto', params })
-  }
-
   const { url } = params as { url: string }
   await ref.page.goto(url)
-
   return 'Navigated to ' + params.url!
 }
 
@@ -242,10 +193,6 @@ export const goto = async (ref: PlayWordInterface, params: ActionParams) => {
  * @param params.xpath - XPath to locate the element.
  */
 export const hover = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'hover', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
@@ -268,10 +215,6 @@ export const hover = async (ref: PlayWordInterface, params: ActionParams) => {
  * @param params.text - The text to fill in the element.
  */
 export const input = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'input', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
@@ -317,15 +260,9 @@ export const mark = async (ref: PlayWordInterface, params: ActionParams) => {
  * @param params.keys - The keys to press.
  */
 export const pressKeys = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'pressKeys', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
-
   await ref.page.keyboard.press(params.keys!)
-
   return 'Pressed keys ' + params.keys!
 }
 
@@ -336,10 +273,6 @@ export const pressKeys = async (ref: PlayWordInterface, params: ActionParams) =>
  * @param params.direction - Supported values for `direction` are `up`, `down`, `top`, and `bottom`.
  */
 export const scroll = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'scroll', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
 
@@ -369,10 +302,6 @@ export const scroll = async (ref: PlayWordInterface, params: ActionParams) => {
  * @param params.option - The option to select from the dropdown.
  */
 export const select = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'select', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
@@ -394,12 +323,7 @@ export const select = async (ref: PlayWordInterface, params: ActionParams) => {
  * @param params.duration - The number of seconds to sleep.
  */
 export const sleep = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'sleep', params })
-  }
-
   await ref.page.waitForTimeout(params.duration! * 1000)
-
   return 'Slept for ' + params.duration! + ' seconds'
 }
 
@@ -410,12 +334,7 @@ export const sleep = async (ref: PlayWordInterface, params: ActionParams) => {
  * @param params.frameNumber - The index of the frame to switch to.
  */
 export const switchFrame = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'switchFrame', params })
-  }
-
-  ref.frame = ref.page.frames()[params.frameNumber!]
-
+  ref.frame = params.frameNumber !== undefined ? ref.page.frames()[params.frameNumber] : undefined
   return 'Switched to frame'
 }
 
@@ -428,9 +347,7 @@ export const switchFrame = async (ref: PlayWordInterface, params: ActionParams) 
 export const unmark = async (ref: PlayWordInterface, params: ActionParams) => {
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
-
   await target.evaluate(unmarkElement, params.order!)
-
   return 'Unmarked ' + params.xpath! + ' with order ' + params.order!
 }
 
@@ -441,14 +358,8 @@ export const unmark = async (ref: PlayWordInterface, params: ActionParams) => {
  * @param params.text - The text to wait for.
  */
 export const waitForText = async (ref: PlayWordInterface, params: ActionParams) => {
-  if (ref.record) {
-    ref.recordings[ref.step].actions.push({ name: 'waitForText', params })
-  }
-
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
-
   await target.waitForSelector(`text=${params.text}`, { state: 'visible', timeout: 30000 })
-
   return 'Waited for text ' + params.text!
 }

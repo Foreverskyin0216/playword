@@ -5,10 +5,8 @@ import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
 
 import * as actions from './actions'
-import { AI } from './ai'
 import { getElementLocations, sanitize } from './htmlUtils'
 import { genericTags } from './resources'
-import { info } from './logger'
 
 /**
  * Tools for asserting conditions on the page.
@@ -25,25 +23,24 @@ export default [
   tool(
     async ({ keywords, text }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
-      const openAI = new AI(ref.openAIOptions)
       const snapshot = await actions.getSnapshot(ref)
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
       if (snapshot !== ref.snapshot) {
-        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
         ref.snapshot = snapshot
-        ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug) info('Snapshot embedded.')
+        await ref.ai.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
       }
 
-      const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
+      const retrieved = await ref.ai.searchDocuments(keywords)
       const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
 
       if (use_screenshot) {
         await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
       }
       const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await openAI.getBestCandidate(ref.input, retrieved, screenshot)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
 
       if (use_screenshot) {
         await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
@@ -51,8 +48,16 @@ export default [
 
       const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
 
-      if (await actions.assertElementContentEquals(ref, { xpath, text })) return 'Element content is equal to: ' + text
-      else return 'Element content is not equal to: ' + text
+      if (ref.record)
+        ref.recordings[ref.step].actions.push({
+          name: 'assertElementContentEquals',
+          params: { xpath, text }
+        })
+
+      if (await actions.assertElementContentEquals(ref, { xpath, text })) {
+        return 'PASS: Element content is equal to: ' + text
+      }
+      return 'FAIL: Element content is not equal to: ' + text
     },
     {
       name: 'AssertElementContentEquals',
@@ -71,25 +76,24 @@ export default [
   tool(
     async ({ keywords, text }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
-      const openAI = new AI(ref.openAIOptions)
       const snapshot = await actions.getSnapshot(ref)
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
       if (snapshot !== ref.snapshot) {
-        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
         ref.snapshot = snapshot
-        ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug) info('Snapshot embedded.')
+        await ref.ai.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
       }
 
-      const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
+      const retrieved = await ref.ai.searchDocuments(keywords)
       const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
 
       if (use_screenshot) {
         await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
       }
       const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await openAI.getBestCandidate(ref.input, retrieved, screenshot)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
 
       if (use_screenshot) {
         await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
@@ -97,11 +101,16 @@ export default [
 
       const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
 
+      if (ref.record)
+        ref.recordings[ref.step].actions.push({
+          name: 'assertElementContentNotEquals',
+          params: { xpath, text }
+        })
+
       if (await actions.assertElementContentNotEquals(ref, { xpath, text })) {
-        return 'Element content is not equal to: ' + text
-      } else {
-        return 'Element content is equal to: ' + text
+        return 'PASS: Element content is not equal to: ' + text
       }
+      return 'FAIL: Element content is equal to: ' + text
     },
     {
       name: 'AssertElementContentNotEquals',
@@ -120,18 +129,17 @@ export default [
   tool(
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
-      const openAI = new AI(ref.openAIOptions)
       const snapshot = await actions.getSnapshot(ref)
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
       if (snapshot !== ref.snapshot) {
-        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
         ref.snapshot = snapshot
-        ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug) info('Snapshot embedded.')
+        await ref.ai.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
       }
 
-      const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
+      const retrieved = await ref.ai.searchDocuments(keywords)
       const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
 
       if (use_screenshot) {
@@ -139,7 +147,7 @@ export default [
       }
 
       const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await openAI.getBestCandidate(ref.input, retrieved, screenshot)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
 
       if (use_screenshot) {
         await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
@@ -147,8 +155,16 @@ export default [
 
       const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
 
-      if (await actions.assertElementVisible(ref, { xpath })) return 'Element is visible'
-      else return 'Element is invisible'
+      if (ref.record)
+        ref.recordings[ref.step].actions.push({
+          name: 'assertElementVisible',
+          params: { xpath }
+        })
+
+      if (await actions.assertElementVisible(ref, { xpath })) {
+        return 'PASS: Element is visible'
+      }
+      return 'FAIL: Element is invisible'
     },
     {
       name: 'AssertElementVisible',
@@ -166,18 +182,17 @@ export default [
   tool(
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
-      const openAI = new AI(ref.openAIOptions)
       const snapshot = await actions.getSnapshot(ref)
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
       if (snapshot !== ref.snapshot) {
-        if (ref.debug) info('Snapshot changed. Embedding the new snapshot...')
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
         ref.snapshot = snapshot
-        ref.store = await openAI.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug) info('Snapshot embedded.')
+        await ref.ai.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
       }
 
-      const retrieved = await ref.store!.asRetriever(10).invoke(keywords)
+      const retrieved = await ref.ai.searchDocuments(keywords)
       const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
 
       if (use_screenshot) {
@@ -185,7 +200,7 @@ export default [
       }
 
       const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await openAI.getBestCandidate(ref.input, retrieved, screenshot)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
 
       if (use_screenshot) {
         await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
@@ -193,8 +208,16 @@ export default [
 
       const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
 
-      if (await actions.assertElementNotVisible(ref, { xpath })) return 'Element is invisible'
-      else return 'Element is visible'
+      if (ref.record)
+        ref.recordings[ref.step].actions.push({
+          name: 'assertElementNotVisible',
+          params: { xpath }
+        })
+
+      if (await actions.assertElementNotVisible(ref, { xpath })) {
+        return 'PASS: Element is invisible'
+      }
+      return 'FAIL: Element is visible'
     },
     {
       name: 'AssertElementNotVisible',
@@ -211,10 +234,17 @@ export default [
 
   tool(
     async ({ text }, { configurable }) => {
-      if (await actions.assertPageContains(configurable.ref, { text })) {
-        return 'Page contains text: ' + text
+      const { ref } = configurable as ToolConfig
+      if (ref.record)
+        ref.recordings[ref.step].actions.push({
+          name: 'assertPageContains',
+          params: { text }
+        })
+
+      if (await actions.assertPageContains(ref, { text })) {
+        return 'PASS: Page contains text: ' + text
       }
-      return 'Page does not contain text: ' + text
+      return 'FAIL: Page does not contain text: ' + text
     },
     {
       name: 'AssertPageContains',
@@ -227,10 +257,17 @@ export default [
 
   tool(
     async ({ text }, { configurable }) => {
-      if (await actions.assertPageDoesNotContain(configurable.ref, { text })) {
-        return 'Page does not contain text: ' + text
+      const { ref } = configurable as ToolConfig
+      if (ref.record)
+        ref.recordings[ref.step].actions.push({
+          name: 'assertPageDoesNotContain',
+          params: { text }
+        })
+
+      if (await actions.assertPageDoesNotContain(ref, { text })) {
+        return 'PASS: Page does not contain text: ' + text
       }
-      return 'Page contains text: ' + text
+      return 'FAIL: Page contains text: ' + text
     },
     {
       name: 'AssertPageDoesNotContain',
@@ -243,10 +280,17 @@ export default [
 
   tool(
     async ({ text }, { configurable }) => {
-      if (await actions.assertPageTitleEquals(configurable.ref, { text })) {
-        return 'Page title is equal to: ' + text
+      const { ref } = configurable as ToolConfig
+      if (ref.record)
+        ref.recordings[ref.step].actions.push({
+          name: 'assertPageTitleEquals',
+          params: { text }
+        })
+
+      if (await actions.assertPageTitleEquals(ref, { text })) {
+        return 'PASS: Page title is equal to: ' + text
       }
-      return 'Page title is not equal to: ' + text
+      return 'FAIL: Page title is not equal to: ' + text
     },
     {
       name: 'AssertPageTitleEquals',
@@ -259,10 +303,17 @@ export default [
 
   tool(
     async ({ pattern }, { configurable }) => {
-      if (await actions.assertPageUrlMatches(configurable.ref, { pattern })) {
-        return 'Page URL matches the pattern: ' + pattern
+      const { ref } = configurable as ToolConfig
+      if (ref.record)
+        ref.recordings[ref.step].actions.push({
+          name: 'assertPageUrlMatches',
+          params: { pattern }
+        })
+
+      if (await actions.assertPageUrlMatches(ref, { pattern })) {
+        return 'PASS: Page URL matches the pattern: ' + pattern
       }
-      return 'Page URL does not match the pattern: ' + pattern
+      return 'FAIL: Page URL does not match the pattern: ' + pattern
     },
     {
       name: 'AssertPageUrlMatches',

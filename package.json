@@ -1,21 +1,6 @@
 {
-  "name": "playword",
-  "version": "1.2.4",
-  "description": "PlayWord lets you effortlessly write web automation tests in natural language, making testing more intuitive and accessible!",
-  "scripts": {
-    "build": "tsup",
-    "release": "semantic-release",
-    "test": "vitest run --coverage",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier .",
-    "format:fix": "prettier . --write",
-    "husky": "[ -d '.husky' ] && husky || (mkdir .husky && husky); echo 'npx --no-install commitlint --edit $1' > .husky/commit-msg; echo 'npm run pre-commit' > .husky/pre-commit; echo 'npm run pre-push' > .husky/pre-push",
-    "pre-commit": "lint-staged",
-    "pre-push": "npm run test"
-  },
-  "author": "Zong-Wei Lu",
-  "license": "MIT",
+  "name": "@playword/root",
+  "private": true,
   "keywords": [
     "ai",
     "automated test",
@@ -23,55 +8,43 @@
     "openai",
     "playwright"
   ],
+  "workspaces": [
+    "packages/*"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/Foreverskyin0216/playword.git"
   },
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "dependencies": {
-    "@langchain/core": "^0.3.19",
-    "@langchain/langgraph": "^0.2.23",
-    "@langchain/openai": "^0.3.14",
-    "jsdom": "^25.0.1",
-    "langchain": "^0.3.6",
-    "openai": "^4.73.1",
-    "sanitize-html": "^2.13.1",
-    "uuid": "^11.0.3",
-    "zod": "^3.23.8"
+  "license": "MIT",
+  "author": "Zong-Wei Lu <foreverskyin@gmail.com>",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --coverage",
+    "lint:fix": "eslint . --fix",
+    "format:fix": "prettier . --write",
+    "husky": "[ -d '.husky' ] && husky || (mkdir .husky && husky); echo 'npx --no-install commitlint --edit $1' > .husky/commit-msg; echo 'npm run pre-commit' > .husky/pre-commit; echo 'npm run pre-push' > .husky/pre-push",
+    "pre-commit": "lint-staged",
+    "pre-push": "npm run test"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.0",
     "@commitlint/config-conventional": "^19.6.0",
-    "@eslint/js": "^9.15.0",
-    "@playwright/test": "^1.49.0",
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
+    "@eslint/js": "^9.16.0",
     "@types/eslint__js": "^8.42.3",
-    "@types/jsdom": "^21.1.7",
     "@types/node": "^22.10.1",
-    "@types/sanitize-html": "^2.13.0",
-    "@types/uuid": "^10.0.0",
-    "@vitest/coverage-v8": "^2.1.6",
-    "eslint": "^9.15.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.16.0",
     "husky": "^9.1.7",
+    "lerna": "^8.1.9",
     "lint-staged": "^15.2.10",
-    "playwright": "^1.49.0",
-    "prettier": "^3.4.1",
-    "semantic-release": "^24.2.0",
-    "tsup": "^8.3.5",
+    "prettier": "^3.4.2",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.16.0",
-    "vite": "^6.0.1",
-    "vitest": "^2.1.6"
+    "typescript-eslint": "^8.17.0",
+    "vite": "^6.0.3",
+    "vitest": "^2.1.8"
   },
   "engines": {
-    "node": ">=18",
-    "npm": ">=9"
+    "node": ">=18"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

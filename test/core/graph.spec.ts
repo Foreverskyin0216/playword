@@ -1,27 +1,20 @@
-import type { ActionState } from '../src/types'
+import type { ActionState } from '../../packages/core/src/types'
 
 import { AIMessage, HumanMessage } from '@langchain/core/messages'
 import { tool } from '@langchain/core/tools'
 import { afterAll, beforeAll, describe, test, expect, vi } from 'vitest'
-import { actionGraph } from '../src/actionGraph'
+import { actionGraph } from '../../packages/core/src/graph'
 
 const { mockUseTools } = vi.hoisted(() => ({
   mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
   mockUseTools: vi.fn()
 }))
 
-vi.mock('../src/ai', () => ({
-  AI: vi.fn(() => ({
-    useTools: mockUseTools,
-    parseResult: vi.fn().mockResolvedValue(new AIMessage('true'))
-  }))
-}))
-
-vi.mock('../src/assertTools', () => ({
+vi.mock('../../packages/core/src/assertTools', () => ({
   default: [tool(async () => 'Tool call result', { name: 'tool-call-name' })]
 }))
 
-vi.mock('../src/pageTools', () => ({
+vi.mock('../../packages/core/src/pageTools', () => ({
   default: [tool(async () => 'Tool call result', { name: 'tool-call-name' })]
 }))
 
@@ -38,7 +31,16 @@ describe('Spec: Action Graph', () => {
           {
             messages: [new HumanMessage('Page Action')]
           },
-          { configurable: { ref: { debug: true, openAIOptions: {} }, thread_id: 'page-test-id' } }
+          {
+            configurable: {
+              ref: {
+                ai: { useTools: mockUseTools, parseResult: vi.fn().mockResolvedValue('true') },
+                debug: true,
+                logger: { text: '' }
+              },
+              thread_id: 'page-test-id'
+            }
+          }
         )
       })
 
@@ -58,14 +60,25 @@ describe('Spec: Action Graph', () => {
         aiMessage.tool_calls = [{ id: 'tool-call-id', name: 'tool-call-name', args: { arg: 'tool-call-args' } }]
         mockUseTools.mockResolvedValue(aiMessage)
         state = await actionGraph.invoke(
-          { messages: [new HumanMessage('Test something...')] },
-          { configurable: { ref: { debug: true, openAIOptions: {} }, thread_id: 'assertion-test-id' } }
+          {
+            messages: [new HumanMessage('Test something...')]
+          },
+          {
+            configurable: {
+              ref: {
+                ai: { useTools: mockUseTools, parseResult: vi.fn().mockResolvedValue('true') },
+                debug: true,
+                logger: { text: '' }
+              },
+              thread_id: 'assertion-test-id'
+            }
+          }
         )
       })
 
       test('Then the graph returns the expected result', async () => {
         expect(state.messages[0].content).toBe('Test something...')
-        expect(state.messages.map(({ content }) => content)).toEqual([
+        expect(state.messages.map(({ content }) => content.toString())).toEqual([
           'Test something...',
           'response',
           'Tool call result',

@@ -3,7 +3,7 @@ import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
-import assertTools from '../src/assertTools'
+import assertTools from '../../packages/core/src/assertTools'
 
 const {
   mockAssertElementContentEquals,
@@ -15,7 +15,7 @@ const {
   mockAssertPageTitleEquals,
   mockAssertPageUrlMatches,
   mockGetSnapshot,
-  mockInvoke
+  mockSearchDocuments
 } = vi.hoisted(() => ({
   mockAssertElementContentEquals: vi.fn(),
   mockAssertElementContentNotEquals: vi.fn(),
@@ -27,10 +27,10 @@ const {
   mockAssertPageUrlMatches: vi.fn(),
   mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
   mockGetSnapshot: vi.fn(),
-  mockInvoke: vi.fn()
+  mockSearchDocuments: vi.fn()
 }))
 
-vi.mock('../src/actions', () => ({
+vi.mock('../../packages/core/src/actions', () => ({
   assertElementContentEquals: mockAssertElementContentEquals,
   assertElementContentNotEquals: mockAssertElementContentNotEquals,
   assertElementVisible: mockAssertElementVisible,
@@ -45,17 +45,23 @@ vi.mock('../src/actions', () => ({
   unmark: vi.fn()
 }))
 
-vi.mock('../src/ai', () => ({
-  AI: vi.fn(() => ({
-    embedDocuments: vi.fn(() => ({ asRetriever: vi.fn(() => ({ invoke: mockInvoke })) })),
-    getBestCandidate: vi.fn().mockResolvedValue(0)
-  }))
-}))
-
 describe('Spec: Assert Tools', () => {
   describe('Given the assert tools', () => {
     const mockConfig = {
-      ref: { debug: true, frame: undefined, input: 'test', openAIOptions: {}, snapshot: '', store: undefined },
+      ref: {
+        ai: {
+          embedDocuments: vi.fn(),
+          getBestCandidate: vi.fn().mockResolvedValue(0),
+          searchDocuments: mockSearchDocuments
+        },
+        debug: true,
+        input: 'test',
+        logger: { text: '' },
+        record: true,
+        recordings: [{ input: 'test', actions: [] }],
+        snapshot: '',
+        step: 0
+      },
       use_screenshot: true
     }
 
@@ -73,7 +79,7 @@ describe('Spec: Assert Tools', () => {
 
       beforeAll(async () => {
         mockAssertElementContentEquals.mockResolvedValue(true)
-        mockInvoke.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
         mockConfig.use_screenshot = true
         successWithScreenshot = await assertElementContentEqualsTool.invoke(
           { keywords: 'test', text: 'ID' },
@@ -90,21 +96,27 @@ describe('Spec: Assert Tools', () => {
 
       afterAll(() => {
         mockAssertElementContentEquals.mockRestore()
-        mockInvoke.mockRestore()
+        mockSearchDocuments.mockRestore()
         mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
           debug: true,
-          frame: undefined,
           input: 'test',
-          openAIOptions: {},
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
           snapshot: '',
-          store: undefined
+          step: 0
         }
         mockConfig.use_screenshot = true
       })
 
       test('Then the result is as expected', () => {
-        expect(successWithScreenshot).toBe('Element content is equal to: ID')
-        expect(failureWithoutScreenshot).toBe('Element content is not equal to: ID')
+        expect(successWithScreenshot).toBe('PASS: Element content is equal to: ID')
+        expect(failureWithoutScreenshot).toBe('FAIL: Element content is not equal to: ID')
       })
 
       test('Then the actions are called as expected', () => {
@@ -122,7 +134,7 @@ describe('Spec: Assert Tools', () => {
 
       beforeAll(async () => {
         mockAssertElementContentNotEquals.mockResolvedValue(true)
-        mockInvoke.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
         mockConfig.use_screenshot = true
         successWithScreenshot = await assertElementContentNotEqualsTool.invoke(
           { keywords: 'test', text: 'ID' },
@@ -139,21 +151,27 @@ describe('Spec: Assert Tools', () => {
 
       afterAll(() => {
         mockAssertElementContentNotEquals.mockRestore()
-        mockInvoke.mockRestore()
+        mockSearchDocuments.mockRestore()
         mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
           debug: true,
-          frame: undefined,
           input: 'test',
-          openAIOptions: {},
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
           snapshot: '',
-          store: undefined
+          step: 0
         }
         mockConfig.use_screenshot = true
       })
 
       test('Then the result is as expected', () => {
-        expect(successWithScreenshot).toBe('Element content is not equal to: ID')
-        expect(failureWithoutScreenshot).toBe('Element content is equal to: ID')
+        expect(successWithScreenshot).toBe('PASS: Element content is not equal to: ID')
+        expect(failureWithoutScreenshot).toBe('FAIL: Element content is equal to: ID')
       })
 
       test('Then the actions are called as expected', () => {
@@ -171,7 +189,7 @@ describe('Spec: Assert Tools', () => {
 
       beforeAll(async () => {
         mockAssertElementVisible.mockResolvedValue(true)
-        mockInvoke.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
         mockConfig.use_screenshot = true
         successWithScreenshot = await assertElementVisibleTool.invoke(
           { keywords: 'test' },
@@ -188,21 +206,27 @@ describe('Spec: Assert Tools', () => {
 
       afterAll(() => {
         mockAssertElementVisible.mockRestore()
-        mockInvoke.mockRestore()
+        mockSearchDocuments.mockRestore()
         mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
           debug: true,
-          frame: undefined,
           input: 'test',
-          openAIOptions: {},
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
           snapshot: '',
-          store: undefined
+          step: 0
         }
         mockConfig.use_screenshot = true
       })
 
       test('Then the result is as expected', () => {
-        expect(successWithScreenshot).toBe('Element is visible')
-        expect(failureWithoutScreenshot).toBe('Element is invisible')
+        expect(successWithScreenshot).toBe('PASS: Element is visible')
+        expect(failureWithoutScreenshot).toBe('FAIL: Element is invisible')
       })
 
       test('Then the actions are called as expected', () => {
@@ -217,7 +241,7 @@ describe('Spec: Assert Tools', () => {
 
       beforeAll(async () => {
         mockAssertElementNotVisible.mockResolvedValue(true)
-        mockInvoke.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
         mockConfig.use_screenshot = true
         successWithScreenshot = await assertElementNotVisibleTool.invoke(
           { keywords: 'test' },
@@ -234,21 +258,27 @@ describe('Spec: Assert Tools', () => {
 
       afterAll(() => {
         mockAssertElementNotVisible.mockRestore()
-        mockInvoke.mockRestore()
+        mockSearchDocuments.mockRestore()
         mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
           debug: true,
-          frame: undefined,
           input: 'test',
-          openAIOptions: {},
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
           snapshot: '',
-          store: undefined
+          step: 0
         }
         mockConfig.use_screenshot = true
       })
 
       test('Then the result is as expected', () => {
-        expect(successWithScreenshot).toBe('Element is invisible')
-        expect(failureWithoutScreenshot).toBe('Element is visible')
+        expect(successWithScreenshot).toBe('PASS: Element is invisible')
+        expect(failureWithoutScreenshot).toBe('FAIL: Element is visible')
       })
 
       test('Then the actions are called as expected', () => {
@@ -272,8 +302,8 @@ describe('Spec: Assert Tools', () => {
       afterAll(() => mockAssertPageContains.mockRestore())
 
       test('Then the result is as expected', () => {
-        expect(success).toBe('Page contains text: ID')
-        expect(failure).toBe('Page does not contain text: ID')
+        expect(success).toBe('PASS: Page contains text: ID')
+        expect(failure).toBe('FAIL: Page does not contain text: ID')
       })
 
       test('Then the actions are called as expected', () => {
@@ -297,8 +327,8 @@ describe('Spec: Assert Tools', () => {
       afterAll(() => mockAssertPageDoesNotContain.mockRestore())
 
       test('Then the result is as expected', () => {
-        expect(success).toBe('Page does not contain text: ID')
-        expect(failure).toBe('Page contains text: ID')
+        expect(success).toBe('PASS: Page does not contain text: ID')
+        expect(failure).toBe('FAIL: Page contains text: ID')
       })
 
       test('Then the actions are called as expected', () => {
@@ -322,8 +352,8 @@ describe('Spec: Assert Tools', () => {
       afterAll(() => mockAssertPageTitleEquals.mockRestore())
 
       test('Then the result is as expected', () => {
-        expect(success).toBe('Page title is equal to: Title')
-        expect(failure).toBe('Page title is not equal to: Title')
+        expect(success).toBe('PASS: Page title is equal to: Title')
+        expect(failure).toBe('FAIL: Page title is not equal to: Title')
       })
 
       test('Then the actions are called as expected', () => {
@@ -353,8 +383,8 @@ describe('Spec: Assert Tools', () => {
       afterAll(() => mockAssertPageUrlMatches.mockRestore())
 
       test('Then the result is as expected', () => {
-        expect(success).toBe('Page URL matches the pattern: https://example.com')
-        expect(failure).toBe('Page URL does not match the pattern: https://example.com')
+        expect(success).toBe('PASS: Page URL matches the pattern: https://example.com')
+        expect(failure).toBe('FAIL: Page URL does not match the pattern: https://example.com')
       })
 
       test('Then the actions are called as expected', () => {

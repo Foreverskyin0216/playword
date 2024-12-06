@@ -1,8 +1,9 @@
 import type { Document } from '@langchain/core/documents'
 import type { BaseMessage } from '@langchain/core/messages'
-import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
-import type { ClientOptions } from 'openai'
-import type { Frame, Page } from 'playwright'
+import type { ClientOptions } from '@langchain/openai'
+import type { Frame, Page } from 'playwright-core'
+import type { AI } from './ai'
+import type { startLog } from './logger'
 
 export interface Action {
   /**
@@ -53,6 +54,17 @@ export interface ElementLocation {
    * The XPath to the element.
    */
   xpath: string
+}
+
+export interface MemoryVector {
+  /**
+   * The content of the vector.
+   */
+  content: string
+  /**
+   * The corresponding embedding.
+   */
+  embedding: number[]
 }
 
 export interface PlayWordOptions {
@@ -123,6 +135,10 @@ export interface PlayWordOptions {
 
 export interface PlayWordInterface {
   /**
+   * The AI wrapper
+   */
+  ai: AI
+  /**
    * Whether to enable debug mode.
    */
   debug: boolean
@@ -135,9 +151,9 @@ export interface PlayWordInterface {
    */
   input: string
   /**
-   * OpenAI options to configure the client.
+   * Logger for debugging.
    */
-  openAIOptions: ClientOptions
+  logger: ReturnType<typeof startLog> | undefined
   /**
    * The page to perform actions on.
    */
@@ -162,10 +178,6 @@ export interface PlayWordInterface {
    * The step number of the actions performed.
    */
   step: number
-  /**
-   * The vector store to save embedded element locations.
-   */
-  store: MemoryVectorStore | undefined
   /**
    * Whether to use screenshots to help AI understand the page.
    */

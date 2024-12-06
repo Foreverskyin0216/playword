@@ -1,0 +1,52 @@
+{
+  "name": "@playword/core",
+  "version": "0.0.0",
+  "description": "Turn your ideas into actual, executable web actions, letting you write automated tests effortlessly.",
+  "keywords": [
+    "ai",
+    "automated test",
+    "langchain",
+    "openai",
+    "playwright"
+  ],
+  "homepage": "https://github.com/Foreverskyin0216/playword/blob/main/packages/core/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Foreverskyin0216/playword.git"
+  },
+  "scripts": {
+    "build": "tsup && rm dist/*.d.mts"
+  },
+  "license": "MIT",
+  "author": "Zong-Wei Lu <foreverskyin@gmail.com>",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@langchain/core": "^0.3.22",
+    "@langchain/langgraph": "^0.2.26",
+    "@langchain/openai": "^0.3.14",
+    "jsdom": "^25.0.1",
+    "ora": "^8.1.1",
+    "sanitize-html": "^2.13.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.10.1",
+    "@types/sanitize-html": "^2.13.0",
+    "playwright-core": "^1.49.0",
+    "tsup": "^8.3.5"
+  },
+  "publishConfig": {
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/",
+    "tag": "latest"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

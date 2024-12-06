@@ -1,15 +1,16 @@
 import type { AIMessage } from '@langchain/core/messages'
-import type { Page } from 'playwright'
+import type { Page } from 'playwright-core'
 import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording, SayOptions } from './types'
 
+import { randomUUID } from 'crypto'
 import { access, mkdir, readFile, writeFile } from 'fs/promises'
 import { dirname } from 'path'
 import { HumanMessage } from '@langchain/core/messages'
-import { v4 as uuidv4 } from 'uuid'
 
-import { actionGraph } from './actionGraph'
+import { actionGraph } from './graph'
 import * as actions from './actions'
-import { divider, info } from './logger'
+import { AI } from './ai'
+import { divider, info, startLog } from './logger'
 
 /**
  * Decorator to handle the test fixture, including the setup process and teardown process.
@@ -44,16 +45,14 @@ const fixture = (_target: unknown, _propertyKey: string, descriptor: PropertyDes
       }
     }
 
-    if (playword.debug) {
-      divider()
-      info(`Step ${playword.step + 1}: ${args[0]}`)
-    }
+    if (playword.debug) divider()
 
     playword.input = args[0] as string
 
     const result = await originalMethod.apply(playword, args)
 
     playword.step++
+    playword.logger = undefined
 
     if (playword.record) {
       const filePath = playword.record as string
@@ -68,7 +67,7 @@ const fixture = (_target: unknown, _propertyKey: string, descriptor: PropertyDes
 /**
  * @class ### PlayWord
  *
- * Playword includes the following features:
+ * PlayWord includes the following features:
  * - Perform actions on the browser page with natural language input.
  * - Record the actions performed to replay them later without token consumption.
  * @param page The PlayWright page. See {@link Page}.
@@ -78,33 +77,40 @@ export class PlayWord implements PlayWordInterface {
   /**
    * LangGraph requires a unique thread id to keep track of the conversation.
    */
-  private threadId: string = uuidv4()
+  private threadId: string = randomUUID()
 
+  public ai: AI
   public frame = undefined
-  public store = undefined
   public step = 0
   public input = ''
   public snapshot = ''
   public recordings = [] as Recording[]
   public debug
-  public openAIOptions
+  public logger: ReturnType<typeof startLog> | undefined
   public page
   public record
   public retryOnFailure
   public useScreenshot
 
   constructor(page: Page, playwordOptions: PlayWordOptions = {}) {
-    this.debug = playwordOptions.debug || false
-    this.openAIOptions = playwordOptions.openAIOptions || {}
+    const { debug, openAIOptions, record, retryOnFailure, useScreenshot } = playwordOptions
+    this.ai = new AI(openAIOptions || {})
+    this.debug = debug || false
     this.page = page
-    this.record = playwordOptions.record === true ? '.playword/recordings.json' : playwordOptions.record
-    this.retryOnFailure = playwordOptions.retryOnFailure || false
-    this.useScreenshot = playwordOptions.useScreenshot || false
+    this.record = record === true ? '.playword/recordings.json' : record
+    this.retryOnFailure = retryOnFailure || false
+    this.useScreenshot = useScreenshot || false
     this.say = this.say.bind(this)
   }
 
   private async invokeAI() {
     let result: ActionResult
+
+    if (this.debug) {
+      info(`Performing action: ${this.input}`)
+      this.logger = startLog('Invoking Action Graph')
+    }
+    if (this.record) this.recordings[this.step] = { input: this.input, actions: [] }
 
     const { messages } = (await actionGraph.invoke(
       {
@@ -118,6 +124,11 @@ export class PlayWord implements PlayWordInterface {
     result = messages[messages.length - 1].content.toString()
     result = ['true', 'false'].includes(result) ? result === 'true' : result
 
+    if (this.logger) {
+      if (result) this.logger.succeed()
+      else this.logger.fail()
+    }
+
     return result
   }
 
@@ -125,14 +136,15 @@ export class PlayWord implements PlayWordInterface {
     try {
       let result: ActionResult
 
+      info(`[RECORDING] ${this.input}`, 'magenta')
+
       for (const { name, params } of recordings.actions) {
         result = await actions[name as keyof typeof actions](this, params)
 
-        if (this.debug) info(result)
+        if (this.debug) info('Result: ' + result)
 
         if (result === 'No element found' && this.retryOnFailure) {
-          info('Retrying with AI...')
-          this.recordings[this.step].actions.pop()
+          info('Retrying with AI...', 'magenta')
           return await this.invokeAI()
         }
       }
@@ -140,7 +152,7 @@ export class PlayWord implements PlayWordInterface {
       return result
     } catch (error) {
       if (this.retryOnFailure) {
-        info('Retrying with AI...')
+        info('Retrying with AI...', 'magenta')
         return await this.invokeAI()
       }
       throw error
@@ -151,8 +163,6 @@ export class PlayWord implements PlayWordInterface {
   public async say(input: string, options: SayOptions = {}) {
     const matched = this.recordings.find((rec, index) => rec.input === input && index === this.step)
     let result: ActionResult
-
-    this.recordings[this.step] = { actions: [], input }
 
     if (this.record && !options.withoutRecordings && matched) {
       result = await this.invokeRecordings(matched)

@@ -5,11 +5,9 @@ import { AIMessage } from '@langchain/core/messages'
 import { Annotation, MemorySaver, StateGraph, messagesStateReducer } from '@langchain/langgraph'
 import { ToolNode } from '@langchain/langgraph/prebuilt'
 
-import { AI } from './ai'
 import assertTools from './assertTools'
 import pageTools from './pageTools'
 import { assertionPattern } from './resources'
-import { info } from './logger'
 
 /**
  * State annotation for the action graph.
@@ -22,10 +20,9 @@ const annotation = Annotation.Root({ messages: Annotation({ reducer: messagesSta
  * @returns The result from the assertion agent.
  */
 const invokeAssertAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
-  const { debug, openAIOptions } = configurable?.ref as PlayWordInterface
-  const ai = new AI(openAIOptions)
+  const { ai, debug, logger } = configurable?.ref as PlayWordInterface
   const response = await ai.useTools(assertTools, messages)
-  if (debug && response.content) info('AI: ' + response.content.toString())
+  if (debug && logger && response.content) logger.text = response.content.toString()
   return { messages: [response] }
 }
 
@@ -35,10 +32,9 @@ const invokeAssertAgent = async ({ messages }: ActionState, { configurable }: La
  * @returns The result from the page agent.
  */
 const invokePageAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
-  const { debug, openAIOptions } = configurable?.ref as PlayWordInterface
-  const ai = new AI(openAIOptions)
+  const { ai, debug, logger } = configurable?.ref as PlayWordInterface
   const response = await ai.useTools(pageTools, messages)
-  if (debug && response.content) info('AI: ' + response.content.toString())
+  if (debug && logger && response.content) logger.text = response.content.toString()
   return { messages: [response] }
 }
 
@@ -48,9 +44,9 @@ const invokePageAgent = async ({ messages }: ActionState, { configurable }: Lang
  * @returns The assertion result.
  */
 const invokeResultAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
-  const ai = new AI(configurable?.ref?.openAIOptions)
+  const { ai } = configurable?.ref as PlayWordInterface
   const response = await ai.parseResult(messages)
-  return { messages: [response] }
+  return { messages: [new AIMessage(response.toString())] }
 }
 
 /**

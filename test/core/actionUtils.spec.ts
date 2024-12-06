@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, test, expect } from 'vitest'
-import { markElement, unmarkElement } from '../src/actionUtils'
+import { markElement, unmarkElement } from '../../packages/core/src/actionUtils'
 
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://localhost' })
 globalThis.document = dom.window.document
