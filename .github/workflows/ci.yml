@@ -13,23 +13,26 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout 🛎
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
+      - name: Setup Node.js 🚀
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Setup npmrc 🔐
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+
+      - name: Install dependencies 📦
         run: npm install
 
-      - name: Run tests
+      - name: Run tests 🧪
         run: npm test
 
-      - name: Upload coverage
+      - name: Upload coverage report 📊
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -37,18 +40,13 @@ jobs:
       - name: Build
         run: npx lerna run build
 
-      - name: Configure Git
+      - name: Configure Git 🛠
         run: |
-          git config --global user.email "foreverskyin+github@gmail.com"
-          git config --global user.name "Foreverskyin0216"
+          git config --global user.email "action@github.com"
+          git config --global user.name "Github Action"
 
-      - name: Version
-        run: "npx lerna version -m \"chore(release): publish [skip ci]\" --yes"
+      - name: Publish 🚀
+        run: npx lerna publish --yes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish
-        run: npx lerna publish from-package --yes
-        env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
