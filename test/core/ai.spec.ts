@@ -5,7 +5,9 @@ import {
   AI,
   CANDIDATE_LIST_REFERENCE,
   CANDIDATE_SCREENSHOT_REFERENCE,
-  DETERMINE_ASSERTION_RESULT
+  CHECK_IMAGE_INFORMATION,
+  DETERMINE_ASSERTION_RESULT,
+  RETRIEVE_IMAGE_INFORMATION
 } from '../../packages/core/src/ai'
 
 const { mockFromTexts, mockMemoryVectorStore, mockOpenAIEmbeddings, mockInvoke } = vi.hoisted(() => ({
@@ -92,8 +94,8 @@ describe('Spec: AI', () => {
       test('Then the mockParse method is called', () => {
         expect(mockInvoke).toHaveBeenCalledWith([
           { role: 'system', content: DETERMINE_ASSERTION_RESULT },
-          { role: 'user', content: 'Assertion' },
-          { role: 'assistant', content: 'Assertion' }
+          { role: 'user', content: 'User: Assertion' },
+          { role: 'assistant', content: 'AI: Assertion' }
         ])
       })
     })
@@ -137,6 +139,66 @@ describe('Spec: AI', () => {
               { type: 'text', text: CANDIDATE_LIST_REFERENCE },
               { type: 'text', text: 'User input: ' + input },
               { type: 'text', text: 'Candidates: Index 0: Document 1\nIndex 1: Document 2' }
+            ]
+          }
+        ])
+      })
+    })
+
+    describe('When the retrieveImageInformation method is called', () => {
+      const input = 'Input'
+      const image = 'Image'
+      let result: string
+
+      beforeAll(async () => {
+        mockInvoke.mockResolvedValue({ info: 'Information' })
+        result = await ai.retrieveImageInformation(input, image)
+      })
+
+      afterAll(() => mockInvoke.mockRestore())
+
+      test('Then the result is returned', () => {
+        expect(result).toBe('Information')
+      })
+
+      test('Then the mockParse method is called', () => {
+        expect(mockInvoke).toHaveBeenCalledWith([
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: RETRIEVE_IMAGE_INFORMATION },
+              { type: 'text', text: 'User input: ' + input },
+              { type: 'image_url', image_url: { url: image } }
+            ]
+          }
+        ])
+      })
+    })
+
+    describe('When the checkImageInformation method is called', () => {
+      const input = 'Input'
+      const image = 'Image'
+      let result: boolean
+
+      beforeAll(async () => {
+        mockInvoke.mockResolvedValue({ result: true })
+        result = await ai.checkImageInformation(input, image)
+      })
+
+      afterAll(() => mockInvoke.mockRestore())
+
+      test('Then the result is returned', () => {
+        expect(result).toBe(true)
+      })
+
+      test('Then the mockParse method is called', () => {
+        expect(mockInvoke).toHaveBeenCalledWith([
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: CHECK_IMAGE_INFORMATION },
+              { type: 'text', text: 'User input: ' + input },
+              { type: 'image_url', image_url: { url: image } }
             ]
           }
         ])

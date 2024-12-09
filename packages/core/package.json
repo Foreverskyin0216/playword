@@ -15,7 +15,7 @@
     "url": "https://github.com/Foreverskyin0216/playword.git"
   },
   "scripts": {
-    "build": "tsup && rm dist/*.d.mts"
+    "build": "tsup"
   },
   "license": "MIT",
   "author": "Zong-Wei Lu <foreverskyin@gmail.com>",
@@ -25,20 +25,29 @@
   "files": [
     "dist"
   ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "dependencies": {
-    "@langchain/core": "^0.3.22",
-    "@langchain/langgraph": "^0.2.27",
+    "@langchain/core": "^0.3.23",
+    "@langchain/langgraph": "^0.2.32",
     "@langchain/openai": "^0.3.14",
     "jsdom": "^25.0.1",
-    "ora": "^8.1.1",
     "sanitize-html": "^2.13.1",
-    "zod": "^3.23.8"
+    "yocto-spinner": "^0.1.2",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.10.2",
     "@types/sanitize-html": "^2.13.0",
-    "playwright-core": "^1.49.0",
+    "playwright-core": "^1.49.1",
     "tsup": "^8.3.5"
   },
   "publishConfig": {

@@ -43,7 +43,7 @@ export class MemoryVectorStore extends VectorStore {
    * texts. It creates a `Document` for each text and metadata pair, and
    * adds them to the store.
    * @param texts Array of texts to be added to the store.
-   * @param embeddings `Embeddings` instance used to generate embeddings for the texts.
+   * @param embeddings `Embeddings` instance used to generate embeddings for texts.
    * @returns Promise that resolves with a new `MemoryVectorStore` instance.
    */
   static async fromTexts(texts: string[], embeddings: EmbeddingsInterface) {

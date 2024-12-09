@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies 📦
         run: npm install
 
+      - name: Test Setup 🧪
+        run: npx lerna run build
+
       - name: Run tests 🧪
         run: npm test
 
@@ -36,9 +39,6 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Build
-        run: npx lerna run build
 
       - name: Configure Git 🛠
         run: |

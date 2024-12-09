@@ -66,6 +66,17 @@
     ]
   },
   {
+    "input": "assertImageContains",
+    "actions": [
+      {
+        "name": "assertImageContains",
+        "params": {
+          "xpath": "mock-xpath"
+        }
+      }
+    ]
+  },
+  {
     "input": "assertPageContains",
     "actions": [
       {
@@ -120,11 +131,33 @@
     ]
   },
   {
+    "input": "getImageInformation",
+    "actions": [
+      {
+        "name": "getImageInformation",
+        "params": {
+          "xpath": "mock-xpath"
+        }
+      }
+    ]
+  },
+  {
     "input": "getSnapshot",
     "actions": [
       {
         "name": "getSnapshot",
         "params": {}
+      }
+    ]
+  },
+  {
+    "input": "getText",
+    "actions": [
+      {
+        "name": "getText",
+        "params": {
+          "xpath": "mock-xpath"
+        }
       }
     ]
   },

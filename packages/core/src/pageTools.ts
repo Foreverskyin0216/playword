@@ -14,6 +14,8 @@ import { genericTags } from './resources'
  * Include the following tools:
  * - **Click**
  * - **GetAttribute**
+ * - **GetImageInformation**
+ * - **GoBack**
  * - **GoTo**
  * - **Hover**
  * - **Input**
@@ -31,9 +33,10 @@ export default [
       const snapshot = await actions.getSnapshot(ref)
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
-      if (snapshot !== ref.snapshot) {
+      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
         ref.snapshot = snapshot
+        ref.elements = elements
         await ref.ai.embedDocuments(elements.map(({ element }) => element))
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
       }
@@ -77,9 +80,10 @@ export default [
       const snapshot = await actions.getSnapshot(ref)
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
-      if (snapshot !== ref.snapshot) {
+      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
         ref.snapshot = snapshot
+        ref.elements = elements
         await ref.ai.embedDocuments(elements.map(({ element }) => element))
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
       }
@@ -119,6 +123,113 @@ export default [
   ),
 
   tool(
+    async ({ keywords }, { configurable }) => {
+      const { ref, use_screenshot } = configurable as ToolConfig
+      const snapshot = await actions.getSnapshot(ref)
+      const elements = getElementLocations(sanitize(snapshot), genericTags)
+
+      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
+        ref.snapshot = snapshot
+        ref.elements = elements
+        await ref.ai.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
+      }
+
+      const retrieved = await ref.ai.searchDocuments(keywords)
+      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
+      }
+
+      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
+      }
+
+      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
+
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'getImageInformation', params: { xpath } })
+
+      return await actions.getImageInformation(ref, { xpath })
+    },
+    {
+      name: 'GetImageInformation',
+      description: 'Call to capture a screenshot from an element and get its information',
+      schema: z.object({
+        keywords: z
+          .string()
+          .describe(
+            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
+          )
+      })
+    }
+  ),
+
+  tool(
+    async ({ keywords }, { configurable }) => {
+      const { ref, use_screenshot } = configurable as ToolConfig
+      const snapshot = await actions.getSnapshot(ref)
+      const elements = getElementLocations(sanitize(snapshot), genericTags)
+
+      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
+        ref.snapshot = snapshot
+        ref.elements = elements
+        await ref.ai.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
+      }
+
+      const retrieved = await ref.ai.searchDocuments(keywords)
+      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
+      }
+
+      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
+      }
+
+      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
+
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'getText', params: { xpath } })
+
+      return await actions.getText(ref, { xpath })
+    },
+    {
+      name: 'GetText',
+      description: 'Call to get text of an element',
+      schema: z.object({
+        keywords: z
+          .string()
+          .describe(
+            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
+          )
+      })
+    }
+  ),
+
+  tool(
+    async (_, { configurable }) => {
+      const { ref } = configurable as ToolConfig
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'goBack', params: {} })
+      return await actions.goBack(ref)
+    },
+    {
+      name: 'GoBack',
+      description: 'Call to go back to the previous page',
+      schema: z.object({})
+    }
+  ),
+
+  tool(
     async ({ url }, { configurable }) => {
       const { ref } = configurable as ToolConfig
       if (ref.record) ref.recordings[ref.step].actions.push({ name: 'goto', params: { url } })
@@ -139,9 +250,10 @@ export default [
       const snapshot = await actions.getSnapshot(ref)
       const elements = getElementLocations(sanitize(snapshot), genericTags)
 
-      if (snapshot !== ref.snapshot) {
+      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
         ref.snapshot = snapshot
+        ref.elements = elements
         await ref.ai.embedDocuments(elements.map(({ element }) => element))
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
       }
@@ -185,9 +297,10 @@ export default [
       const snapshot = await actions.getSnapshot(ref)
       const elements = getElementLocations(sanitize(snapshot), ['input', 'textarea'])
 
-      if (snapshot !== ref.snapshot) {
+      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
         ref.snapshot = snapshot
+        ref.elements = elements
         await ref.ai.embedDocuments(elements.map(({ element }) => element))
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
       }
@@ -214,14 +327,14 @@ export default [
     },
     {
       name: 'Input',
-      description: 'Call to input text into the input field or textarea',
+      description: 'Call to type text into the input field or textarea',
       schema: z.object({
         keywords: z
           .string()
           .describe(
             'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
           ),
-        text: z.string().describe('The text to input')
+        text: z.string().describe('Text to input')
       })
     }
   ),
@@ -262,9 +375,10 @@ export default [
       const snapshot = await actions.getSnapshot(ref)
       const elements = getElementLocations(sanitize(snapshot), ['select'])
 
-      if (snapshot !== ref.snapshot) {
+      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
         ref.snapshot = snapshot
+        ref.elements = elements
         await ref.ai.embedDocuments(elements.map(({ element }) => element))
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
       }
@@ -326,19 +440,12 @@ export default [
         const frames = await actions.getFrames(ref)
         const candidate = await ref.ai.getBestCandidate(ref.input, frames)
         if (ref.record)
-          ref.recordings[ref.step].actions.push({
-            name: 'switchFrame',
-            params: { frameNumber: candidate }
-          })
+          ref.recordings[ref.step].actions.push({ name: 'switchFrame', params: { frameNumber: candidate } })
 
         return await actions.switchFrame(ref, { frameNumber: candidate })
       }
 
-      if (ref.record)
-        ref.recordings[ref.step].actions.push({
-          name: 'switchFrame',
-          params: { frameNumber: undefined }
-        })
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'switchFrame', params: { frameNumber: undefined } })
 
       return await actions.switchFrame(ref, { frameNumber: undefined })
     },
@@ -361,7 +468,7 @@ export default [
       name: 'WaitForText',
       description: 'Call to wait for text to appear on the page',
       schema: z.object({
-        text: z.string().describe('The text to wait for')
+        text: z.string().describe('Text to wait for')
       })
     }
   )

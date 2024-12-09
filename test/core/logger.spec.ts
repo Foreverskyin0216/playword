@@ -21,6 +21,11 @@ describe('Spec: Logger', () => {
   describe('When info is called', () => {
     test('It should print an information message', () => {
       info('message')
+      expect(mockConsoleLog).toHaveBeenCalledWith('message')
+    })
+
+    test('It should print an information message with green color', () => {
+      info('message', 'green')
       expect(mockConsoleLog).toHaveBeenCalledWith('\x1b[32mmessage\x1b[0m')
     })
 
@@ -31,8 +36,8 @@ describe('Spec: Logger', () => {
   })
 
   describe('When startLog is called', () => {
-    test('It should start a progress spinner', () => {
-      const spinner = startLog('ora message')
+    test('It should start a progress spinner', async () => {
+      const spinner = await startLog('ora message')
       expect(spinner.text).toBe('ora message')
     })
   })
