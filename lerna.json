@@ -1,7 +1,9 @@
 {
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "conventionalCommits": true,
+  "conventionalGraduate": true,
   "createRelease": "github",
+  "message": "chore(release): publish",
   "npmClient": "npm",
   "packages": ["packages/*"],
   "version": "independent"

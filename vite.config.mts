@@ -4,9 +4,9 @@ export default defineConfig({
   test: {
     coverage: {
       all: true,
-      exclude: ['examples/**/*', 'test/**/*', '**/*config*', '**/*.d.ts'],
+      exclude: ['examples', 'test', '**/*config*', '**/index*', '**/*.d.ts'],
       provider: 'v8'
     },
-    exclude: [...configDefaults.exclude, 'examples/**/*']
+    exclude: [...configDefaults.exclude, 'examples']
   }
 })

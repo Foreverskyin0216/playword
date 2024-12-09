@@ -37,9 +37,6 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Build
-        run: npx lerna run build
-
       - name: Configure Git 🛠
         run: |
           git config --global user.email "action@github.com"

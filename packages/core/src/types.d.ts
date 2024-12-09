@@ -143,6 +143,10 @@ export interface PlayWordInterface {
    */
   debug: boolean
   /**
+   * Page elements used for detecting the UI changes.
+   */
+  elements: ElementLocation[]
+  /**
    * The current frame.
    */
   frame: Frame | undefined
@@ -153,7 +157,7 @@ export interface PlayWordInterface {
   /**
    * Logger for debugging.
    */
-  logger: ReturnType<typeof startLog> | undefined
+  logger: Awaited<ReturnType<typeof startLog>> | undefined
   /**
    * The page to perform actions on.
    */
@@ -163,7 +167,7 @@ export interface PlayWordInterface {
    */
   record: boolean | string | undefined
   /**
-   * The recordings of the actions performed.
+   * Recordings of the actions performed.
    */
   recordings: Recording[]
   /**
@@ -171,7 +175,7 @@ export interface PlayWordInterface {
    */
   retryOnFailure: boolean
   /**
-   * The snapshot of the page content.
+   * The page snapshot used for detecting the UI changes.
    */
   snapshot: string
   /**
@@ -187,7 +191,6 @@ export interface PlayWordInterface {
    * The input will be converted to the corresponding action to operate on the page.
    *
    * @param input The action to perform on the page.
-   * @param options Optional. See {@link SayOptions}.
    * @returns See {@link ActionResult}.
    *
    * @example
@@ -207,7 +210,7 @@ export interface PlayWordInterface {
    * // Output: false
    * ```
    */
-  say(input: string, options: SayOptions): Promise<ActionResult>
+  say(input: string): Promise<ActionResult>
 }
 
 export interface Recording {
@@ -219,13 +222,6 @@ export interface Recording {
    * The actions performed in one step.
    */
   actions: Action[]
-}
-
-export interface SayOptions {
-  /**
-   * Whether to use the recordings for the current step when ebabling the record option.
-   */
-  withoutRecordings?: boolean
 }
 
 /**

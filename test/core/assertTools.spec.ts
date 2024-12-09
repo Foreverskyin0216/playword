@@ -10,6 +10,7 @@ const {
   mockAssertElementContentNotEquals,
   mockAssertElementVisible,
   mockAssertElementNotVisible,
+  mockAssertImageContains,
   mockAssertPageContains,
   mockAssertPageDoesNotContain,
   mockAssertPageTitleEquals,
@@ -21,6 +22,7 @@ const {
   mockAssertElementContentNotEquals: vi.fn(),
   mockAssertElementVisible: vi.fn(),
   mockAssertElementNotVisible: vi.fn(),
+  mockAssertImageContains: vi.fn(),
   mockAssertPageContains: vi.fn(),
   mockAssertPageDoesNotContain: vi.fn(),
   mockAssertPageTitleEquals: vi.fn(),
@@ -35,6 +37,7 @@ vi.mock('../../packages/core/src/actions', () => ({
   assertElementContentNotEquals: mockAssertElementContentNotEquals,
   assertElementVisible: mockAssertElementVisible,
   assertElementNotVisible: mockAssertElementNotVisible,
+  assertImageContains: mockAssertImageContains,
   assertPageContains: mockAssertPageContains,
   assertPageDoesNotContain: mockAssertPageDoesNotContain,
   assertPageTitleEquals: mockAssertPageTitleEquals,
@@ -55,6 +58,7 @@ describe('Spec: Assert Tools', () => {
           searchDocuments: mockSearchDocuments
         },
         debug: true,
+        elements: [],
         input: 'test',
         logger: { text: '' },
         record: true,
@@ -104,6 +108,7 @@ describe('Spec: Assert Tools', () => {
             searchDocuments: mockSearchDocuments
           },
           debug: true,
+          elements: [],
           input: 'test',
           logger: { text: '' },
           record: true,
@@ -159,6 +164,7 @@ describe('Spec: Assert Tools', () => {
             searchDocuments: mockSearchDocuments
           },
           debug: true,
+          elements: [],
           input: 'test',
           logger: { text: '' },
           record: true,
@@ -214,6 +220,7 @@ describe('Spec: Assert Tools', () => {
             searchDocuments: mockSearchDocuments
           },
           debug: true,
+          elements: [],
           input: 'test',
           logger: { text: '' },
           record: true,
@@ -266,6 +273,7 @@ describe('Spec: Assert Tools', () => {
             searchDocuments: mockSearchDocuments
           },
           debug: true,
+          elements: [],
           input: 'test',
           logger: { text: '' },
           record: true,
@@ -286,8 +294,58 @@ describe('Spec: Assert Tools', () => {
       })
     })
 
+    describe('When the AssertImageContains tool is used', () => {
+      const assertImageContainsTool = assertTools[4]
+      let successWithScreenshot: string
+      let failureWithoutScreenshot: string
+
+      beforeAll(async () => {
+        mockAssertImageContains.mockResolvedValue(true)
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockConfig.use_screenshot = true
+        successWithScreenshot = await assertImageContainsTool.invoke({ keywords: 'test' }, { configurable: mockConfig })
+
+        mockAssertImageContains.mockResolvedValue(false)
+        mockConfig.use_screenshot = false
+        failureWithoutScreenshot = await assertImageContainsTool.invoke(
+          { keywords: 'test' },
+          { configurable: mockConfig }
+        )
+      })
+
+      afterAll(() => {
+        mockAssertImageContains.mockRestore()
+        mockSearchDocuments.mockRestore()
+        mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
+          debug: true,
+          elements: [],
+          input: 'test',
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
+          snapshot: '',
+          step: 0
+        }
+        mockConfig.use_screenshot = true
+      })
+
+      test('Then the result is as expected', () => {
+        expect(successWithScreenshot).toBe('PASS: Image contains the information')
+        expect(failureWithoutScreenshot).toBe('FAIL: Image does not contain the information')
+      })
+
+      test('Then the actions are called as expected', () => {
+        expect(mockAssertImageContains).toHaveBeenCalledWith(mockConfig.ref, { xpath: '//*[@id="targetDiv"]' })
+      })
+    })
+
     describe('When the AssertPageContains tool is used', () => {
-      const assertPageContainsTool = assertTools[4]
+      const assertPageContainsTool = assertTools[5]
       let success: string
       let failure: string
 
@@ -312,7 +370,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageDoesNotContain tool is used', () => {
-      const assertPageDoesNotContainTool = assertTools[5]
+      const assertPageDoesNotContainTool = assertTools[6]
       let success: string
       let failure: string
 
@@ -337,7 +395,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageTitleEquals tool is used', () => {
-      const assertPageTitleEqualsTool = assertTools[6]
+      const assertPageTitleEqualsTool = assertTools[7]
       let success: string
       let failure: string
 
@@ -362,7 +420,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageUrlMatches tool is used', () => {
-      const assertPageUrlMatchesTool = assertTools[7]
+      const assertPageUrlMatchesTool = assertTools[8]
       let success: string
       let failure: string
 

@@ -1,104 +1,92 @@
 # PlayWord
 
 [![NPM Version](https://img.shields.io/npm/v/@playword/core)](https://www.npmjs.com/package/playword)
-[![Release Notes](https://img.shields.io/github/release/Foreverskyin0216/playword)](https://github.com/Foreverskyin0216/playword/releases)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-yellow)](https://nodejs.org/en/download/package-manager)
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
-![Codecov](https://img.shields.io/codecov/c/github/Foreverskyin0216/playword)
-[![GitHub License](https://img.shields.io/github/license/Foreverskyin0216/playword)](https://opensource.org/licenses/MIT)
+[![codecov](https://codecov.io/gh/Foreverskyin0216/playword/graph/badge.svg?token=8VO1EFXKDI)](https://codecov.io/gh/Foreverskyin0216/playword)
 
-Turn your ideas into executable actions on the web, bringing more fun and productivity to your testing!
+Turn your ideas into actions on the web, bringing more fun and productivity to your testing.
+
+![PlayWord](https://i.ibb.co/JtfJvXH/demo1.gif)
 
 ## 📦 Installation
 
-Install playword with any package manager you prefer.
+Choose the package that best suits your needs.
 
-```sh
-# npm
-npm install @playword/core
-# yarn
-yarn add @playword/core
+### @playword/core
+
+The `@playword/core` package provides the core functionality of PlayWord and can be used as a standard **Node.js** module.
+
+```bash
+# Install with any package manager you prefer
+npm install @playword/core --save-dev
 ```
 
-## 📝 Usage
+### @playword/cli
 
-PlayWord is very straightforward to use.
+The `@playword/cli` package enables you to execute PlayWord tests directly from the command line.
 
-This package requires calling OpenAI API. You first need to export your API key as an environment variable.
+For ease of use, I recommend running this package with `npx`.
+
+```bash
+# Run a PlayWord test step by step
+npx @playword/cli test --headed --verbose
+```
+
+[See documentation](https://github.com/Foreverskyin0216/playword/tree/main/packages/cli) for usage example and options documentation.
+
+## 📘 Getting Started
+
+PlayWord uses the [OpenAI API](https://platform.openai.com/docs/overview) to understand the user's intent and perform corresponding actions.
+
+To get started, export your OpenAI API key as an environment variable or pass it directly through `openAIOptions`.
 
 ```bash
 export OPENAI_API_KEY="sk-..."
 ```
 
-Or pass it to `openAIOptions`.
-
 ```typescript
-// Set the API Key with the default endpoint
 const playword = new PlayWord(page, {
+  debug: true,             // Enable debug mode
   openAIOptions: {
-    apiKey: 'sk-...'
-  }
-})
-
-// Use your own endpoint
-const playword = new PlayWord(page, {
-  openAIOptions: {
-    apiKey: 'sk-...',
-    baseURL: 'https://your-endpoint'
+    apiKey: 'sk-...',      // Your OpenAI API Key
+    baseURL: 'https://...' // Custom endpoint (if applicable)
+    // ...                 // Additional OpenAI API options can be configured here
   }
 })
 ```
 
-### 💬 Say what you need to the browser
+## 💬 Communicate with the browser
 
-Now you are ready to use PlayWord. See the example below.
+In its basic usage, you can initialize PlayWord with a Playwright page and use the `say` method to interact with the page.
 
-```typescript
-import { chromium } from 'playwright'
-import PlayWord from '@playword/core'
+![PlayWord](https://i.ibb.co/dpGSFgG/demo3.gif)
 
-const browser = await chromium.launch()
-const page = await browser.newPage()
+No need to worry about locating elements or performing interactions——**PlayWord handles all of that for you**.
 
-const playword = new PlayWord(page)
+### ✅ assertion
 
-await playword.say('Navigate to https://www.google.com')
-
-await playword.say('Input "Hello, World" in the search field')
-
-await playword.say('Press Enter')
-// Output: I pressed Enter, and the search results for "Hello, World" are now displayed.
-```
-
-No need to worry about how to locate elements or how to interact with them. PlayWord will handle everything for you.
-
-### 🧪 assertion
-
-Calling the method with sentences that start with specific keywords will be treated as assertions.
+In PlayWord, keywords are used to identify whether a step is an assertion. This approach ensures more stable results compared to relying solely on AI judgment.
 
 ```typescript
-import { test, expect } from '@playwright/test'
-import PlayWord from '@playword/core'
-
-test('An example of using PlayWord in a Playwright test', async ({ page }) => {
+test('Bootstrap Website Test', async function () {
+  // Initialize PlayWord
   const playword = new PlayWord(page)
 
-  await playword.say('Navigate to https://www.google.com')
+  // Navigate to the website
+  await playword.say('Navigate to https://getbootstrap.com')
 
-  await playword.say('Input "Hello, World" in the search field')
+  // Interact with elements
+  await playword.say('Click the search field')
+  await playword.say('Input "Quick Start" in the search bar')
+  await playword.say('Press enter')
 
-  await playword.say('Press Enter')
-
-  const result = await playword.say('Check if the page contains "HELLO WORLD"')
-
-  expect(result).toBe(true)
+  // Perform an assertion
+  assert(await playword.say('Is "<h1>Hello, world!</h1>" on the page?'))
 })
 ```
 
-### 🔍 Assertion keywords
-
-Keyword matching is used to determine if a step is an assertion, as it provides more stable results than AI judgment.
-
-When a sentence starts with any of the following keywords, the intent is judged as an assertion: **(case insensitive)**
+A sentence starting with any of the following **case-insensitive** keywords will be recognized as an assertion:
 
 - are
 - assert
@@ -128,124 +116,130 @@ When a sentence starts with any of the following keywords, the intent is judged 
 - validate
 - verify
 
-### 🔴 Recordings
+### 🖼️ Frame handling
 
-PlayWord supports recording the executions and replaying them later.
+To interact with elements inside frames, simply instruct PlayWord to switch to the desired frame.
 
 ```typescript
-// Save the recordings in the default path (.playword/recordings.json)
+await playword.say('Go to https://iframetester.com')
+await playword.say('Type "https://www.saucedemo.com" in the URL field')
+await playword.say('Click the render button')
+
+await playword.say('Switch to the frame with the url "https://www.saucedemo.com"')
+
+// Perform actions inside the frame
+// ...
+
+await playword.say('Switch to the main frame')
+```
+
+### 🔧 Custom variables
+
+Hardcoding sensitive information in your test cases is not a good practice.
+Instead, use custom variables with the syntax `{VARIABLE_NAME}` and define them in your environment settings.
+
+```typescript
+// In your .env file
+// USERNAME=standard_user
+// PASSWORD=secret_sauce
+
+import 'dotenv/config'
+// ...
+
+await playword.say('Navigate to https://www.saucedemo.com')
+
+await playword.say('Input {USERNAME} in the username field')
+await playword.say('Input {PASSWORD} in the password field')
+
+await playword.say('Log in')
+// ...
+```
+
+## 🔴 Recordings
+
+PlayWord supports recording test executions and replaying them later for efficient and consistent testing.
+
+```typescript
+// Save recordings to the default path (.playword/recordings.json)
 const playword = new PlayWord(page, { record: true })
 
-// Specify the path to save the recordings (Should end with .json)
+// Save recordings to a custom path (must end with .json)
 const playword = new PlayWord(page, { record: 'path/to/recordings.json' })
 ```
 
-As the recordings are generated, PlayWord will prioritize using them to execute the tests without consuming API tokens.
+When recordings are available, PlayWord will prioritize using them to execute tests, eliminating the need to consume API tokens.
 
 ### 🔄 Retry on failure
 
-Sometimes, errors may occur due to UI changes or unexpected behaviors. In such cases, using `retryOnFailure` will allow PlayWord to retry the failed action using AI.
+Occasionally, errors may occur due to UI changes or unexpected behaviors.
+In such cases, enabling `retryOnFailure` allows PlayWord to retry the failed action using AI, increasing test resilience.
 
 ```typescript
 const playword = new PlayWord(page, { record: true, retryOnFailure: true })
 ```
 
-You can also disable recordings for specific steps by setting `withoutRecordings` to **true**.
+### ✨ Force AI Control
+
+To force PlayWord to use AI for specific steps during playback, start the sentence with `[AI]`.
 
 ```typescript
-await playword.say('Navigate to https://www.google.com')
+await playword.say('[AI] click the "Login" button')
 
-await playword.say('Input "Hello, World" in the search field', { withoutRecordings: true })
-
-await playword.say('Press Enter')
+await playword.say('[AI] verify the URL matches "https://www.saucedemo.com/inventory.html"')
 ```
 
-### 📸 Screenshot reference
+## 📸 Screenshot reference
 
-Screenshot reference helps AI understand the page state and better meet your needs. However, it will increase the cost of the OpenAI API and take longer to process.
+Screenshot reference helps AI understand the page state and better meet your needs.
 
-To enable screenshot reference, set `useScreenshot` to **true**.
+![PlayWord](https://i.ibb.co/CKSQjNG/demo2.gif)
+
+To enable this feature, set `useScreenshot` to **true**.
 
 ```typescript
 const playword = new PlayWord(page, { useScreenshot: true })
 ```
 
-### 🖼️ Handle frames
+## 🌟 Why use PlayWord?
 
-If you need to interact with elements inside frames, just tell PlayWord which frame you want to switch to.
+| Aspect         | Traditional Testing                                 | PlayWord                                                     |
+| -------------- | --------------------------------------------------- | ------------------------------------------------------------ |
+| Dev Experience | Locating elements is very frustrating               | AI takes care of locating elements. Say goodbye to selectors |
+| Efficiency     | Time is needed for writing both test cases and code | Test cases serve both as documentation and executable tests  |
+| Maintainance   | High maintenance cost due to UI changes             | AI-powered adaption to UI changes                            |
+| Learning Curve | Requires knowledge of testing frameworks and tools  | Just use natural language to execute tests                   |
 
-```typescript
-await playword.say('Go to https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe')
+## 📜 Supported actions in PlayWord
 
-await playword.say('Switch to the frame contains the street map')
+### Page actions
 
-await playword.say('Click the "zoom-in" button')
-
-await playword.say('Click the "zoom-out" button')
-
-await playword.say('Go back to the main page')
-```
-
-### 🔧 Debug mode
-
-Enable debug mode by setting `debug` to **true**. This will print the AI's responses during execution.
-
-```typescript
-const playword = new PlayWord(page, { debug: true })
-```
-
-### 🚀 Perform multiple actions in one sentence
-
-If your input contains multiple actions, they will be executed in parallel.
-
-**NOTE**: Since it is not possible to determine which step will be finished first, only use multiple actions under the premise that the order of execution does not matter.
-
-```typescript
-await playword.say('Navigate to https://github.com/')
-
-await playword.say('Click the "Sign in" link')
-
-await playword.say('Input "{EMAIL}" in the email field and "{PASSWORD}" in the password field')
-
-await playword.say('Click the "Sign in" button')
-```
-
-## 🤔 So why PlayWord?
-
-| Aspect         | Traditional Testing                                   | PlayWord                                 |
-| -------------- | ----------------------------------------------------- | ---------------------------------------- |
-| Dev Experience | Locating elements is very frustrating                 | Say goodbye to locating elements.        |
-| Dev Speed      | Time is needed for both test cases and test code      | Remove the time spent writing test code  |
-| Maintainance   | High maintenance cost due to UI changes               | AI-powered adaption to UI changes        |
-| Readability    | Test code and output aren't always easy to understand | Test cases are readable and executable   |
-
-## 💡 Supported actions in PlayWord
-
-Currently, PlayWord supports the following actions:
-
-### Browser actions
-
-- Click on elements
-- Get attributes
-- Hover over elements
-- Input text in elements
-- Navigate to URLs
-- Press keys
-- Scroll on the page
-- Select options
-- Switch to frames
-- Sleep for a specific duration
-- Wait for specific text to appear
+- Click on an element
+- Get a specific attribute from an element
+- Get specific information from the screenshot of an element ✨
+- Get text of an element
+- Go back to the previous page
+- Go to a specific URL
+- Hover over an element
+- Press a key or keys
+- Scroll in a specific direction (top, bottom, up, down)
+- Select an option from a select element
+- Switch to a frame
+- Type text into an input field or textarea
+- Wait for a certain amount of time
+- Wait for text to appear on the page
 
 ### Assertion
 
-- Assert the content of an element is equal to specific text
-- Assert the content of an element is not equal to specific text
-- Assert the element is visible
-- Assert the element is not visible
-- Assert the page contains specific text
-- Assert the page does not contain specific text
-- Assert the page title is equal to specific text
-- Assert the URL matches specific RegExp patterns
+- Check if an element has specific text
+- Check if an element does not have specific text
+- Check if an element is visible
+- Check if an element is not visible
+- Check if the page contains specific text
+- Check if the page does not contain specific text
+- Check if the page title is equal to specific text
+- Check if the page URL matches specific RegExp patterns
+- Check if the screenshot of an element contains specific information ✨
 
-### More actions will be supported in the future!
+### Note: The actions marked with ✨ are AI-powered even during playback.
+
+## 🚀 More actions will be supported in future releases
