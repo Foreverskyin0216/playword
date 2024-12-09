@@ -15,17 +15,20 @@ const { mockAll, mockGetAttribute, mockInvoke, mockIsVisible, mockWaitForLoadSta
   mockIsVisible: vi.fn(),
   mockWaitForLoadState: vi.fn()
 }))
+
+vi.mock('@langchain/openai', () => ({
+  ChatOpenAI: vi.fn(() => ({
+    bindTools: vi.fn(() => ({ invoke: mockInvoke })),
+    withStructuredOutput: vi.fn(() => ({ invoke: mockInvoke }))
+  })),
+  OpenAIEmbeddings: vi.fn()
+}))
+
 vi.mock('fs/promises', async () => ({
   access: (await vi.importActual('fs/promises')).access,
   mkdir: vi.fn(),
   readFile: (await vi.importActual('fs/promises')).readFile,
   writeFile: vi.fn()
-}))
-
-vi.mock('../../packages/core/src/logger', () => ({
-  divider: vi.fn(),
-  info: vi.fn(),
-  startLog: vi.fn().mockReturnValue({ fail: vi.fn(), succeed: vi.fn() })
 }))
 
 vi.mock('playwright-core', () => ({
@@ -48,6 +51,7 @@ vi.mock('playwright-core', () => ({
               getByText: vi.fn().mockReturnThis(),
               hover: vi.fn(),
               isVisible: mockIsVisible,
+              screenshot: vi.fn().mockResolvedValue(Buffer.from('mock-screenshot')),
               selectOption: vi.fn(),
               textContent: vi.fn().mockResolvedValue('mock-text')
             })),
@@ -59,6 +63,7 @@ vi.mock('playwright-core', () => ({
         ]),
         evaluate: vi.fn(),
         getByText: vi.fn(() => ({ all: mockAll, isVisible: mockIsVisible })),
+        goBack: vi.fn().mockResolvedValue('Navigated back'),
         goto: vi.fn(),
         keyboard: { press: vi.fn() },
         locator: vi.fn(() => ({
@@ -71,6 +76,7 @@ vi.mock('playwright-core', () => ({
           getByText: vi.fn().mockReturnThis(),
           hover: vi.fn(),
           isVisible: mockIsVisible,
+          screenshot: vi.fn().mockResolvedValue(Buffer.from('mock-screenshot')),
           selectOption: vi.fn(),
           textContent: vi.fn().mockResolvedValue('mock-text')
         })),
@@ -85,8 +91,23 @@ vi.mock('playwright-core', () => ({
   }
 }))
 
+vi.mock('../../packages/core/src/ai', () => ({
+  AI: vi.fn(() => ({
+    retrieveImageInformation: vi.fn().mockResolvedValue('mock-image-information'),
+    checkImageInformation: vi.fn().mockResolvedValue(true)
+  }))
+}))
+vi.mock('../../packages/core/src/actionUtils', async () => ({
+  getInputVariable: (await vi.importActual('../../packages/core/src/actionUtils')).getInputVariable,
+  markElement: vi.fn(),
+  unmarkElement: vi.fn()
+}))
 vi.mock('../../packages/core/src/graph', () => ({ actionGraph: { invoke: mockInvoke } }))
-vi.mock('../../packages/core/src/actionUtils', () => ({ markElement: vi.fn(), unmarkElement: vi.fn() }))
+vi.mock('../../packages/core/src/logger', () => ({
+  divider: vi.fn(),
+  info: vi.fn(),
+  startLog: vi.fn().mockReturnValue({ error: vi.fn(), success: vi.fn() })
+}))
 
 describe('Spec: PlayWord Class', () => {
   describe('Given a PlayWord instance', () => {
@@ -147,6 +168,7 @@ describe('Spec: PlayWord Class', () => {
       describe('When the recordings file exists', () => {
         let result: ActionResult
         beforeAll(async () => {
+          process.env.VARIABLE = 'mock-variable'
           mockAll.mockResolvedValue([
             {
               click: vi.fn(),
@@ -163,6 +185,7 @@ describe('Spec: PlayWord Class', () => {
         })
 
         afterAll(() => {
+          delete process.env.VARIABLE
           mockAll.mockRestore()
           mockGetAttribute.mockRestore()
           mockIsVisible.mockRestore()
@@ -180,6 +203,9 @@ describe('Spec: PlayWord Class', () => {
 
           result = await playword.say('assertElementNotVisible')
           expect(result).toEqual(false)
+
+          result = await playword.say('assertImageContains')
+          expect(result).toEqual(true)
 
           result = await playword.say('assertPageContains')
           expect(result).toEqual(true)
@@ -199,11 +225,17 @@ describe('Spec: PlayWord Class', () => {
           result = await playword.say('getAttribute')
           expect(result).toBe('Attribute value: mock-attribute')
 
+          result = await playword.say('getImageInformation')
+          expect(result).toBe('mock-image-information')
+
           result = await playword.say('getScreenshot')
           expect(result).toBe('data:image/jpeg;base64,' + Buffer.from('mock-screenshot').toString('base64'))
 
           result = await playword.say('getSnapshot')
           expect(result).toBe('mock-snapshot')
+
+          result = await playword.say('goBack')
+          expect(result).toBe('Navigated back')
 
           result = await playword.say('goto')
           expect(result).toBe('Navigated to mock-url')
@@ -212,6 +244,12 @@ describe('Spec: PlayWord Class', () => {
           expect(result).toBe('Hovered on mock-xpath')
 
           result = await playword.say('input')
+          expect(result).toBe('Filled in mock-xpath')
+
+          result = await playword.say('input with existing variable')
+          expect(result).toBe('Filled in mock-xpath')
+
+          result = await playword.say('input with non-existing variable')
           expect(result).toBe('Filled in mock-xpath')
 
           result = await playword.say('mark')
@@ -245,7 +283,7 @@ describe('Spec: PlayWord Class', () => {
           expect(result).toBe('Unmarked mock-xpath with order 1')
 
           result = await playword.say('waitForText')
-          expect(result).toBe('Waited for text mock-text')
+          expect(result).toBe('Waited for text: mock-text')
         }, 30000)
       })
 
@@ -309,6 +347,9 @@ describe('Spec: PlayWord Class', () => {
           result = await playword.say('assertElementNotVisible')
           expect(result).toBe(false)
 
+          result = await playword.say('assertImageContains')
+          expect(result).toEqual(true)
+
           result = await playword.say('assertPageContains')
           expect(result).toBe(true)
 
@@ -325,6 +366,9 @@ describe('Spec: PlayWord Class', () => {
           const pageContent = JSON.parse(result?.[0]?.pageContent)
           expect(pageContent).toHaveProperty('name', 'mock-frame')
           expect(pageContent).toHaveProperty('url', 'mock-url')
+
+          result = await playword.say('getImageInformation')
+          expect(result).toBe('mock-image-information')
 
           result = await playword.say('getSnapshot')
           expect(result).toBe('mock-snapshot')
@@ -363,7 +407,7 @@ describe('Spec: PlayWord Class', () => {
           expect(result).toBe('Unmarked mock-xpath with order 1')
 
           result = await playword.say('waitForText')
-          expect(result).toBe('Waited for text mock-text')
+          expect(result).toBe('Waited for text: mock-text')
         }, 30000)
       })
 

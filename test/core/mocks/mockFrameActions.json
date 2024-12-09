@@ -66,6 +66,17 @@
     ]
   },
   {
+    "input": "assertImageContains",
+    "actions": [
+      {
+        "name": "assertImageContains",
+        "params": {
+          "xpath": "mock-xpath"
+        }
+      }
+    ]
+  },
+  {
     "input": "assertPageContains",
     "actions": [
       {
@@ -116,6 +127,17 @@
       {
         "name": "getFrames",
         "params": {}
+      }
+    ]
+  },
+  {
+    "input": "getImageInformation",
+    "actions": [
+      {
+        "name": "getImageInformation",
+        "params": {
+          "xpath": "mock-xpath"
+        }
       }
     ]
   },

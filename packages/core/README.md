@@ -150,12 +150,12 @@ Sometimes, errors may occur due to UI changes or unexpected behaviors. In such c
 const playword = new PlayWord(page, { record: true, retryOnFailure: true })
 ```
 
-You can also disable recordings for specific steps by setting `withoutRecordings` to **true**.
+You can also disable recordings by starting the sentence with `[AI]`.
 
 ```typescript
 await playword.say('Navigate to https://www.google.com')
 
-await playword.say('Input "Hello, World" in the search field', { withoutRecordings: true })
+await playword.say('[AI] Input "Hello, World" in the search field')
 
 await playword.say('Press Enter')
 ```
@@ -205,7 +205,7 @@ await playword.say('Navigate to https://github.com/')
 
 await playword.say('Click the "Sign in" link')
 
-await playword.say('Input "{EMAIL}" in the email field and "{PASSWORD}" in the password field')
+await playword.say('Input {EMAIL} in the email field and {PASSWORD} in the password field')
 
 await playword.say('Click the "Sign in" button')
 ```

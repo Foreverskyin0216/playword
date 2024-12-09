@@ -21,6 +21,11 @@ describe('Spec: Logger', () => {
   describe('When info is called', () => {
     test('It should print an information message', () => {
       info('message')
+      expect(mockConsoleLog).toHaveBeenCalledWith('message')
+    })
+
+    test('It should print an information message with green color', () => {
+      info('message', 'green')
       expect(mockConsoleLog).toHaveBeenCalledWith('\x1b[32mmessage\x1b[0m')
     })
 

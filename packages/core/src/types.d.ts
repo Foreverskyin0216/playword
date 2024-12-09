@@ -187,7 +187,6 @@ export interface PlayWordInterface {
    * The input will be converted to the corresponding action to operate on the page.
    *
    * @param input The action to perform on the page.
-   * @param options Optional. See {@link SayOptions}.
    * @returns See {@link ActionResult}.
    *
    * @example
@@ -207,7 +206,7 @@ export interface PlayWordInterface {
    * // Output: false
    * ```
    */
-  say(input: string, options: SayOptions): Promise<ActionResult>
+  say(input: string): Promise<ActionResult>
 }
 
 export interface Recording {
@@ -219,13 +218,6 @@ export interface Recording {
    * The actions performed in one step.
    */
   actions: Action[]
-}
-
-export interface SayOptions {
-  /**
-   * Whether to use the recordings for the current step when ebabling the record option.
-   */
-  withoutRecordings?: boolean
 }
 
 /**

@@ -46,6 +46,17 @@
     ]
   },
   {
+    "input": "assertImageContains",
+    "actions": [
+      {
+        "name": "assertImageContains",
+        "params": {
+          "xpath": "mock-xpath"
+        }
+      }
+    ]
+  },
+  {
     "input": "assertPageContains",
     "actions": [
       {
@@ -113,6 +124,17 @@
     ]
   },
   {
+    "input": "getImageInformation",
+    "actions": [
+      {
+        "name": "getImageInformation",
+        "params": {
+          "xpath": "mock-xpath"
+        }
+      }
+    ]
+  },
+  {
     "input": "getScreenshot",
     "actions": [
       {
@@ -126,6 +148,15 @@
     "actions": [
       {
         "name": "getSnapshot",
+        "params": {}
+      }
+    ]
+  },
+  {
+    "input": "goBack",
+    "actions": [
+      {
+        "name": "goBack",
         "params": {}
       }
     ]
@@ -160,6 +191,30 @@
         "params": {
           "xpath": "mock-xpath",
           "text": "mock-text"
+        }
+      }
+    ]
+  },
+  {
+    "input": "input with existing variable",
+    "actions": [
+      {
+        "name": "input",
+        "params": {
+          "xpath": "mock-xpath",
+          "text": "{VARIABLE}"
+        }
+      }
+    ]
+  },
+  {
+    "input": "input with non-existing variable",
+    "actions": [
+      {
+        "name": "input",
+        "params": {
+          "xpath": "mock-xpath",
+          "text": "{NON_EXISTING_VARIABLE}"
         }
       }
     ]

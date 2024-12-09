@@ -7,7 +7,9 @@ import pageTools from '../../packages/core/src/pageTools'
 const {
   mockClick,
   mockGetAttribute,
+  mockGetImageInformation,
   mockGetSnapshot,
+  mockGoBack,
   mockGoTo,
   mockHover,
   mockInput,
@@ -22,7 +24,9 @@ const {
   mockClick: vi.fn(),
   mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
   mockGetAttribute: vi.fn(),
+  mockGetImageInformation: vi.fn(),
   mockGetSnapshot: vi.fn(),
+  mockGoBack: vi.fn(),
   mockGoTo: vi.fn(),
   mockHover: vi.fn(),
   mockInput: vi.fn(),
@@ -39,8 +43,10 @@ vi.mock('../../packages/core/src/actions', () => ({
   click: mockClick,
   getAttribute: mockGetAttribute,
   getFrames: vi.fn(),
+  getImageInformation: mockGetImageInformation,
   getSnapshot: mockGetSnapshot,
   getScreenshot: vi.fn(),
+  goBack: mockGoBack,
   goto: mockGoTo,
   hover: mockHover,
   input: mockInput,
@@ -178,8 +184,75 @@ describe('Spec: Page Tools', () => {
       })
     })
 
+    describe('When the GetImageInformation tool is used', () => {
+      const getImageInformationTool = pageTools[2]
+      let resultWithScreenshot: string
+      let resultWithoutScreenshot: string
+
+      beforeAll(async () => {
+        mockGetImageInformation.mockResolvedValue('getImageInformation-result')
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
+        mockConfig.use_screenshot = true
+        resultWithScreenshot = await getImageInformationTool.invoke({ keywords: 'test' }, { configurable: mockConfig })
+
+        mockConfig.use_screenshot = false
+        resultWithoutScreenshot = await getImageInformationTool.invoke(
+          { keywords: 'test' },
+          { configurable: mockConfig }
+        )
+      })
+
+      afterAll(() => {
+        mockGetImageInformation.mockRestore()
+        mockSearchDocuments.mockRestore()
+        mockConfig.ref = {
+          ai: {
+            embedDocuments: vi.fn(),
+            getBestCandidate: vi.fn().mockResolvedValue(0),
+            searchDocuments: mockSearchDocuments
+          },
+          debug: true,
+          input: 'test',
+          logger: { text: '' },
+          record: true,
+          recordings: [{ input: 'test', actions: [] }],
+          snapshot: '',
+          step: 0
+        }
+      })
+
+      test('Then the result is as expected', () => {
+        expect(resultWithScreenshot).toBe('getImageInformation-result')
+        expect(resultWithoutScreenshot).toBe('getImageInformation-result')
+      })
+
+      test('Then the actions are called as expected', () => {
+        expect(mockGetImageInformation).toHaveBeenCalledWith(mockConfig.ref, { xpath: '//*[@id="targetDiv"]' })
+      })
+    })
+
+    describe('When the GoBack tool is used', () => {
+      const goBackTool = pageTools[3]
+      let result: string
+
+      beforeAll(async () => {
+        mockGoBack.mockResolvedValue('goBack-result')
+        result = await goBackTool.invoke({}, { configurable: mockConfig })
+      })
+
+      afterAll(() => mockGoBack.mockRestore())
+
+      test('Then the result is as expected', () => {
+        expect(result).toBe('goBack-result')
+      })
+
+      test('Then the actions are called as expected', () => {
+        expect(mockGoBack).toHaveBeenCalledWith(mockConfig.ref)
+      })
+    })
+
     describe('When the GoTo tool is used', () => {
-      const gotoTool = pageTools[2]
+      const gotoTool = pageTools[4]
       let result: string
 
       beforeAll(async () => {
@@ -199,7 +272,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Hover tool is used', () => {
-      const hoverTool = pageTools[3]
+      const hoverTool = pageTools[5]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -243,7 +316,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Input tool is used', () => {
-      const inputTool = pageTools[4]
+      const inputTool = pageTools[6]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -290,7 +363,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the PressKeys tool is used', () => {
-      const pressKeysTool = pageTools[5]
+      const pressKeysTool = pageTools[7]
       let result: string
 
       beforeAll(async () => {
@@ -310,7 +383,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Scroll tool is used', () => {
-      const scrollTool = pageTools[6]
+      const scrollTool = pageTools[8]
       let result: string
 
       beforeAll(async () => {
@@ -330,7 +403,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Select tool is used', () => {
-      const selectTool = pageTools[7]
+      const selectTool = pageTools[9]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -381,7 +454,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Sleep tool is used', () => {
-      const sleepTool = pageTools[8]
+      const sleepTool = pageTools[10]
       let result: string
 
       beforeAll(async () => {
@@ -401,7 +474,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the SwitchFrame tool is used', () => {
-      const switchFrameTool = pageTools[9]
+      const switchFrameTool = pageTools[11]
       let enterFrameResult: string
       let returnToMainPageResult: string
 
@@ -424,7 +497,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the WaitForText tool is used', () => {
-      const waitForTextTool = pageTools[10]
+      const waitForTextTool = pageTools[12]
       let result: string
 
       beforeAll(async () => {

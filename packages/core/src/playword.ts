@@ -1,6 +1,6 @@
 import type { AIMessage } from '@langchain/core/messages'
 import type { Page } from 'playwright-core'
-import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording, SayOptions } from './types'
+import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording } from './types'
 
 import { randomUUID } from 'crypto'
 import { access, mkdir, readFile, writeFile } from 'fs/promises'
@@ -11,6 +11,7 @@ import { actionGraph } from './graph'
 import * as actions from './actions'
 import { AI } from './ai'
 import { divider, info, startLog } from './logger'
+import { aiPattern } from './resources'
 
 /**
  * Decorator to handle the test fixture, including the setup process and teardown process.
@@ -107,7 +108,7 @@ export class PlayWord implements PlayWordInterface {
     let result: ActionResult
 
     if (this.debug) {
-      info('Input: ' + this.input)
+      info('Input: ' + this.input, 'green')
       this.logger = startLog('Invoking the action graph...')
     }
     if (this.record) this.recordings[this.step] = { input: this.input, actions: [] }
@@ -125,8 +126,8 @@ export class PlayWord implements PlayWordInterface {
     result = ['true', 'false'].includes(result) ? result === 'true' : result
 
     if (this.logger) {
-      if (result) this.logger.succeed()
-      else this.logger.fail()
+      if (result) this.logger.success()
+      else this.logger.error()
     }
 
     return result
@@ -136,7 +137,7 @@ export class PlayWord implements PlayWordInterface {
     try {
       let result: ActionResult
 
-      if (this.debug) info(`[RECORDING] ${this.input}`, 'magenta')
+      if (this.debug) info(`[RECORDING] ${this.input}`, 'green')
 
       for (const { name, params } of recordings.actions) {
         result = await actions[name as keyof typeof actions](this, params)
@@ -144,6 +145,7 @@ export class PlayWord implements PlayWordInterface {
         if (this.debug) info('Return: ' + result)
 
         if (result === 'No element found' && this.retryOnFailure) {
+          info('No element found', 'red')
           info('Retrying with AI...', 'magenta')
           return await this.invokeAI()
         }
@@ -152,6 +154,7 @@ export class PlayWord implements PlayWordInterface {
       return result
     } catch (error) {
       if (this.retryOnFailure) {
+        info(error.message, 'red')
         info('Retrying with AI...', 'magenta')
         return await this.invokeAI()
       }
@@ -160,11 +163,11 @@ export class PlayWord implements PlayWordInterface {
   }
 
   @fixture
-  public async say(input: string, options: SayOptions = {}) {
+  public async say(input: string) {
     const matched = this.recordings.find((rec, index) => rec.input === input && index === this.step)
     let result: ActionResult
 
-    if (this.record && !options.withoutRecordings && matched) {
+    if (this.record && !aiPattern.test(input) && matched) {
       result = await this.invokeRecordings(matched)
     } else {
       result = await this.invokeAI()

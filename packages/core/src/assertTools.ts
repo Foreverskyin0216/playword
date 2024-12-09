@@ -14,6 +14,7 @@ import { genericTags } from './resources'
  * Include the following tools:
  * - **AssertElementContentEquals**
  * - **AssertElementVisible**
+ * - **AssertImageContains**
  * - **AssertPageContains**
  * - **AssertPageDoesNotContain**
  * - **AssertPageTitleEquals**
@@ -49,10 +50,7 @@ export default [
       const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
 
       if (ref.record)
-        ref.recordings[ref.step].actions.push({
-          name: 'assertElementContentEquals',
-          params: { xpath, text }
-        })
+        ref.recordings[ref.step].actions.push({ name: 'assertElementContentEquals', params: { xpath, text } })
 
       if (await actions.assertElementContentEquals(ref, { xpath, text })) {
         return 'PASS: Element content is equal to: ' + text
@@ -102,10 +100,7 @@ export default [
       const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
 
       if (ref.record)
-        ref.recordings[ref.step].actions.push({
-          name: 'assertElementContentNotEquals',
-          params: { xpath, text }
-        })
+        ref.recordings[ref.step].actions.push({ name: 'assertElementContentNotEquals', params: { xpath, text } })
 
       if (await actions.assertElementContentNotEquals(ref, { xpath, text })) {
         return 'PASS: Element content is not equal to: ' + text
@@ -155,11 +150,7 @@ export default [
 
       const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
 
-      if (ref.record)
-        ref.recordings[ref.step].actions.push({
-          name: 'assertElementVisible',
-          params: { xpath }
-        })
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertElementVisible', params: { xpath } })
 
       if (await actions.assertElementVisible(ref, { xpath })) {
         return 'PASS: Element is visible'
@@ -208,11 +199,7 @@ export default [
 
       const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
 
-      if (ref.record)
-        ref.recordings[ref.step].actions.push({
-          name: 'assertElementNotVisible',
-          params: { xpath }
-        })
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertElementNotVisible', params: { xpath } })
 
       if (await actions.assertElementNotVisible(ref, { xpath })) {
         return 'PASS: Element is invisible'
@@ -233,13 +220,59 @@ export default [
   ),
 
   tool(
+    async ({ keywords }, { configurable }) => {
+      const { ref, use_screenshot } = configurable as ToolConfig
+      const snapshot = await actions.getSnapshot(ref)
+      const elements = getElementLocations(sanitize(snapshot), genericTags)
+
+      if (snapshot !== ref.snapshot) {
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
+        ref.snapshot = snapshot
+        await ref.ai.embedDocuments(elements.map(({ element }) => element))
+        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
+      }
+
+      const retrieved = await ref.ai.searchDocuments(keywords)
+      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
+      }
+
+      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
+
+      if (use_screenshot) {
+        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
+      }
+
+      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
+
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertImageContains', params: { xpath } })
+
+      if (await actions.assertImageContains(ref, { xpath })) {
+        return 'PASS: Image contains the information'
+      }
+      return 'FAIL: Image does not contain the information'
+    },
+    {
+      name: 'AssertImageContains',
+      description:
+        'Call to capture a screenshot and verify that the image contains specific information that the user needs',
+      schema: z.object({
+        keywords: z
+          .string()
+          .describe(
+            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
+          )
+      })
+    }
+  ),
+
+  tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record)
-        ref.recordings[ref.step].actions.push({
-          name: 'assertPageContains',
-          params: { text }
-        })
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertPageContains', params: { text } })
 
       if (await actions.assertPageContains(ref, { text })) {
         return 'PASS: Page contains text: ' + text
@@ -258,11 +291,7 @@ export default [
   tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record)
-        ref.recordings[ref.step].actions.push({
-          name: 'assertPageDoesNotContain',
-          params: { text }
-        })
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertPageDoesNotContain', params: { text } })
 
       if (await actions.assertPageDoesNotContain(ref, { text })) {
         return 'PASS: Page does not contain text: ' + text
@@ -281,11 +310,7 @@ export default [
   tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record)
-        ref.recordings[ref.step].actions.push({
-          name: 'assertPageTitleEquals',
-          params: { text }
-        })
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertPageTitleEquals', params: { text } })
 
       if (await actions.assertPageTitleEquals(ref, { text })) {
         return 'PASS: Page title is equal to: ' + text
@@ -304,11 +329,7 @@ export default [
   tool(
     async ({ pattern }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record)
-        ref.recordings[ref.step].actions.push({
-          name: 'assertPageUrlMatches',
-          params: { pattern }
-        })
+      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertPageUrlMatches', params: { pattern } })
 
       if (await actions.assertPageUrlMatches(ref, { pattern })) {
         return 'PASS: Page URL matches the pattern: ' + pattern
