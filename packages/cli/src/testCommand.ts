@@ -17,7 +17,7 @@ export default {
     return yargs
       .option('headed', {
         alias: 'h',
-        describe: 'Whether to enable headed mode'
+        describe: 'Whether to open the browser in headed mode'
       })
       .option('env-file', {
         alias: 'e',
@@ -29,7 +29,7 @@ export default {
       })
       .option('playback', {
         alias: 'p',
-        describe: 'Playback the specified recording file. Should be used with --record.'
+        describe: 'Whether to playback the test steps from a recording file'
       })
       .option('use-screenshot', {
         alias: 's',
@@ -47,7 +47,7 @@ export default {
       })
       .option('openai-options', {
         alias: 'o',
-        describe: 'Options to pass to OpenAI API',
+        describe: 'Additional OpenAI API options',
         type: 'array',
         coerce: (options: string[]) =>
           options.reduce(
@@ -97,13 +97,13 @@ export default {
 
       if (recordings.length && argv.playback) for (const rec of recordings) await runPlayWord(playword, rec.input)
       else
-        do await runPlayWord(playword, '[AI] ' + (await input({ message: 'What do you want to do?' })))
+        do await runPlayWord(playword, await input({ message: 'What do you want to do?' }))
         while (await confirm({ message: 'Continue to next step?' }))
 
       info('Closing browser')
       await browser.close()
 
-      if (argv.record) info('Recordings: ' + record)
+      if (argv.record) info('Saved recordings to ' + record)
       info('Test completed', 'green')
 
       process.exit(0)

@@ -30,10 +30,10 @@ For ease of use, I recommend running this package with `npx`.
 
 ```bash
 # Run a PlayWord test step by step
-npx @playword/cli test --headed --verbose
+npx @playword/cli test --headed --verbose -b webkit
 ```
 
-[See documentation](https://github.com/Foreverskyin0216/playword/tree/main/packages/cli) for usage example and options documentation.
+See [documentation](https://github.com/Foreverskyin0216/playword/tree/main/packages/cli) for usage examples and options.
 
 ## 📘 Getting Started
 
@@ -56,7 +56,7 @@ const playword = new PlayWord(page, {
 })
 ```
 
-## 💬 Communicate with the browser
+## 💬 Communicate with Browser
 
 In its basic usage, you can initialize PlayWord with a Playwright page and use the `say` method to interact with the page.
 
@@ -64,7 +64,7 @@ In its basic usage, you can initialize PlayWord with a Playwright page and use t
 
 No need to worry about locating elements or performing interactions——**PlayWord handles all of that for you**.
 
-### ✅ assertion
+### ✅ Assertion
 
 In PlayWord, keywords are used to identify whether a step is an assertion. This approach ensures more stable results compared to relying solely on AI judgment.
 
@@ -116,7 +116,7 @@ A sentence starting with any of the following **case-insensitive** keywords will
 - validate
 - verify
 
-### 🖼️ Frame handling
+### 🖼️ Frame Handling
 
 To interact with elements inside frames, simply instruct PlayWord to switch to the desired frame.
 
@@ -133,7 +133,7 @@ await playword.say('Switch to the frame with the url "https://www.saucedemo.com"
 await playword.say('Switch to the main frame')
 ```
 
-### 🔧 Custom variables
+### 🔧 Custom Variables
 
 Hardcoding sensitive information in your test cases is not a good practice.
 Instead, use custom variables with the syntax `{VARIABLE_NAME}` and define them in your environment settings.
@@ -169,7 +169,7 @@ const playword = new PlayWord(page, { record: 'path/to/recordings.json' })
 
 When recordings are available, PlayWord will prioritize using them to execute tests, eliminating the need to consume API tokens.
 
-### 🔄 Retry on failure
+### 🔄 Retry on Failure
 
 Occasionally, errors may occur due to UI changes or unexpected behaviors.
 In such cases, enabling `retryOnFailure` allows PlayWord to retry the failed action using AI, increasing test resilience.
@@ -178,7 +178,7 @@ In such cases, enabling `retryOnFailure` allows PlayWord to retry the failed act
 const playword = new PlayWord(page, { record: true, retryOnFailure: true })
 ```
 
-### ✨ Force AI Control
+### ✨ Using AI during Playback
 
 To force PlayWord to use AI for specific steps during playback, start the sentence with `[AI]`.
 
@@ -188,7 +188,7 @@ await playword.say('[AI] click the "Login" button')
 await playword.say('[AI] verify the URL matches "https://www.saucedemo.com/inventory.html"')
 ```
 
-## 📸 Screenshot reference
+## 📸 Screenshot Reference
 
 Screenshot reference helps AI understand the page state and better meet your needs.
 
@@ -209,9 +209,9 @@ const playword = new PlayWord(page, { useScreenshot: true })
 | Maintainance   | High maintenance cost due to UI changes             | AI-powered adaption to UI changes                            |
 | Learning Curve | Requires knowledge of testing frameworks and tools  | Just use natural language to execute tests                   |
 
-## 📜 Supported actions in PlayWord
+## 📜 Supported Actions in PlayWord
 
-### Page actions
+### Page Actions
 
 - Click on an element
 - Get a specific attribute from an element
@@ -240,6 +240,8 @@ const playword = new PlayWord(page, { useScreenshot: true })
 - Check if the page URL matches specific RegExp patterns
 - Check if the screenshot of an element contains specific information ✨
 
-### Note: The actions marked with ✨ are AI-powered even during playback.
+**Note**: The actions marked with ✨ are AI-powered even during playback.
 
-## 🚀 More actions will be supported in future releases
+### More actions will be supported in future releases 🚀
+
+## Finally, Have Fun with PlayWord! 🎉
