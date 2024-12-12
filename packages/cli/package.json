@@ -1,0 +1,51 @@
+{
+  "name": "@playword/cli",
+  "version": "0.0.0",
+  "description": "CLI tool for PlayWord",
+  "keywords": [
+    "ai",
+    "automated test",
+    "langchain",
+    "openai",
+    "playwright"
+  ],
+  "homepage": "https://github.com/Foreverskyin0216/playword/blob/main/packages/cli/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Foreverskyin0216/playword.git"
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "license": "MIT",
+  "author": "Zong-Wei Lu <foreverskyin@gmail.com>",
+  "bin": {
+    "cli": "./dist/index.js"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@inquirer/confirm": "^5.1.0",
+    "@inquirer/input": "^4.1.0",
+    "@playword/core": "^0.0.2",
+    "dotenv": "^16.4.7",
+    "playwright-core": "^1.49.1",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/yargs": "^17.0.33",
+    "openai": "^4.76.1",
+    "tsup": "^8.3.5"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

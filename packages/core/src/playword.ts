@@ -1,6 +1,6 @@
 import type { AIMessage } from '@langchain/core/messages'
 import type { Page } from 'playwright-core'
-import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording, SayOptions } from './types'
+import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording } from './types'
 
 import { randomUUID } from 'crypto'
 import { access, mkdir, readFile, writeFile } from 'fs/promises'
@@ -11,6 +11,7 @@ import { actionGraph } from './graph'
 import * as actions from './actions'
 import { AI } from './ai'
 import { divider, info, startLog } from './logger'
+import { aiPattern } from './resources'
 
 /**
  * Decorator to handle the test fixture, including the setup process and teardown process.
@@ -20,7 +21,7 @@ import { divider, info, startLog } from './logger'
  *
  * Teardown:
  * - Write the recordings to the record file.
- * - Increment the step.
+ * - Increment the step count.
  */
 const fixture = (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) => {
   const originalMethod = descriptor.value
@@ -47,7 +48,7 @@ const fixture = (_target: unknown, _propertyKey: string, descriptor: PropertyDes
 
     if (playword.debug) divider()
 
-    playword.input = args[0] as string
+    playword.input = (args[0] as string).replace(aiPattern, '').trim()
 
     const result = await originalMethod.apply(playword, args)
 
@@ -80,13 +81,14 @@ export class PlayWord implements PlayWordInterface {
   private threadId: string = randomUUID()
 
   public ai: AI
+  public elements = []
   public frame = undefined
   public step = 0
   public input = ''
   public snapshot = ''
   public recordings = [] as Recording[]
+  public logger: Awaited<ReturnType<typeof startLog>> | undefined
   public debug
-  public logger: ReturnType<typeof startLog> | undefined
   public page
   public record
   public retryOnFailure
@@ -103,12 +105,17 @@ export class PlayWord implements PlayWordInterface {
     this.say = this.say.bind(this)
   }
 
+  /**
+   * Use AI to perform the action.
+   *
+   * @returns The last action result.
+   */
   private async invokeAI() {
     let result: ActionResult
 
     if (this.debug) {
-      info('Input: ' + this.input)
-      this.logger = startLog('Invoking the action graph...')
+      info('[AI] ' + this.input, 'green')
+      this.logger = await startLog('Invoking the action graph...')
     }
     if (this.record) this.recordings[this.step] = { input: this.input, actions: [] }
 
@@ -125,23 +132,29 @@ export class PlayWord implements PlayWordInterface {
     result = ['true', 'false'].includes(result) ? result === 'true' : result
 
     if (this.logger) {
-      if (result) this.logger.succeed()
-      else this.logger.fail()
+      if (result) this.logger.success()
+      else this.logger.error()
     }
 
     return result
   }
 
+  /**
+   * Use the recordings to perform the action. If the action fails, retry with AI.
+   *
+   * @param recordings The recordings to perform.
+   * @returns The last action result.
+   */
   private async invokeRecordings(recordings: Recording) {
     try {
       let result: ActionResult
 
-      if (this.debug) info(`[RECORDING] ${this.input}`, 'magenta')
+      if (this.debug) info(`[RECORDING] ${this.input}`, 'green')
 
       for (const { name, params } of recordings.actions) {
         result = await actions[name as keyof typeof actions](this, params)
 
-        if (this.debug) info('Return: ' + result)
+        if (this.debug) info(result)
 
         if (result === 'No element found' && this.retryOnFailure) {
           info('Retrying with AI...', 'magenta')
@@ -152,6 +165,7 @@ export class PlayWord implements PlayWordInterface {
       return result
     } catch (error) {
       if (this.retryOnFailure) {
+        info(error.message, 'red')
         info('Retrying with AI...', 'magenta')
         return await this.invokeAI()
       }
@@ -160,11 +174,11 @@ export class PlayWord implements PlayWordInterface {
   }
 
   @fixture
-  public async say(input: string, options: SayOptions = {}) {
-    const matched = this.recordings.find((rec, index) => rec.input === input && index === this.step)
+  public async say(input: string) {
+    const matched = this.recordings.find((rec, index) => rec.input === this.input && index === this.step)
     let result: ActionResult
 
-    if (this.record && !options.withoutRecordings && matched) {
+    if (this.record && !aiPattern.test(input) && matched) {
       result = await this.invokeRecordings(matched)
     } else {
       result = await this.invokeAI()

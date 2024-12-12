@@ -1,7 +1,7 @@
 import type { ActionParams, PlayWordInterface } from './types'
 
 import { Document } from '@langchain/core/documents'
-import { markElement, unmarkElement } from './actionUtils'
+import { getInputVariable, markElement, unmarkElement } from './actionUtils'
 
 /**
  * Assert that the content of an element on the page or within the current frame is equal to a specific text.
@@ -14,7 +14,8 @@ export const assertElementContentEquals = async (ref: PlayWordInterface, params:
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
-  return (await locator.textContent())?.trim() === params.text?.trim()
+  const text = getInputVariable(params.text!)
+  return (await locator.textContent())?.trim() === text.trim()
 }
 
 /**
@@ -52,6 +53,19 @@ export const assertElementNotVisible = async (ref: PlayWordInterface, params: Ac
 }
 
 /**
+ * Assert that an image contains specific information.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the image element.
+ */
+export const assertImageContains = async (ref: PlayWordInterface, params: ActionParams) => {
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const image = await target.locator(params.xpath!).first().screenshot()
+  return ref.ai.checkImageInformation(ref.input, 'data:image/jpeg;base64,' + image.toString('base64'))
+}
+
+/**
  * Assert that the page contains a specific text.
  *
  * @param ref - PlayWord instance.
@@ -60,7 +74,8 @@ export const assertElementNotVisible = async (ref: PlayWordInterface, params: Ac
 export const assertPageContains = async (ref: PlayWordInterface, params: ActionParams) => {
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
-  const locators = await target.getByText(params.text!).all()
+  const text = getInputVariable(params.text!)
+  const locators = await target.getByText(text).all()
   return (await Promise.all(locators.map((locator) => locator.isVisible()))).some((item) => item)
 }
 
@@ -82,7 +97,8 @@ export const assertPageDoesNotContain = async (ref: PlayWordInterface, params: A
  */
 export const assertPageTitleEquals = async (ref: PlayWordInterface, params: ActionParams) => {
   await ref.page.waitForLoadState('load')
-  return (await ref.page.title()) === params.text
+  const text = getInputVariable(params.text!)
+  return (await ref.page.title()) === text
 }
 
 /**
@@ -152,6 +168,20 @@ export const getFrames = async (ref: PlayWordInterface) => {
 }
 
 /**
+ * Get the information from a screenshot of an element.
+ * This action requires calling the AI service even if running in record mode.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the element.
+ */
+export const getImageInformation = async (ref: PlayWordInterface, params: ActionParams) => {
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const image = await target.locator(params.xpath!).first().screenshot()
+  return ref.ai.retrieveImageInformation(ref.input, 'data:image/jpeg;base64,' + image.toString('base64'))
+}
+
+/**
  * Get a base64-encoded JPEG screenshot of the page.
  * It will return an empty string when the page is within a frame.
  *
@@ -172,6 +202,29 @@ export const getSnapshot = async (ref: PlayWordInterface) => {
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   return target.content()
+}
+
+/**
+ * Get text of an element on the page or within the current frame.
+ *
+ * @param ref - PlayWord instance.
+ * @param params.xpath - XPath to locate the element.
+ */
+export const getText = async (ref: PlayWordInterface, params: ActionParams) => {
+  const target = ref.frame ? ref.frame : ref.page
+  await target.waitForLoadState('load')
+  const locator = target.locator(params.xpath!).first()
+  return (await locator.evaluate((elem) => elem.firstChild?.textContent)) || ''
+}
+
+/**
+ * Go back to the previous page in the browser history.
+ *
+ * @param ref - PlayWord instance.
+ */
+export const goBack = async (ref: PlayWordInterface) => {
+  await ref.page.goBack()
+  return 'Navigated back'
 }
 
 /**
@@ -218,10 +271,11 @@ export const input = async (ref: PlayWordInterface, params: ActionParams) => {
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
   const locator = target.locator(params.xpath!).first()
+  const text = getInputVariable(params.text!)
 
   for (const element of await locator.all()) {
     if (await element.isVisible()) {
-      await element.fill(params.text!)
+      await element.fill(text)
       return 'Filled in ' + params.xpath!
     }
   }
@@ -360,6 +414,7 @@ export const unmark = async (ref: PlayWordInterface, params: ActionParams) => {
 export const waitForText = async (ref: PlayWordInterface, params: ActionParams) => {
   const target = ref.frame ? ref.frame : ref.page
   await target.waitForLoadState('load')
-  await target.waitForSelector(`text=${params.text}`, { state: 'visible', timeout: 30000 })
-  return 'Waited for text ' + params.text!
+  const text = getInputVariable(params.text!)
+  await target.waitForSelector('text=' + text, { state: 'visible', timeout: 30000 })
+  return 'Waited for text: ' + text
 }
