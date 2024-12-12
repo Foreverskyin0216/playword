@@ -5,7 +5,7 @@
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Foreverskyin0216/playword/graph/badge.svg?token=8VO1EFXKDI)](https://codecov.io/gh/Foreverskyin0216/playword)
 
-Enable you to execute PlayWord tests directly from the command line.
+Enable you to use PlayWord directly from the command line.
 
 ## 📦 Installation
 
@@ -16,16 +16,18 @@ npm install @playword/cli --save-dev
 # Use npx to run the package directly (recommended)
 npx @playword/cli test --headed --verbose
 ```
-## 💡 Usage
 
-### Test command
+## 📖 Available Commands
+
+### `test`
+
+Use this command to run a PlayWord test step by step.
 
 ```bash
-# Run a PlayWord test with options
 npx @playword/cli test [options]
 ```
 
-### Options for test command
+### Options for `test` command
 
 | Property           | Alias | Type           | Default    | Description                                                                                                        |
 | ------------------ | ----- | -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -36,4 +38,5 @@ npx @playword/cli test [options]
 | `--use-screenshot` | `-s`  | bool           | **false**  | Whether to enable screenshot reference.                                                                            |
 | `--browser`        | `-b`  | string         | **chrome** | Which browser to use. Supported values are `chromium`, `chrome`, `msedge`, `firefox` and `webkit`.                 |
 | `--verbose`        | `-v`  | bool           | **false**  | Whether to enable verbose mode.                                                                                    |
-| `--openai-options` | `-o`  | array          | **[]**     | Additional OpenAI API options. e.g.<br>`npx @playword/cli test --openai-options apiKey=sk-... baseURL=https://...` |
+| `--openai-options` | `-o`  | array          | **[]**     | Additional OpenAI API options. e.g.<br>`--openai-option apiKey=sk-... baseURL=https://...`                         |
+| `--help`           |       | bool           | **false**  | Show help information.                                                                                             |

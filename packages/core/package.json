@@ -1,7 +1,7 @@
 {
   "name": "@playword/core",
   "version": "0.1.1",
-  "description": "Turn your ideas into executable browser actions, bringing a new way to test your web applications.",
+  "description": "Turn your ideas into actions on the page, bringing a new way to test your web applications.",
   "keywords": [
     "ai",
     "automated test",
