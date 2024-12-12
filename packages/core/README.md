@@ -5,7 +5,7 @@
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Foreverskyin0216/playword/graph/badge.svg?token=8VO1EFXKDI)](https://codecov.io/gh/Foreverskyin0216/playword)
 
-Turn your ideas into actions on the web, bringing more fun and productivity to your testing.
+Turn your ideas into actions on the webpage, bringing productivity and fun to your testing.
 
 ![PlayWord](https://i.ibb.co/JtfJvXH/demo1.gif)
 
@@ -15,7 +15,7 @@ Choose the package that best suits your needs.
 
 ### @playword/core
 
-The `@playword/core` package provides the core functionality of PlayWord and can be used as a standard **Node.js** module.
+The `@playword/core` package provides the core functionality of PlayWord and can be used as a **Node.js** module.
 
 ```bash
 # Install with any package manager you prefer
@@ -24,12 +24,12 @@ npm install @playword/core --save-dev
 
 ### @playword/cli
 
-The `@playword/cli` package enables you to execute PlayWord tests directly from the command line.
+The `@playword/cli` package enables you to use PlayWord directly from the command line.
 
 For ease of use, I recommend running this package with `npx`.
 
 ```bash
-# Run a PlayWord test step by step
+# Run a PlayWord test
 npx @playword/cli test --headed --verbose -b webkit
 ```
 

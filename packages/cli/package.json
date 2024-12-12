@@ -1,7 +1,7 @@
 {
   "name": "@playword/cli",
   "version": "0.1.2",
-  "description": "CLI tool for PlayWord",
+  "description": "Use PlayWord instantly from the command line.",
   "keywords": [
     "ai",
     "automated test",
