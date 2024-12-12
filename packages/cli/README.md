@@ -5,7 +5,7 @@
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Foreverskyin0216/playword/graph/badge.svg?token=8VO1EFXKDI)](https://codecov.io/gh/Foreverskyin0216/playword)
 
-Enable you to use PlayWord directly from the command line.
+Use PlayWord instantly from the command line.
 
 ## 📦 Installation
 
@@ -13,7 +13,7 @@ Enable you to use PlayWord directly from the command line.
 # Install with any package manager you prefer
 npm install @playword/cli --save-dev
 
-# Use npx to run the package directly (recommended)
+# Run the package directly with npx (recommended)
 npx @playword/cli test --headed --verbose
 ```
 
@@ -21,13 +21,13 @@ npx @playword/cli test --headed --verbose
 
 ### `test`
 
-Use this command to run a PlayWord test step by step.
+Run a PlayWord test step by step.
 
 ```bash
 npx @playword/cli test [options]
 ```
 
-### Options for `test` command
+### Options
 
 | Property           | Alias | Type           | Default    | Description                                                                                                        |
 | ------------------ | ----- | -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
