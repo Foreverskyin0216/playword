@@ -1,7 +1,7 @@
 {
   "name": "@playword/cli",
   "version": "0.1.3",
-  "description": "Use PlayWord instantly from the command line.",
+  "description": "Use PlayWord instantly from the command line",
   "keywords": [
     "ai",
     "automated test",
@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@types/yargs": "^17.0.33",
-    "openai": "^4.76.1",
+    "openai": "^4.76.3",
     "tsup": "^8.3.5"
   },
   "publishConfig": {

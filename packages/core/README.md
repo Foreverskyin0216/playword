@@ -5,7 +5,7 @@
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Foreverskyin0216/playword/graph/badge.svg?token=8VO1EFXKDI)](https://codecov.io/gh/Foreverskyin0216/playword)
 
-Turn your ideas into actions on the webpage, bringing productivity and fun to your testing.
+Automate browsers with AI: What you say is what you get.
 
 ![PlayWord](https://i.ibb.co/JtfJvXH/demo1.gif)
 
@@ -47,7 +47,7 @@ export OPENAI_API_KEY="sk-..."
 
 ```typescript
 const playword = new PlayWord(page, {
-  debug: true,             // Enable debug mode
+  debug: true,             // Debug mode
   openAIOptions: {
     apiKey: 'sk-...',      // Your OpenAI API Key
     baseURL: 'https://...' // Custom endpoint (if applicable)
@@ -66,11 +66,18 @@ No need to worry about locating elements or performing interactions——**PlayW
 
 ### ✅ Assertion
 
-In PlayWord, keywords are used to identify whether a step is an assertion. This approach ensures more stable results compared to relying solely on AI judgment.
+PlayWord uses keywords to identify whether a step is an assertion. This approach ensures more stable results compared to relying solely on AI judgment.
 
 ```typescript
+import PlayWord from '@playword/core'
+import assert from 'node:assert'
+import test from 'node:test'
+import { chromium } from 'playwright'
+
 test('Bootstrap Website Test', async function () {
   // Initialize PlayWord
+  const browser = await chromium.launch()
+  const page = await browser.newPage()
   const playword = new PlayWord(page)
 
   // Navigate to the website
@@ -83,6 +90,7 @@ test('Bootstrap Website Test', async function () {
 
   // Perform an assertion
   assert(await playword.say('Is "<h1>Hello, world!</h1>" on the page?'))
+  await browser.close()
 })
 ```
 
@@ -135,8 +143,7 @@ await playword.say('Switch to the main frame')
 
 ### 🔧 Custom Variables
 
-Hardcoding sensitive information in your test cases is not a good practice.
-Instead, use custom variables with the syntax `{VARIABLE_NAME}` and define them in your environment settings.
+Hardcoding sensitive information in your test cases is not a good practice. Instead, use custom variables with the syntax `{VARIABLE_NAME}` and define them in your environment settings.
 
 ```typescript
 // In your .env file
