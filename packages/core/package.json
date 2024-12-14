@@ -1,7 +1,7 @@
 {
   "name": "@playword/core",
   "version": "0.1.3",
-  "description": "Turn your ideas into actions on the webpage, bringing productivity and fun to your testing.",
+  "description": "Automate browsers with AI: What you say is what you get.",
   "keywords": [
     "ai",
     "automated test",
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@langchain/core": "^0.3.23",
-    "@langchain/langgraph": "^0.2.32",
+    "@langchain/langgraph": "^0.2.33",
     "@langchain/openai": "^0.3.14",
     "jsdom": "^25.0.1",
     "sanitize-html": "^2.13.1",
