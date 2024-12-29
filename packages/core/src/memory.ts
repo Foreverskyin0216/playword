@@ -3,7 +3,6 @@
  * Reference: https://github.com/langchain-ai/langchainjs/blob/main/langchain/src/vectorstores/memory.ts
  */
 import type { EmbeddingsInterface } from '@langchain/core/embeddings'
-import type { MemoryVector } from './types'
 
 import { Document } from '@langchain/core/documents'
 import { VectorStore } from '@langchain/core/vectorstores'

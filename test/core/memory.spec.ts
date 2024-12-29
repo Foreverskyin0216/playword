@@ -1,8 +1,6 @@
-import type { Document } from '@langchain/core/documents'
-
 import { SyntheticEmbeddings } from '@langchain/core/utils/testing'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { MemoryVectorStore } from '../../packages/core/src/memoryVectorStore'
+import { MemoryVectorStore } from '../../packages/core/src/memory'
 
 describe('Spec: MemoryVectorStore', () => {
   describe('Given the MemoryVectorStore class is from texts', async () => {
@@ -22,13 +20,8 @@ describe('Spec: MemoryVectorStore', () => {
     })
 
     describe('When the MemoryVectorStore is queried', () => {
-      let result: Document[]
-
-      beforeAll(async () => {
-        result = await memoryVectorStore.asRetriever().invoke('Test Class')
-      })
-
-      test('It should have the correct vectors', () => {
+      test('It should have the correct vectors', async () => {
+        const result = await memoryVectorStore.asRetriever().invoke('Test Class')
         expect(result[0].pageContent).toBe('<div class="testClass">Test Class</div>')
       })
     })

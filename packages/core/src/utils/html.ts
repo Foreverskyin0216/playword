@@ -1,5 +1,3 @@
-import type { ElementLocation } from './types'
-
 import { JSDOM } from 'jsdom'
 import sanitizeHtml from 'sanitize-html'
 

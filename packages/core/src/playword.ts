@@ -1,6 +1,5 @@
 import type { AIMessage } from '@langchain/core/messages'
 import type { Page } from 'playwright-core'
-import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording } from './types'
 
 import { randomUUID } from 'crypto'
 import { access, mkdir, readFile, writeFile } from 'fs/promises'
@@ -10,8 +9,8 @@ import { HumanMessage } from '@langchain/core/messages'
 import { actionGraph } from './graph'
 import * as actions from './actions'
 import { AI } from './ai'
-import { divider, info, startLog } from './logger'
-import { aiPattern } from './resources'
+import { divider, info, startLog } from './utils'
+import { aiPattern } from './validators'
 
 /**
  * Decorator to handle the test fixture, including the setup process and teardown process.

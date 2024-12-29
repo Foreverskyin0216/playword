@@ -2,8 +2,7 @@ import { Document } from '@langchain/core/documents'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-
-import assertTools from '../../packages/core/src/assertTools'
+import * as tools from '../../../packages/core/src/tools'
 
 const {
   mockAssertElementContentEquals,
@@ -32,7 +31,7 @@ const {
   mockSearchDocuments: vi.fn()
 }))
 
-vi.mock('../../packages/core/src/actions', () => ({
+vi.mock('../../../packages/core/src/actions', () => ({
   assertElementContentEquals: mockAssertElementContentEquals,
   assertElementContentNotEquals: mockAssertElementContentNotEquals,
   assertElementVisible: mockAssertElementVisible,
@@ -70,14 +69,14 @@ describe('Spec: Assert Tools', () => {
     }
 
     beforeAll(async () => {
-      const html = await readFile(join(__dirname, 'mocks/mockPageContent.html'), 'utf-8')
-      mockGetSnapshot.mockResolvedValue(html)
+      const mockHtml = await readFile(join(__dirname, '../mocks/mockPageContent.html'), 'utf-8')
+      mockGetSnapshot.mockResolvedValue(mockHtml)
     })
 
     afterAll(() => mockGetSnapshot.mockRestore())
 
     describe('When the AssertElementContentEquals tool is used', () => {
-      const assertElementContentEqualsTool = assertTools[0]
+      const assertElementContentEqualsTool = tools.assertion[0]
       let successWithScreenshot: string
       let failureWithoutScreenshot: string
 
@@ -133,7 +132,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertElementContentNotEquals tool is used', () => {
-      const assertElementContentNotEqualsTool = assertTools[1]
+      const assertElementContentNotEqualsTool = tools.assertion[1]
       let successWithScreenshot: string
       let failureWithoutScreenshot: string
 
@@ -189,7 +188,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertElementVisible tool is used', () => {
-      const assertElementVisibleTool = assertTools[2]
+      const assertElementVisibleTool = tools.assertion[2]
       let successWithScreenshot: string
       let failureWithoutScreenshot: string
 
@@ -242,7 +241,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertElementNotVisible tool is used', () => {
-      const assertElementNotVisibleTool = assertTools[3]
+      const assertElementNotVisibleTool = tools.assertion[3]
       let successWithScreenshot: string
       let failureWithoutScreenshot: string
 
@@ -295,7 +294,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertImageContains tool is used', () => {
-      const assertImageContainsTool = assertTools[4]
+      const assertImageContainsTool = tools.assertion[4]
       let successWithScreenshot: string
       let failureWithoutScreenshot: string
 
@@ -345,7 +344,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageContains tool is used', () => {
-      const assertPageContainsTool = assertTools[5]
+      const assertPageContainsTool = tools.assertion[5]
       let success: string
       let failure: string
 
@@ -370,7 +369,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageDoesNotContain tool is used', () => {
-      const assertPageDoesNotContainTool = assertTools[6]
+      const assertPageDoesNotContainTool = tools.assertion[6]
       let success: string
       let failure: string
 
@@ -395,7 +394,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageTitleEquals tool is used', () => {
-      const assertPageTitleEqualsTool = assertTools[7]
+      const assertPageTitleEqualsTool = tools.assertion[7]
       let success: string
       let failure: string
 
@@ -420,7 +419,7 @@ describe('Spec: Assert Tools', () => {
     })
 
     describe('When the AssertPageUrlMatches tool is used', () => {
-      const assertPageUrlMatchesTool = assertTools[8]
+      const assertPageUrlMatchesTool = tools.assertion[8]
       let success: string
       let failure: string
 

@@ -1,12 +1,11 @@
 import type { DynamicStructuredTool } from '@langchain/core/tools'
-import type { ToolConfig } from './types'
 
 import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
 
-import * as actions from './actions'
-import { getElementLocations, sanitize } from './htmlUtils'
-import { genericTags } from './resources'
+import * as actions from '../actions'
+import { getElementLocations, sanitize } from '../utils'
+import { allowedTags } from '../validators'
 
 /**
  * Tools for asserting conditions on the page.
@@ -20,12 +19,12 @@ import { genericTags } from './resources'
  * - **AssertPageTitleEquals**
  * - **AssertPageUrlMatches**
  */
-export default [
+export const assertion = [
   tool(
     async ({ keywords, text }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
@@ -76,7 +75,7 @@ export default [
     async ({ keywords, text }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
@@ -127,7 +126,7 @@ export default [
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
@@ -177,7 +176,7 @@ export default [
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
@@ -227,7 +226,7 @@ export default [
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'

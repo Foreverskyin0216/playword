@@ -1,12 +1,12 @@
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, test, expect } from 'vitest'
-import { markElement, unmarkElement } from '../../packages/core/src/actionUtils'
+import { markElement, unmarkElement } from '../../../packages/core/src/utils'
 
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://localhost' })
 globalThis.document = dom.window.document
 globalThis.window = dom.window as unknown as Window & typeof globalThis
 
-describe('Spec: Action Utils', () => {
+describe('Spec: DOM Utils', () => {
   describe('Given the markElement function', () => {
     describe('When it is called with an element and an order', () => {
       const div = document.createElement('div')

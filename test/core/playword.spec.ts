@@ -1,11 +1,7 @@
-import type { Page } from 'playwright-core'
-import type { ActionResult } from '../../packages/core/src/types'
-
 import { AIMessage } from '@langchain/core/messages'
 import { join } from 'path'
 import { chromium } from 'playwright-core'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-
 import PlayWord from '../../packages/core/src'
 
 const { mockAll, mockEvaluate, mockGetAttribute, mockInvoke, mockIsVisible, mockWaitForLoadState } = vi.hoisted(() => ({
@@ -98,13 +94,12 @@ vi.mock('../../packages/core/src/ai', () => ({
     checkImageInformation: vi.fn().mockResolvedValue(true)
   }))
 }))
-vi.mock('../../packages/core/src/actionUtils', async () => ({
-  getInputVariable: (await vi.importActual('../../packages/core/src/actionUtils')).getInputVariable,
+vi.mock('../../packages/core/src/utils/dom', async () => ({
   markElement: vi.fn(),
   unmarkElement: vi.fn()
 }))
 vi.mock('../../packages/core/src/graph', () => ({ actionGraph: { invoke: mockInvoke } }))
-vi.mock('../../packages/core/src/logger', () => ({
+vi.mock('../../packages/core/src/utils/logger', () => ({
   divider: vi.fn(),
   info: vi.fn(),
   startLog: vi.fn().mockReturnValue({ error: vi.fn(), success: vi.fn() })
@@ -113,7 +108,7 @@ vi.mock('../../packages/core/src/logger', () => ({
 describe('Spec: PlayWord Class', () => {
   describe('Given a PlayWord instance', () => {
     let playword: PlayWord
-    let page: Page
+    let page: typeof PlayWord.prototype.page
     let workdir: string
 
     beforeAll(async () => {
@@ -135,7 +130,7 @@ describe('Spec: PlayWord Class', () => {
       })
 
       describe('When the say method return true', () => {
-        let result: ActionResult
+        let result: string
 
         beforeAll(async () => {
           mockInvoke.mockResolvedValue({ messages: [new AIMessage('true')] })
@@ -150,7 +145,7 @@ describe('Spec: PlayWord Class', () => {
       })
 
       describe('When the say method return false', () => {
-        let result: ActionResult
+        let result: string
 
         beforeAll(async () => {
           mockInvoke.mockResolvedValue({ messages: [new AIMessage('false')] })
@@ -167,7 +162,8 @@ describe('Spec: PlayWord Class', () => {
 
     describe('And the record option is set to file path', () => {
       describe('When the recordings file exists', () => {
-        let result: ActionResult
+        let result: string
+
         beforeAll(async () => {
           process.env.VARIABLE = 'mock-variable'
           mockAll.mockResolvedValue([
@@ -297,7 +293,7 @@ describe('Spec: PlayWord Class', () => {
       })
 
       describe('When the recordings file does not exist', () => {
-        let result: ActionResult
+        let result: string
 
         beforeAll(async () => {
           mockInvoke.mockResolvedValue({ messages: [new AIMessage('result')] })
@@ -313,7 +309,7 @@ describe('Spec: PlayWord Class', () => {
       })
 
       describe('When the page is switched to a frame', () => {
-        let result: ActionResult
+        let result: string
 
         beforeAll(async () => {
           mockAll.mockResolvedValue([
@@ -373,7 +369,7 @@ describe('Spec: PlayWord Class', () => {
           expect(result).toBe('Attribute value: mock-attribute')
 
           result = await playword.say('getFrames')
-          const pageContent = JSON.parse(result?.[0]?.pageContent)
+          const pageContent = JSON.parse(result?.[0])
           expect(pageContent).toHaveProperty('name', 'mock-frame')
           expect(pageContent).toHaveProperty('url', 'mock-url')
 
@@ -425,7 +421,7 @@ describe('Spec: PlayWord Class', () => {
       })
 
       describe('When the element is not found', () => {
-        let result: ActionResult
+        let result: string
 
         beforeAll(async () => {
           mockAll.mockResolvedValue([])
@@ -462,8 +458,8 @@ describe('Spec: PlayWord Class', () => {
 
     describe('And the record option is set to true', () => {
       describe('When the recordings file exists', () => {
-        let first: ActionResult
-        let second: ActionResult
+        let first: string
+        let second: string
 
         beforeAll(async () => {
           mockAll.mockResolvedValue([
@@ -495,7 +491,7 @@ describe('Spec: PlayWord Class', () => {
     })
 
     describe('And the useScreenshot option is set to true', () => {
-      let result: ActionResult
+      let result: string
 
       beforeAll(async () => {
         mockInvoke.mockResolvedValue({ messages: [new AIMessage('result')] })
@@ -513,7 +509,7 @@ describe('Spec: PlayWord Class', () => {
     describe('And the retryOnFailure option is set', () => {
       describe('When the retryOnFailure option is set to true', () => {
         describe('And the element is not found', () => {
-          let result: ActionResult
+          let result: string
 
           beforeAll(async () => {
             mockAll.mockResolvedValue([])
@@ -536,7 +532,7 @@ describe('Spec: PlayWord Class', () => {
         })
 
         describe('And an error occurs', () => {
-          let result: ActionResult
+          let result: string
 
           beforeAll(async () => {
             mockInvoke.mockResolvedValue({ messages: [new AIMessage('true')] })

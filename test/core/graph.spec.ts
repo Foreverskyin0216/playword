@@ -1,5 +1,3 @@
-import type { ActionState } from '../../packages/core/src/types'
-
 import { AIMessage, HumanMessage } from '@langchain/core/messages'
 import { tool } from '@langchain/core/tools'
 import { afterAll, beforeAll, describe, test, expect, vi } from 'vitest'
@@ -10,19 +8,19 @@ const { mockUseTools } = vi.hoisted(() => ({
   mockUseTools: vi.fn()
 }))
 
-vi.mock('../../packages/core/src/assertTools', () => ({
-  default: [tool(async () => 'Tool call result', { name: 'tool-call-name' })]
+vi.mock('../../packages/core/src/tools/assertion', () => ({
+  assertion: [tool(async () => 'Tool call result', { name: 'tool-call-name' })]
 }))
 
-vi.mock('../../packages/core/src/pageTools', () => ({
-  default: [tool(async () => 'Tool call result', { name: 'tool-call-name' })]
+vi.mock('../../packages/core/src/tools/page', () => ({
+  page: [tool(async () => 'Tool call result', { name: 'tool-call-name' })]
 }))
 
 describe('Spec: Action Graph', () => {
   describe('Given the action graph', () => {
     describe('When the page agent is invoked', () => {
       const aiMessage = new AIMessage('response')
-      let state: ActionState
+      let state: { messages: AIMessage[] }
 
       beforeAll(async () => {
         aiMessage.tool_calls = [{ id: 'tool-call-id', name: 'tool-call-name', args: { arg: 'tool-call-args' } }]
@@ -54,7 +52,7 @@ describe('Spec: Action Graph', () => {
 
     describe('When the assertion agent is invoked', () => {
       const aiMessage = new AIMessage('response')
-      let state: ActionState
+      let state: { messages: AIMessage[] }
 
       beforeAll(async () => {
         aiMessage.tool_calls = [{ id: 'tool-call-id', name: 'tool-call-name', args: { arg: 'tool-call-args' } }]

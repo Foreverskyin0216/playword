@@ -5,7 +5,7 @@ import type { ClientOptions } from '@langchain/openai'
 
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { z } from 'zod'
-import { MemoryVectorStore } from './memoryVectorStore'
+import { MemoryVectorStore } from './memory'
 
 export const CANDIDATE_SCREENSHOT_REFERENCE = `I will provide you with some candidates of elements and a screenshot.
 Your goal is to find the most relevant candidate that user mentioned in the input and want to interact with.
