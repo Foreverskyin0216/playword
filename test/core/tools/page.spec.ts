@@ -2,7 +2,7 @@ import { Document } from '@langchain/core/documents'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import pageTools from '../../packages/core/src/pageTools'
+import * as tools from '../../../packages/core/src/tools'
 
 const {
   mockClick,
@@ -41,10 +41,10 @@ const {
   mockWaitForText: vi.fn()
 }))
 
-vi.mock('../../packages/core/src/actions', () => ({
+vi.mock('../../../packages/core/src/actions', () => ({
   click: mockClick,
   getAttribute: mockGetAttribute,
-  getFrames: vi.fn(),
+  getFrames: vi.fn().mockResolvedValue([]),
   getImageInformation: mockGetImageInformation,
   getSnapshot: mockGetSnapshot,
   getScreenshot: vi.fn(),
@@ -85,14 +85,14 @@ describe('Spec: Page Tools', () => {
     }
 
     beforeAll(async () => {
-      const mockHtml = await readFile(join(__dirname, 'mocks/mockPageContent.html'), 'utf-8')
+      const mockHtml = await readFile(join(__dirname, '../mocks/mockPageContent.html'), 'utf-8')
       mockGetSnapshot.mockResolvedValue(mockHtml)
     })
 
     afterAll(() => mockGetSnapshot.mockRestore())
 
     describe('When the Click tool is used', () => {
-      const clickTool = pageTools[0]
+      const clickTool = tools.page[0]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -137,7 +137,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the GetAttribute tool is used', () => {
-      const getAttributeTool = pageTools[1]
+      const getAttributeTool = tools.page[1]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -191,7 +191,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the GetImageInformation tool is used', () => {
-      const getImageInformationTool = pageTools[2]
+      const getImageInformationTool = tools.page[2]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -239,7 +239,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the GetText tool is used', () => {
-      const getTextTool = pageTools[3]
+      const getTextTool = tools.page[3]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -284,7 +284,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the GoBack tool is used', () => {
-      const goBackTool = pageTools[4]
+      const goBackTool = tools.page[4]
       let result: string
 
       beforeAll(async () => {
@@ -304,7 +304,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the GoTo tool is used', () => {
-      const gotoTool = pageTools[5]
+      const gotoTool = tools.page[5]
       let result: string
 
       beforeAll(async () => {
@@ -324,7 +324,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Hover tool is used', () => {
-      const hoverTool = pageTools[6]
+      const hoverTool = tools.page[6]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -369,7 +369,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Input tool is used', () => {
-      const inputTool = pageTools[7]
+      const inputTool = tools.page[7]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -417,7 +417,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the PressKeys tool is used', () => {
-      const pressKeysTool = pageTools[8]
+      const pressKeysTool = tools.page[8]
       let result: string
 
       beforeAll(async () => {
@@ -437,7 +437,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Scroll tool is used', () => {
-      const scrollTool = pageTools[9]
+      const scrollTool = tools.page[9]
       let result: string
 
       beforeAll(async () => {
@@ -457,7 +457,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Select tool is used', () => {
-      const selectTool = pageTools[10]
+      const selectTool = tools.page[10]
       let resultWithScreenshot: string
       let resultWithoutScreenshot: string
 
@@ -509,7 +509,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Sleep tool is used', () => {
-      const sleepTool = pageTools[11]
+      const sleepTool = tools.page[11]
       let result: string
 
       beforeAll(async () => {
@@ -529,7 +529,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the SwitchFrame tool is used', () => {
-      const switchFrameTool = pageTools[12]
+      const switchFrameTool = tools.page[12]
       let enterFrameResult: string
       let returnToMainPageResult: string
 
@@ -552,7 +552,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the WaitForText tool is used', () => {
-      const waitForTextTool = pageTools[13]
+      const waitForTextTool = tools.page[13]
       let result: string
 
       beforeAll(async () => {

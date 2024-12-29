@@ -35,11 +35,11 @@
     }
   },
   "dependencies": {
-    "@langchain/core": "^0.3.23",
-    "@langchain/langgraph": "^0.2.33",
-    "@langchain/openai": "^0.3.14",
+    "@langchain/core": "^0.3.26",
+    "@langchain/langgraph": "^0.2.36",
+    "@langchain/openai": "^0.3.16",
     "jsdom": "^25.0.1",
-    "sanitize-html": "^2.13.1",
+    "sanitize-html": "^2.14.0",
     "yocto-spinner": "^0.1.2",
     "zod": "^3.24.1"
   },

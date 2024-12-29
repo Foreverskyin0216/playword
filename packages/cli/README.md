@@ -33,10 +33,10 @@ npx @playword/cli test [options]
 | ------------------ | ----- | -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
 | `--headed`         | `-h`  | bool           | **false**  | Whether to open the browser in headed mode.                                                                        |
 | `--env-file`       | `-e`  | string         | **.env**   | Which env file to use.                                                                                             |
-| `--record`         | `-r`  | bool, string   | **false**  | Whether to record the test steps.<br>You can also specify a file path to save the recording. (Must be a JSON file) |
+| `--record`         | `-r`  | string \| bool | **false**  | Whether to record the test steps.<br>You can also specify a file path to save the recording. (Must be a JSON file) |
 | `--playback`       | `-p`  | string         | **false**  | Whether to playback the test steps from a recording file.<br>This should be used with the `--record` option.       |
 | `--use-screenshot` | `-s`  | bool           | **false**  | Whether to enable screenshot reference.                                                                            |
 | `--browser`        | `-b`  | string         | **chrome** | Which browser to use. Supported values are `chromium`, `chrome`, `msedge`, `firefox` and `webkit`.                 |
 | `--verbose`        | `-v`  | bool           | **false**  | Whether to enable verbose mode.                                                                                    |
-| `--openai-options` | `-o`  | array          | **[]**     | Additional OpenAI API options. e.g.<br>`--openai-option apiKey=sk-... baseURL=https://...`                         |
+| `--openai-options` | `-o`  | string[]       | **[]**     | Additional OpenAI API options. e.g.<br>`-o apiKey=sk-... baseURL=https://...`                                      |
 | `--help`           |       | bool           | **false**  | Show help information.                                                                                             |

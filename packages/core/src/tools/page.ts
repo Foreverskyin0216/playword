@@ -1,12 +1,12 @@
 import type { DynamicStructuredTool } from '@langchain/core/tools'
-import type { ToolConfig } from './types'
 
+import { Document } from '@langchain/core/documents'
 import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
 
-import * as actions from './actions'
-import { getElementLocations, sanitize } from './htmlUtils'
-import { genericTags } from './resources'
+import * as actions from '../actions'
+import { getElementLocations, sanitize } from '../utils'
+import { allowedTags } from '../validators'
 
 /**
  * Tools for interacting with the page.
@@ -26,12 +26,12 @@ import { genericTags } from './resources'
  * - **SwitchFrame**
  * - **WaitForText**
  */
-export default [
+export const page = [
   tool(
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
@@ -78,7 +78,7 @@ export default [
     async ({ attribute, keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
@@ -126,7 +126,7 @@ export default [
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
@@ -173,7 +173,7 @@ export default [
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
@@ -248,7 +248,7 @@ export default [
     async ({ keywords }, { configurable }) => {
       const { ref, use_screenshot } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), genericTags)
+      const elements = getElementLocations(sanitize(snapshot), allowedTags)
 
       if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
         if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
@@ -438,7 +438,8 @@ export default [
 
       if (enterFrame) {
         const frames = await actions.getFrames(ref)
-        const candidate = await ref.ai.getBestCandidate(ref.input, frames)
+        const docs = frames.map((pageContent) => new Document({ pageContent }))
+        const candidate = await ref.ai.getBestCandidate(ref.input, docs)
         if (ref.record)
           ref.recordings[ref.step].actions.push({ name: 'switchFrame', params: { frameNumber: candidate } })
 

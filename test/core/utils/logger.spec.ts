@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-
-import { divider, info, startLog } from '../../packages/core/src/logger'
+import { divider, info, startLog } from '../../../packages/core/src/utils'
 
 const { mockConsoleLog } = await vi.hoisted(async () => ({
   mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),

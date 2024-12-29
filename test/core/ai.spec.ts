@@ -29,7 +29,7 @@ vi.mock('@langchain/openai', () => ({
   OpenAIEmbeddings: vi.fn()
 }))
 
-vi.mock('../../packages/core/src/memoryVectorStore', () => ({ MemoryVectorStore: mockMemoryVectorStore }))
+vi.mock('../../packages/core/src/memory', () => ({ MemoryVectorStore: mockMemoryVectorStore }))
 
 describe('Spec: AI', () => {
   describe('Given the AI class', () => {

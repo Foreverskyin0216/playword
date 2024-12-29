@@ -1,13 +1,11 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph'
-import type { ActionState, PlayWordInterface } from './types'
 
 import { AIMessage } from '@langchain/core/messages'
 import { Annotation, MemorySaver, StateGraph, messagesStateReducer } from '@langchain/langgraph'
 import { ToolNode } from '@langchain/langgraph/prebuilt'
 
-import assertTools from './assertTools'
-import pageTools from './pageTools'
-import { assertionPattern } from './resources'
+import * as tools from './tools'
+import { assertionPattern } from './validators'
 
 /**
  * State annotation for the action graph.
@@ -21,7 +19,7 @@ const annotation = Annotation.Root({ messages: Annotation({ reducer: messagesSta
  */
 const invokeAssertAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
   const { ai, debug, logger } = configurable?.ref as PlayWordInterface
-  const response = await ai.useTools(assertTools, messages)
+  const response = await ai.useTools(tools.assertion, messages)
   if (debug && logger && response.content) logger.text = 'AI: ' + response.content.toString()
   return { messages: [response] }
 }
@@ -33,7 +31,7 @@ const invokeAssertAgent = async ({ messages }: ActionState, { configurable }: La
  */
 const invokePageAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
   const { ai, debug, logger } = configurable?.ref as PlayWordInterface
-  const response = await ai.useTools(pageTools, messages)
+  const response = await ai.useTools(tools.page, messages)
   if (debug && logger && response.content) logger.text = 'AI: ' + response.content.toString()
   return { messages: [response] }
 }
@@ -92,8 +90,8 @@ export const actionGraph = new StateGraph(annotation)
   .addNode('assert', invokeAssertAgent)
   .addNode('page', invokePageAgent)
   .addNode('result', invokeResultAgent)
-  .addNode('assertTools', new ToolNode(assertTools))
-  .addNode('pageTools', new ToolNode(pageTools))
+  .addNode('assertTools', new ToolNode(tools.assertion))
+  .addNode('pageTools', new ToolNode(tools.page))
   .addConditionalEdges('__start__', shouldInvoke, ['page', 'assert'])
   .addConditionalEdges('assert', shouldInvokeAssertTools, ['assertTools', 'result'])
   .addConditionalEdges('page', shouldInvokePageTools, ['pageTools', '__end__'])

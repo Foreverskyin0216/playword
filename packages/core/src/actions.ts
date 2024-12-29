@@ -1,7 +1,17 @@
-import type { ActionParams, PlayWordInterface } from './types'
+import { markElement, unmarkElement } from './utils'
+import { variablePattern } from './validators'
 
-import { Document } from '@langchain/core/documents'
-import { getInputVariable, markElement, unmarkElement } from './actionUtils'
+/**
+ * Get the input variable from the environment variables.
+ *
+ * @param input
+ * @returns If the input variable is found in the environment variables, return the value of the input variable. Otherwise, return the original input.
+ */
+const getInputVariable = (input: string) => {
+  const match = input.match(variablePattern)
+  if (!match) return input
+  return process.env[match[0]] || input
+}
 
 /**
  * Assert that the content of an element on the page or within the current frame is equal to a specific text.
@@ -152,16 +162,15 @@ export const getAttribute = async (ref: PlayWordInterface, params: ActionParams)
  * Get all frames on the page.
  *
  * @param ref - PlayWord instance.
- * @returns The frame documents stored within the {@link Document} structure.
+ * @returns The frame list containing the name and URL of each frame.
  */
 export const getFrames = async (ref: PlayWordInterface) => {
+  const frames = [] as string[]
   await ref.page.waitForLoadState('load')
-
-  const frames = [] as Document[]
 
   for (const frame of ref.page.frames()) {
     await frame.waitForLoadState('load')
-    frames.push(new Document({ pageContent: JSON.stringify({ name: frame.name(), url: frame.url() }) }))
+    frames.push(JSON.stringify({ name: frame.name(), url: frame.url() }))
   }
 
   return frames

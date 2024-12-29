@@ -1,9 +1,7 @@
-import type { ElementLocation } from '../../packages/core/src/types'
-
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { beforeAll, describe, test, expect } from 'vitest'
-import { getElementLocations, sanitize } from '../../packages/core/src/htmlUtils'
+import { getElementLocations, sanitize } from '../../../packages/core/src/utils'
 
 describe('Spec: HTML Utils', () => {
   describe('Given the getElementLocations function', () => {
@@ -11,12 +9,12 @@ describe('Spec: HTML Utils', () => {
       let snapshot = ''
 
       beforeAll(async () => {
-        const html = await readFile(join(__dirname, './mocks/mockPageContent.html'), 'utf-8')
+        const html = await readFile(join(__dirname, '../mocks/mockPageContent.html'), 'utf-8')
         snapshot = sanitize(html)
       })
 
       describe('When it is called with a snapshot and target elements', () => {
-        let locations: ElementLocation[]
+        let locations: { element: string; xpath: string }[]
 
         beforeAll(() => {
           locations = getElementLocations(snapshot, ['a', 'div', 'head', 'p', 'script', 'style'])

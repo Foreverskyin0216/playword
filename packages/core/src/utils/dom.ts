@@ -1,17 +1,3 @@
-import { inputVariablesPattern } from './resources'
-
-/**
- * Get the input variable from the environment variables.
- *
- * @param input
- * @returns If the input variable is found in the environment variables, return the value of the input variable. Otherwise, return the original input.
- */
-export const getInputVariable = (input: string) => {
-  const match = input.match(inputVariablesPattern)
-  if (!match) return input
-  return process.env[match[0]] || input
-}
-
 /**
  * Create a label for an element with an order number.
  *

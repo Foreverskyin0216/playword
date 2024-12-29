@@ -5,7 +5,7 @@
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Foreverskyin0216/playword/graph/badge.svg?token=8VO1EFXKDI)](https://codecov.io/gh/Foreverskyin0216/playword)
 
-Automate browsers with AI: What you say is what you get.
+Supercharge your Playwright tests with AI-powered natural language testing.
 
 ![PlayWord](https://i.ibb.co/JtfJvXH/demo1.gif)
 
