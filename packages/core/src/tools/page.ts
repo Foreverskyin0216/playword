@@ -1,65 +1,49 @@
 import type { DynamicStructuredTool } from '@langchain/core/tools'
+import type { ToolConfig } from '../types'
 
 import { Document } from '@langchain/core/documents'
 import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
-
 import * as actions from '../actions'
-import { getElementLocations, sanitize } from '../utils'
+import * as utils from '../utils'
 import { allowedTags } from '../validators'
 
 /**
- * Tools for interacting with the page.
+ * Custom tools for interacting with the page.
  *
- * Include the following tools:
- * - **Click**
- * - **GetAttribute**
- * - **GetImageInformation**
- * - **GoBack**
- * - **GoTo**
- * - **Hover**
- * - **Input**
- * - **PressKeys**
- * - **Scroll**
- * - **Select**
- * - **Sleep**
- * - **SwitchFrame**
- * - **WaitForText**
+ * The following tools are available:
+ * - Click
+ * - GetText
+ * - GoTo
+ * - Hover
+ * - Input
+ * - PressKeys
+ * - Scroll
+ * - Select
+ * - Sleep
+ * - SwitchFrame
+ * - SwitchPage
+ * - WaitForText
  */
 export const page = [
   tool(
     async ({ keywords }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
+      const { ref } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, allowedTags)
 
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
       const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
+      ref.recorder?.addAction({ name: 'click', params: { xpath } })
 
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'click', params: { xpath } })
-
-      return await actions.click(ref, { xpath })
+      return actions.click(ref, { xpath })
     },
     {
       name: 'Click',
@@ -75,133 +59,23 @@ export const page = [
   ),
 
   tool(
-    async ({ attribute, keywords }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
-      const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
-
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
-
-      const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
-
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'getAttribute', params: { attribute, xpath } })
-
-      return await actions.getAttribute(ref, { attribute, xpath })
-    },
-    {
-      name: 'GetAttribute',
-      description: 'Call to get a specific attribute from an element',
-      schema: z.object({
-        attribute: z.string().describe('The attribute to get from the element'),
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          )
-      })
-    }
-  ),
-
-  tool(
     async ({ keywords }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
+      const { ref } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, allowedTags)
 
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
       const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
+      ref.recorder?.addAction({ name: 'hover', params: { xpath } })
 
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'getImageInformation', params: { xpath } })
-
-      return await actions.getImageInformation(ref, { xpath })
-    },
-    {
-      name: 'GetImageInformation',
-      description: 'Call to capture a screenshot from an element and get its information',
-      schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          )
-      })
-    }
-  ),
-
-  tool(
-    async ({ keywords }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
-      const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
-
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
-
-      const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
-
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'getText', params: { xpath } })
-
-      return await actions.getText(ref, { xpath })
+      return actions.getText(ref, { xpath })
     },
     {
       name: 'GetText',
@@ -217,23 +91,10 @@ export const page = [
   ),
 
   tool(
-    async (_, { configurable }) => {
-      const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'goBack', params: {} })
-      return await actions.goBack(ref)
-    },
-    {
-      name: 'GoBack',
-      description: 'Call to go back to the previous page',
-      schema: z.object({})
-    }
-  ),
-
-  tool(
     async ({ url }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'goto', params: { url } })
-      return await actions.goto(configurable.ref, { url })
+      ref.recorder?.addAction({ name: 'goto', params: { url } })
+      return actions.goto(ref, { url })
     },
     {
       name: 'GoTo',
@@ -245,43 +106,29 @@ export const page = [
   ),
 
   tool(
-    async ({ keywords }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
+    async ({ duration, keywords }, { configurable }) => {
+      const { ref } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, allowedTags)
 
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
       const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
+      ref.recorder?.addAction({ name: 'hover', params: { xpath } })
 
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'hover', params: { xpath } })
-
-      return await actions.hover(ref, { xpath })
+      return actions.hover(ref, { duration, xpath })
     },
     {
       name: 'Hover',
       description: 'Call to hover over an element',
       schema: z.object({
+        duration: z.number().describe('The duration to hover over the element. Default is 1000ms'),
         keywords: z
           .string()
           .describe(
@@ -293,37 +140,22 @@ export const page = [
 
   tool(
     async ({ keywords, text }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
+      const { ref } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), ['input', 'textarea'])
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, ['input', 'textarea'])
 
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
       const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
+      ref.recorder?.addAction({ name: 'input', params: { text, xpath } })
 
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'input', params: { text, xpath } })
-
-      return await actions.input(ref, { text, xpath })
+      return actions.input(ref, { text, xpath })
     },
     {
       name: 'Input',
@@ -342,8 +174,8 @@ export const page = [
   tool(
     async ({ keys }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'pressKeys', params: { keys } })
-      return await actions.pressKeys(ref, { keys })
+      ref.recorder?.addAction({ name: 'pressKeys', params: { keys } })
+      return actions.pressKeys(ref, { keys })
     },
     {
       name: 'PressKeys',
@@ -357,8 +189,8 @@ export const page = [
   tool(
     async ({ direction }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'scroll', params: { direction } })
-      return await actions.scroll(configurable.ref, { direction })
+      ref.recorder?.addAction({ name: 'scroll', params: { direction } })
+      return actions.scroll(ref, { direction })
     },
     {
       name: 'Scroll',
@@ -371,37 +203,22 @@ export const page = [
 
   tool(
     async ({ keywords, option }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
+      const { ref } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), ['select'])
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, ['select'])
 
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
       const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
+      ref.recorder?.addAction({ name: 'select', params: { option, xpath } })
 
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'select', params: { option, xpath } })
-
-      return await actions.select(ref, { option, xpath })
+      return actions.select(ref, { option, xpath })
     },
     {
       name: 'Select',
@@ -420,14 +237,14 @@ export const page = [
   tool(
     async ({ duration }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'sleep', params: { duration } })
-      return await actions.sleep(configurable.ref, { duration })
+      ref.recorder?.addAction({ name: 'sleep', params: { duration } })
+      return actions.sleep(ref, { duration })
     },
     {
       name: 'Sleep',
       description: 'Call to wait for a certain amount of time',
       schema: z.object({
-        duration: z.number().describe('The duration to wait in seconds')
+        duration: z.number().describe('The duration to wait in milliseconds')
       })
     }
   ),
@@ -435,20 +252,20 @@ export const page = [
   tool(
     async ({ enterFrame }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+      const frames = ref.page?.frames().map((frame) => JSON.stringify({ name: frame.name(), url: frame.url() }))
 
-      if (enterFrame) {
-        const frames = await actions.getFrames(ref)
-        const docs = frames.map((pageContent) => new Document({ pageContent }))
+      if (enterFrame && frames?.length) {
+        const docs = frames.map((frame) => new Document({ pageContent: frame }))
         const candidate = await ref.ai.getBestCandidate(ref.input, docs)
-        if (ref.record)
-          ref.recordings[ref.step].actions.push({ name: 'switchFrame', params: { frameNumber: candidate } })
 
-        return await actions.switchFrame(ref, { frameNumber: candidate })
+        ref.recorder?.addAction({ name: 'switchFrame', params: { frameNumber: candidate } })
+
+        return actions.switchFrame(ref, { frameNumber: candidate })
       }
 
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'switchFrame', params: { frameNumber: undefined } })
+      ref.recorder?.addAction({ name: 'switchFrame', params: {} })
 
-      return await actions.switchFrame(ref, { frameNumber: undefined })
+      return actions.switchFrame(ref, {})
     },
     {
       name: 'SwitchFrame',
@@ -460,10 +277,24 @@ export const page = [
   ),
 
   tool(
+    async ({ pageNumber }, { configurable }) => {
+      const { ref } = configurable as ToolConfig
+      return actions.switchPage(ref, { pageNumber })
+    },
+    {
+      name: 'SwitchPage',
+      description: 'Call to switch to a different page or tab',
+      schema: z.object({
+        pageNumber: z.number().describe('The index of the page to switch to. Starts from 0')
+      })
+    }
+  ),
+
+  tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'waitForText', params: { text } })
-      return await actions.waitForText(ref, { text })
+      ref.recorder?.addAction({ name: 'waitForText', params: { text } })
+      return actions.waitForText(ref, { text })
     },
     {
       name: 'WaitForText',

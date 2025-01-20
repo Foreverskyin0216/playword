@@ -1,5 +1,2 @@
-import { PlayWord } from './playword'
-
-export { PlayWord }
-
-export default PlayWord
+export * from './observer'
+export * from './playword'

@@ -1,2 +1,3 @@
-export { assertion } from './assertion'
-export { page } from './page'
+export * from './assertion'
+export * from './classifier'
+export * from './page'

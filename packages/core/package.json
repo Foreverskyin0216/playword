@@ -1,7 +1,7 @@
 {
   "name": "@playword/core",
   "version": "0.1.5",
-  "description": "Automate browsers with AI: What you say is what you get.",
+  "description": "Supercharge your web test automation experience with AI",
   "keywords": [
     "ai",
     "automated test",
@@ -35,17 +35,17 @@
     }
   },
   "dependencies": {
-    "@langchain/core": "^0.3.26",
-    "@langchain/langgraph": "^0.2.36",
-    "@langchain/openai": "^0.3.16",
-    "jsdom": "^25.0.1",
+    "@langchain/core": "^0.3.32",
+    "@langchain/langgraph": "^0.2.41",
+    "@langchain/openai": "^0.3.17",
+    "jsdom": "^26.0.0",
+    "p-queue": "^8.0.1",
     "sanitize-html": "^2.14.0",
-    "yocto-spinner": "^0.1.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.10.2",
+    "@types/node": "^22.10.7",
     "@types/sanitize-html": "^2.13.0",
     "playwright-core": "^1.49.1",
     "tsup": "^8.3.5"
@@ -56,6 +56,6 @@
     "registry": "https://registry.npmjs.org/"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }

@@ -5,447 +5,281 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import * as tools from '../../../packages/core/src/tools'
 
 const {
+  mockAssertElementContains,
+  mockAssertElementNotContain,
   mockAssertElementContentEquals,
-  mockAssertElementContentNotEquals,
+  mockAssertElementContentNotEqual,
   mockAssertElementVisible,
   mockAssertElementNotVisible,
-  mockAssertImageContains,
   mockAssertPageContains,
-  mockAssertPageDoesNotContain,
+  mockAssertPageNotContain,
   mockAssertPageTitleEquals,
   mockAssertPageUrlMatches,
   mockGetSnapshot,
   mockSearchDocuments
 } = vi.hoisted(() => ({
+  mockAssertElementContains: vi.fn(),
+  mockAssertElementNotContain: vi.fn(),
   mockAssertElementContentEquals: vi.fn(),
-  mockAssertElementContentNotEquals: vi.fn(),
+  mockAssertElementContentNotEqual: vi.fn(),
   mockAssertElementVisible: vi.fn(),
   mockAssertElementNotVisible: vi.fn(),
-  mockAssertImageContains: vi.fn(),
   mockAssertPageContains: vi.fn(),
-  mockAssertPageDoesNotContain: vi.fn(),
+  mockAssertPageNotContain: vi.fn(),
   mockAssertPageTitleEquals: vi.fn(),
   mockAssertPageUrlMatches: vi.fn(),
-  mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
   mockGetSnapshot: vi.fn(),
   mockSearchDocuments: vi.fn()
 }))
 
 vi.mock('../../../packages/core/src/actions', () => ({
+  assertElementContains: mockAssertElementContains,
+  assertElementNotContain: mockAssertElementNotContain,
   assertElementContentEquals: mockAssertElementContentEquals,
-  assertElementContentNotEquals: mockAssertElementContentNotEquals,
+  assertElementContentNotEqual: mockAssertElementContentNotEqual,
   assertElementVisible: mockAssertElementVisible,
   assertElementNotVisible: mockAssertElementNotVisible,
-  assertImageContains: mockAssertImageContains,
   assertPageContains: mockAssertPageContains,
-  assertPageDoesNotContain: mockAssertPageDoesNotContain,
+  assertPageNotContain: mockAssertPageNotContain,
   assertPageTitleEquals: mockAssertPageTitleEquals,
   assertPageUrlMatches: mockAssertPageUrlMatches,
-  getScreenshot: vi.fn(),
-  getSnapshot: mockGetSnapshot,
-  mark: vi.fn(),
-  unmark: vi.fn()
+  getSnapshot: mockGetSnapshot
 }))
 
 describe('Spec: Assert Tools', () => {
   describe('Given the assert tools', () => {
-    const mockConfig = {
+    const configurable = {
       ref: {
         ai: {
-          embedDocuments: vi.fn(),
+          embedTexts: vi.fn(),
           getBestCandidate: vi.fn().mockResolvedValue(0),
           searchDocuments: mockSearchDocuments
         },
-        debug: true,
-        elements: [],
         input: 'test',
-        logger: { text: '' },
-        record: true,
-        recordings: [{ input: 'test', actions: [] }],
-        snapshot: '',
-        step: 0
-      },
-      use_screenshot: true
+        recorder: { addAction: vi.fn() }
+      }
     }
+    const keywords = 'mock-keywords'
+    const pattern = 'mock-pattern'
+    const text = 'mock-text'
+    const xpath = '//html[1]/body[1]/div[1]/div[1]'
 
     beforeAll(async () => {
-      const mockHtml = await readFile(join(__dirname, '../mocks/mockPageContent.html'), 'utf-8')
-      mockGetSnapshot.mockResolvedValue(mockHtml)
+      const mockHTML = await readFile(join(__dirname, '../mocks/mockPageContent.html'), 'utf-8')
+      mockGetSnapshot.mockResolvedValue(mockHTML)
+      mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
     })
 
-    afterAll(() => mockGetSnapshot.mockRestore())
+    afterAll(() => {
+      mockGetSnapshot.mockReset()
+      mockSearchDocuments.mockReset()
+    })
+
+    describe('When the AssertElementContains tool is used', () => {
+      const assertElementContainsTool = tools.assertion[0]
+
+      afterAll(() => mockAssertElementContains.mockReset())
+
+      test('Then the result is as expected', async () => {
+        mockAssertElementContains.mockResolvedValue(true)
+        const success = await assertElementContainsTool.invoke({ keywords, text }, { configurable })
+        expect(success).toBe('PASS: Element contains text: ' + text)
+
+        mockAssertElementContains.mockResolvedValue(false)
+        const failure = await assertElementContainsTool.invoke({ keywords, text }, { configurable })
+        expect(failure).toBe('FAIL: Element does not contain text: ' + text)
+      })
+
+      test('Then the actions are called as expected', () => {
+        expect(mockAssertElementContains).toBeCalledWith(configurable.ref, { text, xpath })
+      })
+    })
+
+    describe('When the AssertElementNotContain tool is used', () => {
+      const assertElementNotContainTool = tools.assertion[1]
+
+      afterAll(() => mockAssertElementNotContain.mockReset())
+
+      test('Then the result is as expected', async () => {
+        mockAssertElementNotContain.mockResolvedValue(true)
+        const success = await assertElementNotContainTool.invoke({ keywords, text }, { configurable })
+        expect(success).toBe('PASS: Element does not contain text: ' + text)
+
+        mockAssertElementNotContain.mockResolvedValue(false)
+        const failure = await assertElementNotContainTool.invoke({ keywords, text }, { configurable })
+        expect(failure).toBe('FAIL: Element contains text: ' + text)
+      })
+
+      test('Then the actions are called as expected', () => {
+        expect(mockAssertElementNotContain).toBeCalledWith(configurable.ref, { text, xpath })
+      })
+    })
 
     describe('When the AssertElementContentEquals tool is used', () => {
-      const assertElementContentEqualsTool = tools.assertion[0]
-      let successWithScreenshot: string
-      let failureWithoutScreenshot: string
+      const assertElementContentEqualsTool = tools.assertion[2]
 
-      beforeAll(async () => {
+      afterAll(() => mockAssertElementContentEquals.mockReset())
+
+      test('Then the result is as expected', async () => {
         mockAssertElementContentEquals.mockResolvedValue(true)
-        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
-        mockConfig.use_screenshot = true
-        successWithScreenshot = await assertElementContentEqualsTool.invoke(
-          { keywords: 'test', text: 'ID' },
-          { configurable: mockConfig }
-        )
+        const success = await assertElementContentEqualsTool.invoke({ keywords, text }, { configurable })
+        expect(success).toBe('PASS: Element content is equal to: ' + text)
 
         mockAssertElementContentEquals.mockResolvedValue(false)
-        mockConfig.use_screenshot = false
-        failureWithoutScreenshot = await assertElementContentEqualsTool.invoke(
-          { keywords: 'test', text: 'ID' },
-          { configurable: mockConfig }
-        )
-      })
-
-      afterAll(() => {
-        mockAssertElementContentEquals.mockRestore()
-        mockSearchDocuments.mockRestore()
-        mockConfig.ref = {
-          ai: {
-            embedDocuments: vi.fn(),
-            getBestCandidate: vi.fn().mockResolvedValue(0),
-            searchDocuments: mockSearchDocuments
-          },
-          debug: true,
-          elements: [],
-          input: 'test',
-          logger: { text: '' },
-          record: true,
-          recordings: [{ input: 'test', actions: [] }],
-          snapshot: '',
-          step: 0
-        }
-        mockConfig.use_screenshot = true
-      })
-
-      test('Then the result is as expected', () => {
-        expect(successWithScreenshot).toBe('PASS: Element content is equal to: ID')
-        expect(failureWithoutScreenshot).toBe('FAIL: Element content is not equal to: ID')
+        const failure = await assertElementContentEqualsTool.invoke({ keywords, text }, { configurable })
+        expect(failure).toBe('FAIL: Element content is not equal to: ' + text)
       })
 
       test('Then the actions are called as expected', () => {
-        expect(mockAssertElementContentEquals).toHaveBeenCalledWith(mockConfig.ref, {
-          text: 'ID',
-          xpath: '//*[@id="targetDiv"]'
-        })
+        expect(mockAssertElementContentEquals).toBeCalledWith(configurable.ref, { text, xpath })
       })
     })
 
-    describe('When the AssertElementContentNotEquals tool is used', () => {
-      const assertElementContentNotEqualsTool = tools.assertion[1]
-      let successWithScreenshot: string
-      let failureWithoutScreenshot: string
+    describe('When the AssertElementContentNotEqual tool is used', () => {
+      const assertElementContentNotEqualTool = tools.assertion[3]
 
-      beforeAll(async () => {
-        mockAssertElementContentNotEquals.mockResolvedValue(true)
-        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
-        mockConfig.use_screenshot = true
-        successWithScreenshot = await assertElementContentNotEqualsTool.invoke(
-          { keywords: 'test', text: 'ID' },
-          { configurable: mockConfig }
-        )
+      afterAll(() => mockAssertElementContentNotEqual.mockReset())
 
-        mockAssertElementContentNotEquals.mockResolvedValue(false)
-        mockConfig.use_screenshot = false
-        failureWithoutScreenshot = await assertElementContentNotEqualsTool.invoke(
-          { keywords: 'test', text: 'ID' },
-          { configurable: mockConfig }
-        )
-      })
+      test('Then the result is as expected', async () => {
+        mockAssertElementContentNotEqual.mockResolvedValue(true)
+        const success = await assertElementContentNotEqualTool.invoke({ keywords, text }, { configurable })
+        expect(success).toBe('PASS: Element content is not equal to: ' + text)
 
-      afterAll(() => {
-        mockAssertElementContentNotEquals.mockRestore()
-        mockSearchDocuments.mockRestore()
-        mockConfig.ref = {
-          ai: {
-            embedDocuments: vi.fn(),
-            getBestCandidate: vi.fn().mockResolvedValue(0),
-            searchDocuments: mockSearchDocuments
-          },
-          debug: true,
-          elements: [],
-          input: 'test',
-          logger: { text: '' },
-          record: true,
-          recordings: [{ input: 'test', actions: [] }],
-          snapshot: '',
-          step: 0
-        }
-        mockConfig.use_screenshot = true
-      })
-
-      test('Then the result is as expected', () => {
-        expect(successWithScreenshot).toBe('PASS: Element content is not equal to: ID')
-        expect(failureWithoutScreenshot).toBe('FAIL: Element content is equal to: ID')
+        mockAssertElementContentNotEqual.mockResolvedValue(false)
+        const failure = await assertElementContentNotEqualTool.invoke({ keywords, text }, { configurable })
+        expect(failure).toBe('FAIL: Element content is equal to: ' + text)
       })
 
       test('Then the actions are called as expected', () => {
-        expect(mockAssertElementContentNotEquals).toHaveBeenCalledWith(mockConfig.ref, {
-          text: 'ID',
-          xpath: '//*[@id="targetDiv"]'
-        })
+        expect(mockAssertElementContentNotEqual).toBeCalledWith(configurable.ref, { text, xpath })
       })
     })
 
     describe('When the AssertElementVisible tool is used', () => {
-      const assertElementVisibleTool = tools.assertion[2]
-      let successWithScreenshot: string
-      let failureWithoutScreenshot: string
+      const assertElementVisibleTool = tools.assertion[4]
 
-      beforeAll(async () => {
-        mockAssertElementVisible.mockResolvedValue(true)
+      beforeAll(() => {
         mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
-        mockConfig.use_screenshot = true
-        successWithScreenshot = await assertElementVisibleTool.invoke(
-          { keywords: 'test' },
-          { configurable: mockConfig }
-        )
+      })
+
+      afterAll(() => mockAssertElementVisible.mockReset())
+
+      test('Then the result is as expected', async () => {
+        mockAssertElementVisible.mockResolvedValue(true)
+        const success = await assertElementVisibleTool.invoke({ keywords }, { configurable })
+        expect(success).toBe('PASS: Element is visible')
 
         mockAssertElementVisible.mockResolvedValue(false)
-        mockConfig.use_screenshot = false
-        failureWithoutScreenshot = await assertElementVisibleTool.invoke(
-          { keywords: 'test' },
-          { configurable: mockConfig }
-        )
-      })
-
-      afterAll(() => {
-        mockAssertElementVisible.mockRestore()
-        mockSearchDocuments.mockRestore()
-        mockConfig.ref = {
-          ai: {
-            embedDocuments: vi.fn(),
-            getBestCandidate: vi.fn().mockResolvedValue(0),
-            searchDocuments: mockSearchDocuments
-          },
-          debug: true,
-          elements: [],
-          input: 'test',
-          logger: { text: '' },
-          record: true,
-          recordings: [{ input: 'test', actions: [] }],
-          snapshot: '',
-          step: 0
-        }
-        mockConfig.use_screenshot = true
-      })
-
-      test('Then the result is as expected', () => {
-        expect(successWithScreenshot).toBe('PASS: Element is visible')
-        expect(failureWithoutScreenshot).toBe('FAIL: Element is invisible')
+        const failure = await assertElementVisibleTool.invoke({ keywords }, { configurable })
+        expect(failure).toBe('FAIL: Element is invisible')
       })
 
       test('Then the actions are called as expected', () => {
-        expect(mockAssertElementVisible).toHaveBeenCalledWith(mockConfig.ref, { xpath: '//*[@id="targetDiv"]' })
+        expect(mockAssertElementVisible).toBeCalledWith(configurable.ref, { xpath })
       })
     })
 
     describe('When the AssertElementNotVisible tool is used', () => {
-      const assertElementNotVisibleTool = tools.assertion[3]
-      let successWithScreenshot: string
-      let failureWithoutScreenshot: string
+      const assertElementNotVisibleTool = tools.assertion[5]
 
-      beforeAll(async () => {
-        mockAssertElementNotVisible.mockResolvedValue(true)
+      beforeAll(() => {
         mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
-        mockConfig.use_screenshot = true
-        successWithScreenshot = await assertElementNotVisibleTool.invoke(
-          { keywords: 'test' },
-          { configurable: mockConfig }
-        )
+      })
+
+      afterAll(() => mockAssertElementNotVisible.mockReset())
+
+      test('Then the result is as expected', async () => {
+        mockAssertElementNotVisible.mockResolvedValue(true)
+        const success = await assertElementNotVisibleTool.invoke({ keywords }, { configurable })
+        expect(success).toBe('PASS: Element is invisible')
 
         mockAssertElementNotVisible.mockResolvedValue(false)
-        mockConfig.use_screenshot = false
-        failureWithoutScreenshot = await assertElementNotVisibleTool.invoke(
-          { keywords: 'test' },
-          { configurable: mockConfig }
-        )
-      })
-
-      afterAll(() => {
-        mockAssertElementNotVisible.mockRestore()
-        mockSearchDocuments.mockRestore()
-        mockConfig.ref = {
-          ai: {
-            embedDocuments: vi.fn(),
-            getBestCandidate: vi.fn().mockResolvedValue(0),
-            searchDocuments: mockSearchDocuments
-          },
-          debug: true,
-          elements: [],
-          input: 'test',
-          logger: { text: '' },
-          record: true,
-          recordings: [{ input: 'test', actions: [] }],
-          snapshot: '',
-          step: 0
-        }
-        mockConfig.use_screenshot = true
-      })
-
-      test('Then the result is as expected', () => {
-        expect(successWithScreenshot).toBe('PASS: Element is invisible')
-        expect(failureWithoutScreenshot).toBe('FAIL: Element is visible')
+        const failure = await assertElementNotVisibleTool.invoke({ keywords }, { configurable })
+        expect(failure).toBe('FAIL: Element is visible')
       })
 
       test('Then the actions are called as expected', () => {
-        expect(mockAssertElementNotVisible).toHaveBeenCalledWith(mockConfig.ref, { xpath: '//*[@id="targetDiv"]' })
-      })
-    })
-
-    describe('When the AssertImageContains tool is used', () => {
-      const assertImageContainsTool = tools.assertion[4]
-      let successWithScreenshot: string
-      let failureWithoutScreenshot: string
-
-      beforeAll(async () => {
-        mockAssertImageContains.mockResolvedValue(true)
-        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
-        mockConfig.use_screenshot = true
-        successWithScreenshot = await assertImageContainsTool.invoke({ keywords: 'test' }, { configurable: mockConfig })
-
-        mockAssertImageContains.mockResolvedValue(false)
-        mockConfig.use_screenshot = false
-        failureWithoutScreenshot = await assertImageContainsTool.invoke(
-          { keywords: 'test' },
-          { configurable: mockConfig }
-        )
-      })
-
-      afterAll(() => {
-        mockAssertImageContains.mockRestore()
-        mockSearchDocuments.mockRestore()
-        mockConfig.ref = {
-          ai: {
-            embedDocuments: vi.fn(),
-            getBestCandidate: vi.fn().mockResolvedValue(0),
-            searchDocuments: mockSearchDocuments
-          },
-          debug: true,
-          elements: [],
-          input: 'test',
-          logger: { text: '' },
-          record: true,
-          recordings: [{ input: 'test', actions: [] }],
-          snapshot: '',
-          step: 0
-        }
-        mockConfig.use_screenshot = true
-      })
-
-      test('Then the result is as expected', () => {
-        expect(successWithScreenshot).toBe('PASS: Image contains the information')
-        expect(failureWithoutScreenshot).toBe('FAIL: Image does not contain the information')
-      })
-
-      test('Then the actions are called as expected', () => {
-        expect(mockAssertImageContains).toHaveBeenCalledWith(mockConfig.ref, { xpath: '//*[@id="targetDiv"]' })
+        expect(mockAssertElementNotVisible).toBeCalledWith(configurable.ref, { xpath })
       })
     })
 
     describe('When the AssertPageContains tool is used', () => {
-      const assertPageContainsTool = tools.assertion[5]
-      let success: string
-      let failure: string
+      const assertPageContainsTool = tools.assertion[6]
 
-      beforeAll(async () => {
+      afterAll(() => mockAssertPageContains.mockReset())
+
+      test('Then the result is as expected', async () => {
         mockAssertPageContains.mockResolvedValue(true)
-        success = await assertPageContainsTool.invoke({ text: 'ID' }, { configurable: mockConfig })
+        const success = await assertPageContainsTool.invoke({ text }, { configurable })
+        expect(success).toBe('PASS: Page contains text: ' + text)
 
         mockAssertPageContains.mockResolvedValue(false)
-        failure = await assertPageContainsTool.invoke({ text: 'ID' }, { configurable: mockConfig })
-      })
-
-      afterAll(() => mockAssertPageContains.mockRestore())
-
-      test('Then the result is as expected', () => {
-        expect(success).toBe('PASS: Page contains text: ID')
-        expect(failure).toBe('FAIL: Page does not contain text: ID')
+        const failure = await assertPageContainsTool.invoke({ text }, { configurable })
+        expect(failure).toBe('FAIL: Page does not contain text: ' + text)
       })
 
       test('Then the actions are called as expected', () => {
-        expect(mockAssertPageContains).toHaveBeenCalledWith(mockConfig.ref, { text: 'ID' })
+        expect(mockAssertPageContains).toBeCalledWith(configurable.ref, { text })
       })
     })
 
-    describe('When the AssertPageDoesNotContain tool is used', () => {
-      const assertPageDoesNotContainTool = tools.assertion[6]
-      let success: string
-      let failure: string
+    describe('When the AssertPageNotContain tool is used', () => {
+      const assertPageNotContainTool = tools.assertion[7]
 
-      beforeAll(async () => {
-        mockAssertPageDoesNotContain.mockResolvedValue(true)
-        success = await assertPageDoesNotContainTool.invoke({ text: 'ID' }, { configurable: mockConfig })
+      afterAll(() => mockAssertPageNotContain.mockReset())
 
-        mockAssertPageDoesNotContain.mockResolvedValue(false)
-        failure = await assertPageDoesNotContainTool.invoke({ text: 'ID' }, { configurable: mockConfig })
-      })
+      test('Then the result is as expected', async () => {
+        mockAssertPageNotContain.mockResolvedValue(true)
+        const success = await assertPageNotContainTool.invoke({ text }, { configurable })
+        expect(success).toBe('PASS: Page does not contain text: ' + text)
 
-      afterAll(() => mockAssertPageDoesNotContain.mockRestore())
-
-      test('Then the result is as expected', () => {
-        expect(success).toBe('PASS: Page does not contain text: ID')
-        expect(failure).toBe('FAIL: Page contains text: ID')
+        mockAssertPageNotContain.mockResolvedValue(false)
+        const failure = await assertPageNotContainTool.invoke({ text }, { configurable })
+        expect(failure).toBe('FAIL: Page contains text: ' + text)
       })
 
       test('Then the actions are called as expected', () => {
-        expect(mockAssertPageDoesNotContain).toHaveBeenCalledWith(mockConfig.ref, { text: 'ID' })
+        expect(mockAssertPageNotContain).toBeCalledWith(configurable.ref, { text })
       })
     })
 
     describe('When the AssertPageTitleEquals tool is used', () => {
-      const assertPageTitleEqualsTool = tools.assertion[7]
-      let success: string
-      let failure: string
+      const assertPageTitleEqualsTool = tools.assertion[8]
 
-      beforeAll(async () => {
+      afterAll(() => mockAssertPageTitleEquals.mockReset())
+
+      test('Then the result is as expected', async () => {
         mockAssertPageTitleEquals.mockResolvedValue(true)
-        success = await assertPageTitleEqualsTool.invoke({ text: 'Title' }, { configurable: mockConfig })
+        const success = await assertPageTitleEqualsTool.invoke({ text }, { configurable })
+        expect(success).toBe('PASS: Page title is equal to: ' + text)
 
         mockAssertPageTitleEquals.mockResolvedValue(false)
-        failure = await assertPageTitleEqualsTool.invoke({ text: 'Title' }, { configurable: mockConfig })
-      })
-
-      afterAll(() => mockAssertPageTitleEquals.mockRestore())
-
-      test('Then the result is as expected', () => {
-        expect(success).toBe('PASS: Page title is equal to: Title')
-        expect(failure).toBe('FAIL: Page title is not equal to: Title')
+        const failure = await assertPageTitleEqualsTool.invoke({ text }, { configurable })
+        expect(failure).toBe('FAIL: Page title is not equal to: ' + text)
       })
 
       test('Then the actions are called as expected', () => {
-        expect(mockAssertPageTitleEquals).toHaveBeenCalledWith(mockConfig.ref, { text: 'Title' })
+        expect(mockAssertPageTitleEquals).toBeCalledWith(configurable.ref, { text })
       })
     })
 
     describe('When the AssertPageUrlMatches tool is used', () => {
-      const assertPageUrlMatchesTool = tools.assertion[8]
-      let success: string
-      let failure: string
+      const assertPageUrlMatchesTool = tools.assertion[9]
 
-      beforeAll(async () => {
+      afterAll(() => mockAssertPageUrlMatches.mockReset())
+
+      test('Then the result is as expected', async () => {
         mockAssertPageUrlMatches.mockResolvedValue(true)
-        success = await assertPageUrlMatchesTool.invoke(
-          { pattern: 'https://example.com' },
-          { configurable: mockConfig }
-        )
+        const success = await assertPageUrlMatchesTool.invoke({ pattern }, { configurable })
+        expect(success).toBe('PASS: Page URL matches the pattern: ' + pattern)
 
         mockAssertPageUrlMatches.mockResolvedValue(false)
-        failure = await assertPageUrlMatchesTool.invoke(
-          { pattern: 'https://example.com' },
-          { configurable: mockConfig }
-        )
-      })
-
-      afterAll(() => mockAssertPageUrlMatches.mockRestore())
-
-      test('Then the result is as expected', () => {
-        expect(success).toBe('PASS: Page URL matches the pattern: https://example.com')
-        expect(failure).toBe('FAIL: Page URL does not match the pattern: https://example.com')
+        const failure = await assertPageUrlMatchesTool.invoke({ pattern }, { configurable })
+        expect(failure).toBe('FAIL: Page URL does not match the pattern: ' + pattern)
       })
 
       test('Then the actions are called as expected', () => {
-        expect(mockAssertPageUrlMatches).toHaveBeenCalledWith(mockConfig.ref, { pattern: 'https://example.com' })
+        expect(mockAssertPageUrlMatches).toBeCalledWith(configurable.ref, { pattern })
       })
     })
   })

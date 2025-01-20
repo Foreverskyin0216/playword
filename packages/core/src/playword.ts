@@ -1,188 +1,270 @@
-import type { AIMessage } from '@langchain/core/messages'
-import type { Page } from 'playwright-core'
+import type { BrowserContext, Frame, Page } from 'playwright-core'
+import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording } from './types'
 
-import { randomUUID } from 'crypto'
-import { access, mkdir, readFile, writeFile } from 'fs/promises'
-import { dirname } from 'path'
 import { HumanMessage } from '@langchain/core/messages'
-
+import { randomUUID } from 'crypto'
+import { setTimeout } from 'timers/promises'
 import { actionGraph } from './graph'
 import * as actions from './actions'
 import { AI } from './ai'
-import { divider, info, startLog } from './utils'
+import { Recorder } from './recorder'
+import * as utils from './utils'
 import { aiPattern } from './validators'
 
 /**
- * Decorator to handle the test fixture, including the setup process and teardown process.
+ * PlayWord enables users to automate browsers with AI.
  *
- * Setup:
- * - Read the recordings from the record file.
+ * This class simplifies browser automation by removing the need to locate elements
+ * manually using selectors. Instead, you can describe your desired actions in natural
+ * language, and PlayWord will interpret and execute them.
  *
- * Teardown:
- * - Write the recordings to the record file.
- * - Increment the step count.
- */
-const fixture = (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) => {
-  const originalMethod = descriptor.value
-
-  const checkPath = async (path: string) => {
-    try {
-      await access(path)
-      return path.endsWith('.json')
-    } catch {
-      return false
-    }
-  }
-
-  descriptor.value = async function (...args: unknown[]) {
-    const playword = this as PlayWord
-
-    if (playword.step === 0) {
-      const filePath = playword.record as string
-      if (playword.record && (await checkPath(filePath))) {
-        const file = await readFile(filePath, 'utf-8')
-        playword.recordings = JSON.parse(file)
-      }
-    }
-
-    if (playword.debug) divider()
-
-    playword.input = (args[0] as string).replace(aiPattern, '').trim()
-
-    const result = await originalMethod.apply(playword, args)
-
-    playword.step++
-    playword.logger = undefined
-
-    if (playword.record) {
-      const filePath = playword.record as string
-      await mkdir(dirname(filePath), { recursive: true })
-      await writeFile(filePath, JSON.stringify(playword.recordings.slice(0, playword.step), null, 2))
-    }
-
-    return result
-  }
-}
-
-/**
- * @class ### PlayWord
+ * **Repository**: [GitHub - PlayWord](https://github.com/Foreverskyin0216/playword)
  *
- * PlayWord includes the following features:
- * - Perform actions on the browser page with natural language input.
- * - Record the actions performed to replay them later without token consumption.
- * @param page The PlayWright page. See {@link Page}.
- * @param playwordOptions Optional. See {@link PlayWordOptions}.
+ * @param context The Playwright `Context` instance used to control the browser.
+ * @param playwordOptions Optional configuration for PlayWord. See {@link PlayWordOptions} for details.
+ *
+ * @example
+ * **Create a new PlayWord instance**
+ * ```ts
+ * const context = await browser.newContext()
+ * const playword = new PlayWord(context, {
+ *   debug: true,
+ *   delay: 500,
+ *   openAIOptions: {
+ *     apiKey: '<api-key>',
+ *     endpoint: 'https://custom-ai-endpoint.com'
+ *   },
+ *   record: true
+ * })
+ * ```
  */
 export class PlayWord implements PlayWordInterface {
   /**
-   * LangGraph requires a unique thread id to keep track of the conversation.
+   * Due to the requirement of the LangGraph,
+   * it needs a unique thread id to keep track of the conversation.
    */
-  private threadId: string = randomUUID()
+  private threadId = randomUUID()
 
-  public ai: AI
-  public elements = []
-  public frame = undefined
-  public step = 0
+  /**
+   * AI instance to interact with the OpenAI API.
+   */
+  public ai
+
+  /**
+   * The delay in milliseconds to wait before executing each action during the playback.
+   *
+   * This introduces a pause between actions to wait for loading and rendering.
+   *
+   * @default 250
+   */
+  public delay: number
+
+  /**
+   * The frame within the page, if the current context is inside a frame.
+   *
+   * This property represents the current frame being operated on within the page. It
+   * allows for frame-specific actions when the context is nested inside an iframe.
+   *
+   * - **PlayWord Observer**: The current frame will be recorded and saved to the record file.
+   * - **PlayWord**: You can switch frames dynamically using the `say` method.
+   *
+   * If no frame is set, the value will be `undefined`.
+   *
+   * @example
+   * **Switch to the specified frame**
+   * ```ts
+   * // Switch to the frame with the name "frame-name"
+   * await playword.say('Switch to the frame "frame-name"')
+   * // Switch to the frame with the source "https://www.example.com"
+   * await playword.say('Switch to the frame "https://www.example.com"')
+   * ```
+   */
+  public frame: Frame | undefined
+
+  /**
+   * The most recent input from the user.
+   *
+   * This stores the last natural language command provided to the `say` method.
+   */
   public input = ''
-  public snapshot = ''
-  public recordings = [] as Recording[]
-  public logger: Awaited<ReturnType<typeof startLog>> | undefined
-  public debug
-  public page
-  public record
-  public retryOnFailure
-  public useScreenshot
 
-  constructor(page: Page, playwordOptions: PlayWordOptions = {}) {
-    const { debug, openAIOptions, record, retryOnFailure, useScreenshot } = playwordOptions
-    this.ai = new AI(openAIOptions || {})
-    this.debug = debug || false
-    this.page = page
-    this.record = record === true ? '.playword/recordings.json' : record
-    this.retryOnFailure = retryOnFailure || false
-    this.useScreenshot = useScreenshot || false
+  /**
+   * The Playwright `Page` instance used to perform actions.
+   *
+   * This property represents the current page being operated on. When a new page is
+   * opened, the context will automatically switch to the new page. Additionally,
+   * manual page switching can be performed using the `say` method.
+   *
+   * @example
+   * **Switch to the specified page**
+   * ```ts
+   * // Switch to the first page
+   * await playword.say('Switch to the first page')
+   * // Switch to the second page
+   * await playword.say('Switch to the second page')
+   * ```
+   */
+  public page: Page | undefined
+
+  /**
+   * The recorder instance used to save the actions performed.
+   *
+   * If recording is not enabled or initialized, the value will be `undefined`.
+   */
+  public recorder: Recorder | undefined
+  /**
+   * Step count to keep track of the actions performed.
+   * This is used to locate the recording in the record file.
+   */
+  public stepCount = 0
+
+  constructor(
+    public context: BrowserContext,
+    playwordOptions: PlayWordOptions = {}
+  ) {
+    const { debug = false, delay = 250, openAIOptions = {}, record = false } = playwordOptions
+
+    process.env.PLWD_DEBUG = debug.toString()
+
+    this.ai = new AI(openAIOptions)
+
+    this.context.on('page', (page) => (this.page = page))
+
+    this.delay = Math.abs(delay)
+
+    if (record) {
+      this.recorder = new Recorder(record === true ? '.playword/recordings.json' : record)
+    }
+
     this.say = this.say.bind(this)
   }
 
   /**
-   * Use AI to perform the action.
+   * The decorator to handle the test fixture, including the setup process and teardown process.
    *
-   * @returns The last action result.
+   * **Setup:**
+   * - If the page is not initialized, create a new page.
+   * - If recording is enabled, load the recordings from the record file.
+   * - If the input starts with the AI pattern, replace the AI pattern with an empty string for the input.
+   *
+   * **Teardown:**
+   * - Increment the step count to locate the recording in the record file.
    */
-  private async invokeAI() {
-    let result: ActionResult
+  private static fixture(_target: object, _property: string, descriptor: PropertyDescriptor) {
+    const method = descriptor.value
 
-    if (this.debug) {
-      info('[AI] ' + this.input, 'green')
-      this.logger = await startLog('Invoking the action graph...')
+    descriptor.value = async function (message: string) {
+      const playword = this as PlayWord
+      // Setup
+      if (playword.stepCount === 0) {
+        await Promise.all([playword.context.newPage(), playword.recorder?.load()])
+      }
+
+      playword.input = message.replace(aiPattern, '').trim()
+
+      // Action
+      const result = await method.apply(playword, [message])
+
+      // Teardown
+      playword.stepCount++
+
+      return result
     }
-    if (this.record) this.recordings[this.step] = { input: this.input, actions: [] }
+  }
+
+  /**
+   * Invoke the action graph to perform actions.
+   *
+   * @returns The action result. See {@link ActionResult} for details.
+   */
+  private async useActionGraph() {
+    utils.divider()
+    utils.info('[AI] ' + this.input, 'green')
+
+    this.recorder?.initStep(this.stepCount, this.input)
 
     const { messages } = await actionGraph.invoke(
       {
         messages: [new HumanMessage(this.input)]
       },
       {
-        configurable: { ref: this, thread_id: this.threadId, use_screenshot: this.useScreenshot }
+        configurable: { ref: this, thread_id: this.threadId }
       }
     )
 
-    result = (messages as AIMessage[])[messages.length - 1].content.toString()
-    result = ['true', 'false'].includes(result) ? result === 'true' : result
+    const response = messages[messages.length - 1].content.toString()
+    const result = ['true', 'false'].includes(response) ? response === 'true' : response
+    utils.info('Result: ' + response, result ? 'green' : 'red')
 
-    if (this.logger) {
-      if (result) this.logger.success()
-      else this.logger.error()
+    this.recorder?.save()
+
+    return result as ActionResult
+  }
+
+  /**
+   * Use recordings to perform actions. If the action fails, retry with AI.
+   *
+   * @param recording The recording to perform actions. See {@link Recording} for details.
+   *
+   * @returns The action result. See {@link ActionResult} for details.
+   */
+  private async useRecording(recording: Recording) {
+    utils.divider()
+    utils.info(`[RECORDING] ${this.input}`, 'green')
+
+    let result: ActionResult = ''
+
+    for (const { name, params } of recording.actions) {
+      result = await actions[name as keyof typeof actions](this, params)
+      utils.info(result.toString())
+
+      if (result.toString().startsWith('Failed')) {
+        utils.info('Retrying with AI...', 'magenta')
+        return this.useActionGraph()
+      }
+
+      await setTimeout(this.delay)
     }
 
     return result
   }
 
   /**
-   * Use the recordings to perform the action. If the action fails, retry with AI.
+   * Executes actions on the page using natural language input.
    *
-   * @param recordings The recordings to perform.
-   * @returns The last action result.
+   * Converts the provided input into corresponding actions and performs them
+   * on the browser page.
+   *
+   * @param message Natural language input to specify the action.
+   * @returns The action result, which can be a boolean (for assertions)
+   * or a string message indicating the outcome. See {@link ActionResult} for details.
+   *
+   * @example
+   * **Navigate to a webpage**
+   * ```ts
+   * const playword = new PlayWord(context)
+   * await playword.say('Navigate to https://www.google.com')
+   * ```
+   *
+   * **Click a link**
+   * ```ts
+   * await playword.say('Click the "Gmail" link')
+   * ```
+   *
+   * **Check for page content**
+   * ```ts
+   * const result = await playword.say('Check if the page contains "Sign in"')
+   * console.log(result) // Output: true
+   * ```
    */
-  private async invokeRecordings(recordings: Recording) {
-    try {
-      let result: ActionResult
+  @PlayWord.fixture
+  public async say(message: string) {
+    const recording = this.recorder?.list().find((r, i) => r.input === this.input && i === this.stepCount)
 
-      if (this.debug) info(`[RECORDING] ${this.input}`, 'green')
-
-      for (const { name, params } of recordings.actions) {
-        result = await actions[name as keyof typeof actions](this, params)
-
-        if (this.debug) info(result)
-
-        if (result === 'No element found' && this.retryOnFailure) {
-          info('Retrying with AI...', 'magenta')
-          return await this.invokeAI()
-        }
-      }
-
-      return result
-    } catch (error) {
-      if (this.retryOnFailure) {
-        info(error.message, 'red')
-        info('Retrying with AI...', 'magenta')
-        return await this.invokeAI()
-      }
-      throw error
-    }
-  }
-
-  @fixture
-  public async say(input: string) {
-    const matched = this.recordings.find((rec, index) => rec.input === this.input && index === this.step)
-    let result: ActionResult
-
-    if (this.record && !aiPattern.test(input) && matched) {
-      result = await this.invokeRecordings(matched)
-    } else {
-      result = await this.invokeAI()
+    if (aiPattern.test(message) || !recording) {
+      return this.useActionGraph()
     }
 
-    return result
+    return this.useRecording(recording)
   }
 }

@@ -1,14 +1,7 @@
 import { Document } from '@langchain/core/documents'
 import { AIMessage, HumanMessage } from '@langchain/core/messages'
 import { afterAll, beforeAll, describe, test, expect, vi } from 'vitest'
-import {
-  AI,
-  CANDIDATE_LIST_REFERENCE,
-  CANDIDATE_SCREENSHOT_REFERENCE,
-  CHECK_IMAGE_INFORMATION,
-  DETERMINE_ASSERTION_RESULT,
-  RETRIEVE_IMAGE_INFORMATION
-} from '../../packages/core/src/ai'
+import { AI, CANDIDATE_LIST_REFERENCE, DETERMINE_ASSERTION_RESULT, SUMMARIZE_HTML } from '../../packages/core/src/ai'
 
 const { mockFromTexts, mockMemoryVectorStore, mockOpenAIEmbeddings, mockInvoke } = vi.hoisted(() => ({
   mockFromTexts: vi.fn(),
@@ -36,63 +29,49 @@ describe('Spec: AI', () => {
     const ai = new AI()
 
     describe('When the useTools method is called', () => {
-      let result: AIMessage
+      beforeAll(() => mockInvoke.mockResolvedValue(new AIMessage('response')))
 
-      beforeAll(async () => {
-        mockInvoke.mockResolvedValue(new AIMessage('response'))
-        result = await ai.useTools([], [new HumanMessage('test')])
-      })
+      afterAll(() => mockInvoke.mockReset())
 
-      afterAll(() => mockInvoke.mockRestore())
-
-      test('Then the result is returned', () => {
-        expect(result.content).toBe('response')
+      test('Then the result is returned', async () => {
+        const { content } = await ai.useTools([], [new HumanMessage('test')])
+        expect(content).toBe('response')
       })
     })
 
     describe('When the searchDocuments method is called', () => {
-      const query = 'query'
-      let result: Document[]
+      beforeAll(() => mockInvoke.mockResolvedValue([new Document({ pageContent: 'Document 1' })]))
 
-      beforeAll(async () => {
-        mockInvoke.mockResolvedValue([new Document({ pageContent: 'Document 1' })])
-        result = await ai.searchDocuments(query)
-      })
+      afterAll(() => mockInvoke.mockReset())
 
-      afterAll(() => mockInvoke.mockRestore())
-
-      test('Then the result is returned', () => {
-        expect(result).toEqual([new Document({ pageContent: 'Document 1' })])
+      test('Then the result is returned', async () => {
+        const docs = await ai.searchDocuments('query')
+        expect(docs).toEqual([new Document({ pageContent: 'Document 1' })])
       })
     })
 
     describe('When the embedDocuments method is called', () => {
-      const documents = ['Document 1', 'Document 2']
-
-      beforeAll(async () => await ai.embedDocuments(documents))
-
-      test('Then the mockFromTexts method is called', () => {
-        expect(mockFromTexts).toHaveBeenCalledWith(documents, mockOpenAIEmbeddings)
+      test('Then the mockFromTexts method is called', async () => {
+        const texts = ['Document 1', 'Document 2']
+        await ai.embedTexts(texts)
+        expect(mockFromTexts).toBeCalledWith(texts, mockOpenAIEmbeddings)
       })
     })
 
     describe('When the parseResult method is called', () => {
       const messages = [new HumanMessage('Assertion')]
-      let result: boolean
 
-      beforeAll(async () => {
-        mockInvoke.mockResolvedValue({ result: true })
-        result = await ai.parseResult(messages)
-      })
+      beforeAll(() => mockInvoke.mockResolvedValue({ result: true }))
 
-      afterAll(() => mockInvoke.mockRestore())
+      afterAll(() => mockInvoke.mockReset())
 
-      test('Then the result is returned', () => {
+      test('Then the result is returned', async () => {
+        const result = await ai.parseResult(messages)
         expect(result).toBe(true)
       })
 
       test('Then the mockParse method is called', () => {
-        expect(mockInvoke).toHaveBeenCalledWith([
+        expect(mockInvoke).toBeCalledWith([
           { role: 'system', content: DETERMINE_ASSERTION_RESULT },
           { role: 'user', content: 'User: Assertion' },
           { role: 'assistant', content: 'AI: Assertion' }
@@ -103,36 +82,18 @@ describe('Spec: AI', () => {
     describe('When the getBestCandidate method is called', () => {
       const input = 'Input'
       const docs = [new Document({ pageContent: 'Document 1' }), new Document({ pageContent: 'Document 2' })]
-      let resultWithScreenshot: number
-      let resultWithoutScreenshot: number
 
-      beforeAll(async () => {
-        mockInvoke.mockResolvedValue({ index: '1' })
-        resultWithScreenshot = await ai.getBestCandidate(input, docs, 'Screenshot')
-        resultWithoutScreenshot = await ai.getBestCandidate(input, docs)
-      })
+      beforeAll(() => mockInvoke.mockResolvedValue({ index: '1' }))
 
-      afterAll(() => mockInvoke.mockRestore())
+      afterAll(() => mockInvoke.mockReset())
 
-      test('Then the result is returned', () => {
-        expect(resultWithScreenshot).toBe(1)
-        expect(resultWithoutScreenshot).toBe(1)
+      test('Then the result is returned', async () => {
+        const candidate = await ai.getBestCandidate(input, docs)
+        expect(candidate).toBe(1)
       })
 
       test('Then the mockParse method is called', () => {
-        expect(mockInvoke).toHaveBeenNthCalledWith(1, [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: CANDIDATE_SCREENSHOT_REFERENCE },
-              { type: 'text', text: 'User input: ' + input },
-              { type: 'text', text: 'Candidates: Index 0: Document 1\nIndex 1: Document 2' },
-              { type: 'image_url', image_url: { url: 'Screenshot' } }
-            ]
-          }
-        ])
-
-        expect(mockInvoke).toHaveBeenNthCalledWith(2, [
+        expect(mockInvoke).toBeCalledWith([
           {
             role: 'user',
             content: [
@@ -145,60 +106,25 @@ describe('Spec: AI', () => {
       })
     })
 
-    describe('When the retrieveImageInformation method is called', () => {
-      const input = 'Input'
-      const image = 'Image'
-      let result: string
+    describe('When the summarizeHTML method is called', () => {
+      const html = '<div>Content</div>'
 
-      beforeAll(async () => {
-        mockInvoke.mockResolvedValue({ info: 'Information' })
-        result = await ai.retrieveImageInformation(input, image)
-      })
+      beforeAll(() => mockInvoke.mockResolvedValue({ phrase: 'Element summary' }))
 
-      afterAll(() => mockInvoke.mockRestore())
+      afterAll(() => mockInvoke.mockReset())
 
-      test('Then the result is returned', () => {
-        expect(result).toBe('Information')
+      test('Then the result is returned', async () => {
+        const phrase = await ai.summarizeHTML(html)
+        expect(phrase).toBe('Element summary')
       })
 
       test('Then the mockParse method is called', () => {
-        expect(mockInvoke).toHaveBeenCalledWith([
+        expect(mockInvoke).toBeCalledWith([
           {
             role: 'user',
             content: [
-              { type: 'text', text: RETRIEVE_IMAGE_INFORMATION },
-              { type: 'text', text: 'User input: ' + input },
-              { type: 'image_url', image_url: { url: image } }
-            ]
-          }
-        ])
-      })
-    })
-
-    describe('When the checkImageInformation method is called', () => {
-      const input = 'Input'
-      const image = 'Image'
-      let result: boolean
-
-      beforeAll(async () => {
-        mockInvoke.mockResolvedValue({ result: true })
-        result = await ai.checkImageInformation(input, image)
-      })
-
-      afterAll(() => mockInvoke.mockRestore())
-
-      test('Then the result is returned', () => {
-        expect(result).toBe(true)
-      })
-
-      test('Then the mockParse method is called', () => {
-        expect(mockInvoke).toHaveBeenCalledWith([
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: CHECK_IMAGE_INFORMATION },
-              { type: 'text', text: 'User input: ' + input },
-              { type: 'image_url', image_url: { url: image } }
+              { type: 'text', text: SUMMARIZE_HTML },
+              { type: 'text', text: 'HTML: ' + html }
             ]
           }
         ])
