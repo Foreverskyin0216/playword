@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.1.5...@playword/core@0.2.0) (2025-01-20)
+
+
+### Features
+
+* implement the Observer feature ([cf49c28](https://github.com/Foreverskyin0216/playword/commit/cf49c28b487fa92814427526ff2705ca3d56362a))
+
+
+### BREAKING CHANGES
+
+* changed the parameter passed to PlayWord From Page to Context.
+This change enables the broader browser-level control.
+
+
+
+
+
 ## [0.1.5](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.1.4...@playword/core@0.1.5) (2024-12-29)
 
 
