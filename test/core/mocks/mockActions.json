@@ -1,5 +1,29 @@
 [
   {
+    "input": "assertElementContains",
+    "actions": [
+      {
+        "name": "assertElementContains",
+        "params": {
+          "xpath": "mock-xpath",
+          "text": "mock-text"
+        }
+      }
+    ]
+  },
+  {
+    "input": "assertElementNotContain",
+    "actions": [
+      {
+        "name": "assertElementNotContain",
+        "params": {
+          "xpath": "mock-xpath",
+          "text": "mock-text"
+        }
+      }
+    ]
+  },
+  {
     "input": "assertElementContentEquals",
     "actions": [
       {
@@ -12,10 +36,10 @@
     ]
   },
   {
-    "input": "assertElementContentNotEquals",
+    "input": "assertElementContentNotEqual",
     "actions": [
       {
-        "name": "assertElementContentNotEquals",
+        "name": "assertElementContentNotEqual",
         "params": {
           "xpath": "mock-xpath",
           "text": "mock-text"
@@ -46,34 +70,23 @@
     ]
   },
   {
-    "input": "assertImageContains",
-    "actions": [
-      {
-        "name": "assertImageContains",
-        "params": {
-          "xpath": "mock-xpath"
-        }
-      }
-    ]
-  },
-  {
     "input": "assertPageContains",
     "actions": [
       {
         "name": "assertPageContains",
         "params": {
-          "text": "mock-snapshot"
+          "text": "mock-text"
         }
       }
     ]
   },
   {
-    "input": "assertPageDoesNotContain",
+    "input": "assertPageNotContain",
     "actions": [
       {
-        "name": "assertPageDoesNotContain",
+        "name": "assertPageNotContain",
         "params": {
-          "text": "mock-other-snapshot"
+          "text": "mock-text"
         }
       }
     ]
@@ -106,40 +119,9 @@
       {
         "name": "click",
         "params": {
+          "frameSrc": "mock-url",
           "xpath": "mock-xpath"
         }
-      }
-    ]
-  },
-  {
-    "input": "getAttribute",
-    "actions": [
-      {
-        "name": "getAttribute",
-        "params": {
-          "xpath": "mock-xpath",
-          "attribute": "mock-attribute"
-        }
-      }
-    ]
-  },
-  {
-    "input": "getImageInformation",
-    "actions": [
-      {
-        "name": "getImageInformation",
-        "params": {
-          "xpath": "mock-xpath"
-        }
-      }
-    ]
-  },
-  {
-    "input": "getScreenshot",
-    "actions": [
-      {
-        "name": "getScreenshot",
-        "params": {}
       }
     ]
   },
@@ -164,22 +146,13 @@
     ]
   },
   {
-    "input": "getTextReturnNull",
+    "input": "getEmptyText",
     "actions": [
       {
         "name": "getText",
         "params": {
           "xpath": "mock-xpath"
         }
-      }
-    ]
-  },
-  {
-    "input": "goBack",
-    "actions": [
-      {
-        "name": "goBack",
-        "params": {}
       }
     ]
   },
@@ -200,6 +173,7 @@
       {
         "name": "hover",
         "params": {
+          "duration": 1,
           "xpath": "mock-xpath"
         }
       }
@@ -218,7 +192,7 @@
     ]
   },
   {
-    "input": "input with existing variable",
+    "input": "input with existing variables",
     "actions": [
       {
         "name": "input",
@@ -230,25 +204,13 @@
     ]
   },
   {
-    "input": "input with non-existing variable",
+    "input": "input with non-existing variables",
     "actions": [
       {
         "name": "input",
         "params": {
           "xpath": "mock-xpath",
           "text": "{NON_EXISTING_VARIABLE}"
-        }
-      }
-    ]
-  },
-  {
-    "input": "mark",
-    "actions": [
-      {
-        "name": "mark",
-        "params": {
-          "xpath": "mock-xpath",
-          "order": 1
         }
       }
     ]
@@ -343,13 +305,23 @@
     ]
   },
   {
-    "input": "unmark",
+    "input": "switchFrame",
     "actions": [
       {
-        "name": "unmark",
+        "name": "switchFrame",
         "params": {
-          "xpath": "mock-xpath",
-          "order": 1
+          "frameNumber": 0
+        }
+      }
+    ]
+  },
+  {
+    "input": "switchPage",
+    "actions": [
+      {
+        "name": "switchPage",
+        "params": {
+          "pageNumber": 0
         }
       }
     ]

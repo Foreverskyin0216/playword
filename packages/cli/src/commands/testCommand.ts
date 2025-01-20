@@ -1,12 +1,11 @@
 import type Yargs from 'yargs'
-import type { Recording, TestOptions } from './types'
+import type { Recording, TestOptions } from '../types'
 
 import confirm from '@inquirer/confirm'
 import input from '@inquirer/input'
 import { PlayWord } from '@playword/core'
-import { config as dotenvConfig } from 'dotenv'
-import { info } from './logger'
-import { getBrowser, getRecordings, runPlayWord } from './utils'
+import { config } from 'dotenv'
+import { getBrowser, getRecordings, info, runPlayWord } from '../utils'
 
 export default {
   command: 'test',
@@ -19,6 +18,11 @@ export default {
         alias: 'h',
         describe: 'Whether to open the browser in headed mode'
       })
+      .option('delay', {
+        alias: 'd',
+        describe: 'How long to wait before executing each action during the playback (ms)',
+        default: 250
+      })
       .option('env-file', {
         alias: 'e',
         describe: 'Which env file to use'
@@ -30,10 +34,6 @@ export default {
       .option('playback', {
         alias: 'p',
         describe: 'Whether to playback the test steps from a recording file'
-      })
-      .option('use-screenshot', {
-        alias: 's',
-        describe: 'Whether to enable screenshot reference'
       })
       .option('browser', {
         alias: 'b',
@@ -65,46 +65,49 @@ export default {
         }
         return true
       })
-      .example('$0 test -b firefox', 'Use Firefox browser')
+      .example('$0 test -b firefox', 'Use the Firefox browser')
+      .example('$0 test -d 500', 'Set the delay time to 500ms')
       .example('$0 test -h', 'Enable headed mode')
       .example('$0 test -e .env.test', 'Use .env.test file')
       .example('$0 test -v', 'Enable verbose mode')
-      .example('$0 test -s', 'Enable screenshot reference')
-      .example('$0 test -r', 'Save recordings to .playword/recordings.json as default')
-      .example('$0 test -r path/to/rec.json', 'Save recordings to path/to/rec.json')
+      .example('$0 test -r', 'Save the recordings to .playword/recordings.json as default')
+      .example('$0 test -r path/to/rec.json', 'Save the recordings to path/to/rec.json')
       .example('$0 test -r -p', 'Replay the recordings')
-      .example('$0 test -o apiKey=sk-... baseURL=https://...', 'Pass OpenAI options')
+      .example('$0 test -o apiKey=sk-... baseURL=https://...', 'Pass the OpenAI options')
       .version(false)
       .help()
   },
 
-  handler: async (argv: TestOptions) => {
+  handler: async ({
+    browser = 'chrome',
+    delay = 250,
+    envFile = '.env',
+    headed = false,
+    openaiOptions = {},
+    playback = false,
+    record = false,
+    verbose = false
+  }: TestOptions) => {
     try {
-      dotenvConfig({ path: argv.envFile || '.env' })
+      config({ path: envFile })
 
-      const record = typeof argv.record === 'string' ? argv.record : '.playword/recordings.json'
-      const recordings: Recording[] = argv.record ? getRecordings(record) : []
+      const recordPath = typeof record === 'string' ? record : '.playword/recordings.json'
+      const recordings: Recording[] = record ? getRecordings(recordPath) : []
 
-      info('Opening browser: ' + argv.browser)
-      const browser = await getBrowser(argv.browser, !argv.headed)
-      const playword = new PlayWord(await browser.newPage(), {
-        debug: argv.verbose,
-        openAIOptions: argv.openaiOptions,
-        record: argv.record,
-        retryOnFailure: true,
-        useScreenshot: argv.useScreenshot
-      })
+      info('Creating a new context for the browser: ' + browser)
+      const br = await getBrowser(browser, !headed)
+      const context = await br.newContext()
+      const playword = new PlayWord(context, { debug: verbose, delay, openAIOptions: openaiOptions, record })
 
-      if (recordings.length && argv.playback) for (const rec of recordings) await runPlayWord(playword, rec.input)
+      if (recordings.length && playback) for (const rec of recordings) await runPlayWord(playword, rec.input)
       else
         do await runPlayWord(playword, await input({ message: 'What do you want to do?' }))
         while (await confirm({ message: 'Continue to next step?' }))
 
-      info('Closing browser')
-      await browser.close()
-
-      if (argv.record) info('Saved recordings to ' + record)
+      if (record) info('Saved recordings to ' + recordPath)
       info('Test completed', 'green')
+
+      await br.close()
 
       process.exit(0)
     } catch (error) {

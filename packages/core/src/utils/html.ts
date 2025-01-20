@@ -1,88 +1,48 @@
+import type { ElementLocation } from '../types'
+
 import { JSDOM } from 'jsdom'
-import sanitizeHtml from 'sanitize-html'
+import sanitizeHTML from 'sanitize-html'
 
 /**
- * This function creates a DOM from the given HTML snapshot and tries to generate all locations of the target elements.
+ * This function creates a JSDOM environment from the given HTML
+ * and generates all locations of the target elements.
  *
- * @param html The sanitized HTML snapshot to generate element locations from.
- * @param targets Which elements to generate locations for.
- * @returns The locations of the target elements.
+ * @param html The sanitized HTML snapshot to generate locations from.
+ * @param types The types of elements to generate locations for.
+ *
+ * @returns The locations of the target elements. See {@link ElementLocation} for details.
  */
-export const getElementLocations = (html: string, targets: string[] = []) => {
-  const allowedTags = JSON.stringify(targets).toUpperCase()
+export const getElementLocations = (html: string, types: string[] = []) => {
+  const allowedTags = JSON.stringify(types).toUpperCase()
   const dom = new JSDOM(html, { runScripts: 'dangerously' })
 
   dom.window.eval(`
     const elements = document.querySelectorAll('*:not(head):not(script):not(style)')
     const locations = []
 
-    const getElementXPath = (element, text) => {
-      switch (true) {
-        case Boolean(element && element.id):
-          return '//*[@id="' + element.id + '"]'
+    const getElementXPath = (e) => {
+      const path = []
 
-        case Boolean(element && element.hasAttribute('data-testid')):
-          return '//*[@data-testid="' + element.getAttribute('data-testid') + '"]'
+      for (; e && e.nodeType == 1; e = e.parentNode) {
+        let position = 1
 
-        case Boolean(element && element.hasAttribute('data-qa')):
-          return '//*[@data-qa="' + element.getAttribute('data-qa') + '"]'
-
-        case Boolean(element && element.tagName === 'A' && element.href && element.href.startsWith('http')):
-          return '//a[@href="' + element.href + '"]'
-
-        case Boolean(element && element.tagName === 'DIV'):
-          return '//div[@class="' + element.className + '" and text()="' + text + '"]'
-
-        default:
-          return getElementTreeXPath(element)
-      }
-    }
-
-    const getElementTreeXPath = (element) => {
-      const paths = []
-
-      for (; element && element.nodeType == 1; element = element.parentNode) {
-        let index = 0
-
-        for (let sibling = element.previousSibling; sibling; sibling = sibling.previousSibling) {
-          if (sibling.nodeType == Node.DOCUMENT_TYPE_NODE) continue
-          if (sibling.nodeName == element.nodeName) ++index
+        for (let sibling = e.previousSibling; sibling; sibling = sibling.previousSibling) {
+          if (sibling.nodeType === 1 && sibling.nodeName === e.nodeName) position++
         }
 
-        paths.splice(0, 0, element.nodeName.toLowerCase() + (index ? '[' + (index + 1) + ']' : ''))
+        path.unshift(e.nodeName.toLowerCase() + '[' + position + ']')
       }
-      
-      return paths.length ? '//' + paths.join('/') : null
+
+      return path.length ? '//' + path.join('/') : null
     }
 
-    const isTarget = (element) => ${allowedTags}.includes(element.tagName)
+    for (const e of elements) {
+      if (!${allowedTags}.includes(e.nodeName)) continue
 
-    const isVisibleInViewport = (element) => {
-      const rect = element.getBoundingClientRect()
-      return (
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-      )
-    }
+      const clone = e.cloneNode(true)
+      clone.innerHTML = [...clone.childNodes].filter((n) => n.nodeType === 3).map((n) => n.nodeValue).join('').trim()
 
-    for (const element of elements) {
-      if (!isTarget(element) || !isVisibleInViewport(element)) continue
-
-      const clone = element.cloneNode(true)
-      let text = ''
-
-      for (const { nodeType, nodeValue } of clone.childNodes) {
-        text += nodeType === 3 ? nodeValue : ''
-      }
-      text = text.trim()
-      if (element.tagName === 'DIV' && text.length === 0) continue
-
-      clone.innerHTML = text
-      const xpath = getElementXPath(element, text)
-
-      locations.push({ xpath, element: clone.outerHTML })
+      locations.push({ html: clone.outerHTML, xpath: getElementXPath(e) })
     }
 
     window.locations = locations
@@ -95,10 +55,11 @@ export const getElementLocations = (html: string, targets: string[] = []) => {
  * To reduce the size of the HTML snapshot and make it easier to do similarity searches, we need to sanitize the HTML.
  *
  * @param html The original HTML snapshot.
+ *
  * @returns The sanitized HTML snapshot.
  */
 export const sanitize = (html: string) => {
-  return sanitizeHtml(html, {
+  return sanitizeHTML(html, {
     allowedAttributes: { '*': ['aria-*', 'class', 'data-*', 'href', 'id', 'placeholder', 'title', 'type', 'value'] },
     allowedStyles: { '*': { '*': [] } },
     allowedTags: false,

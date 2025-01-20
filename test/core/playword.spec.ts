@@ -1,199 +1,212 @@
+import type { BrowserContext } from 'playwright-core'
+
 import { AIMessage } from '@langchain/core/messages'
 import { join } from 'path'
-import { chromium } from 'playwright-core'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import PlayWord from '../../packages/core/src'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
+import { PlayWord } from '../../packages/core/src'
 
-const { mockAll, mockEvaluate, mockGetAttribute, mockInvoke, mockIsVisible, mockWaitForLoadState } = vi.hoisted(() => ({
+const {
+  mockAll,
+  mockEvaluate,
+  mockFrames,
+  mockGoTo,
+  mockInvoke,
+  mockIsVisible,
+  mockPages,
+  mockPress,
+  mockTitle,
+  mockUrl,
+  mockWaitForLoadState,
+  mockWaitForTimeout
+} = vi.hoisted(() => ({
   mockAll: vi.fn(),
   mockEvaluate: vi.fn(),
-  mockGetAttribute: vi.fn(),
+  mockFrames: vi.fn(),
+  mockGoTo: vi.fn(),
   mockInvoke: vi.fn(),
   mockIsVisible: vi.fn(),
-  mockWaitForLoadState: vi.fn()
-}))
-
-vi.mock('@langchain/openai', () => ({
-  ChatOpenAI: vi.fn(() => ({
-    bindTools: vi.fn(() => ({ invoke: mockInvoke })),
-    withStructuredOutput: vi.fn(() => ({ invoke: mockInvoke }))
-  })),
-  OpenAIEmbeddings: vi.fn()
+  mockPages: vi.fn(),
+  mockPress: vi.fn(),
+  mockTitle: vi.fn(),
+  mockUrl: vi.fn(),
+  mockWaitForLoadState: vi.fn(),
+  mockWaitForTimeout: vi.fn()
 }))
 
 vi.mock('fs/promises', async () => ({
   access: (await vi.importActual('fs/promises')).access,
-  mkdir: vi.fn(),
   readFile: (await vi.importActual('fs/promises')).readFile,
+  mkdir: vi.fn(),
   writeFile: vi.fn()
 }))
 
-vi.mock('playwright-core', () => ({
-  chromium: {
-    launch: vi.fn(() => ({
-      newPage: vi.fn(() => ({
-        content: vi.fn().mockResolvedValue('mock-snapshot'),
-        frames: vi.fn().mockReturnValue([
-          {
-            content: vi.fn().mockResolvedValue('mock-snapshot'),
-            evaluate: mockEvaluate,
-            getByText: vi.fn(() => ({ all: mockAll, isVisible: mockIsVisible })),
-            locator: vi.fn(() => ({
-              all: mockAll,
-              click: vi.fn(),
-              evaluate: mockEvaluate,
-              fill: vi.fn(),
-              first: vi.fn().mockReturnThis(),
-              getAttribute: mockGetAttribute,
-              getByText: vi.fn().mockReturnThis(),
-              hover: vi.fn(),
-              isVisible: mockIsVisible,
-              screenshot: vi.fn().mockResolvedValue(Buffer.from('mock-screenshot')),
-              selectOption: vi.fn(),
-              textContent: vi.fn().mockResolvedValue('mock-text')
-            })),
-            name: vi.fn().mockReturnValue('mock-frame'),
-            url: vi.fn().mockReturnValue('mock-url'),
-            waitForLoadState: mockWaitForLoadState,
-            waitForSelector: vi.fn()
-          }
-        ]),
-        evaluate: mockEvaluate,
-        getByText: vi.fn(() => ({ all: mockAll, isVisible: mockIsVisible })),
-        goBack: vi.fn().mockResolvedValue('Navigated back'),
-        goto: vi.fn(),
-        keyboard: { press: vi.fn() },
-        locator: vi.fn(() => ({
-          all: mockAll,
-          click: vi.fn(),
-          evaluate: mockEvaluate,
-          fill: vi.fn(),
-          first: vi.fn().mockReturnThis(),
-          getAttribute: mockGetAttribute,
-          getByText: vi.fn().mockReturnThis(),
-          hover: vi.fn(),
-          isVisible: mockIsVisible,
-          screenshot: vi.fn().mockResolvedValue(Buffer.from('mock-screenshot')),
-          selectOption: vi.fn(),
-          textContent: vi.fn().mockResolvedValue('mock-text')
-        })),
-        screenshot: vi.fn().mockResolvedValue(Buffer.from('mock-screenshot')),
-        title: vi.fn().mockResolvedValue('mock-title'),
-        url: vi.fn().mockReturnValue('mock-url'),
-        waitForLoadState: mockWaitForLoadState,
-        waitForSelector: vi.fn(),
-        waitForTimeout: vi.fn()
-      }))
-    }))
-  }
-}))
+vi.mock('timers/promises', () => ({ setTimeout: vi.fn() }))
 
-vi.mock('../../packages/core/src/ai', () => ({
-  AI: vi.fn(() => ({
-    retrieveImageInformation: vi.fn().mockResolvedValue('mock-image-information'),
-    checkImageInformation: vi.fn().mockResolvedValue(true)
-  }))
-}))
-vi.mock('../../packages/core/src/utils/dom', async () => ({
-  markElement: vi.fn(),
-  unmarkElement: vi.fn()
-}))
 vi.mock('../../packages/core/src/graph', () => ({ actionGraph: { invoke: mockInvoke } }))
-vi.mock('../../packages/core/src/utils/logger', () => ({
-  divider: vi.fn(),
-  info: vi.fn(),
-  startLog: vi.fn().mockReturnValue({ error: vi.fn(), success: vi.fn() })
-}))
 
-describe('Spec: PlayWord Class', () => {
+vi.mock('../../packages/core/src/utils', () => ({ divider: vi.fn(), info: vi.fn(), log: vi.fn(), logResult: vi.fn() }))
+
+describe('Spec: PlayWord', () => {
   describe('Given a PlayWord instance', () => {
-    let playword: PlayWord
-    let page: typeof PlayWord.prototype.page
-    let workdir: string
+    const workdir = process.cwd()
 
-    beforeAll(async () => {
-      const browser = await chromium.launch()
-      page = await browser.newPage()
-      workdir = process.cwd()
+    const mockFrame = {
+      locator: vi.fn(() => ({
+        first: vi.fn().mockReturnThis(),
+        selectOption: vi.fn(),
+        waitFor: vi.fn(),
+        click: vi.fn(),
+        hover: vi.fn(),
+        fill: vi.fn(),
+        evaluate: mockEvaluate,
+        isVisible: mockIsVisible,
+        textContent: vi.fn().mockResolvedValue('mock-text')
+      })),
+      content: vi.fn().mockResolvedValue('mock-snapshot'),
+      name: vi.fn().mockReturnValue('mock-frame'),
+      waitForSelector: vi.fn(),
+      waitForLoadState: mockWaitForLoadState,
+      evaluate: mockEvaluate,
+      url: mockUrl,
+      getByText: vi.fn(() => ({ all: mockAll }))
+    }
+
+    const mockPage = {
+      locator: vi.fn(() => ({
+        first: vi.fn().mockReturnThis(),
+        selectOption: vi.fn(),
+        waitFor: vi.fn(),
+        click: vi.fn(),
+        hover: vi.fn(),
+        fill: vi.fn(),
+        evaluate: mockEvaluate,
+        isVisible: mockIsVisible,
+        textContent: vi.fn().mockResolvedValue('mock-text')
+      })),
+      content: vi.fn().mockResolvedValue('mock-snapshot'),
+      waitForSelector: vi.fn(),
+      waitForLoadState: mockWaitForLoadState,
+      waitForTimeout: mockWaitForTimeout,
+      evaluate: mockEvaluate,
+      frames: mockFrames,
+      title: mockTitle,
+      goto: mockGoTo,
+      url: mockUrl,
+      keyboard: { press: mockPress },
+      getByText: vi.fn(() => ({ all: mockAll }))
+    }
+
+    const mockContext = { newPage: vi.fn(() => mockPage), on: vi.fn((_, fn) => fn(mockPage)), pages: mockPages }
+
+    let playword: PlayWord
+
+    beforeAll(() => {
       process.chdir(join(__dirname, 'mocks'))
       process.env.OPENAI_API_KEY = 'test-api-key'
     })
 
     afterAll(() => {
-      process.chdir(workdir)
       delete process.env.OPENAI_API_KEY
+      process.chdir(workdir)
     })
 
-    describe('And the record option is set to false', () => {
-      beforeAll(async () => {
-        playword = new PlayWord(page, { debug: true, record: false })
+    describe('And the PlayWord instance is created with the default options', () => {
+      beforeAll(() => {
+        mockPages.mockReturnValue([mockPage])
+        playword = new PlayWord(mockContext as unknown as BrowserContext)
       })
 
-      describe('When the say method return true', () => {
-        let result: string
+      afterAll(() => mockPages.mockReset())
 
-        beforeAll(async () => {
+      describe('When the say method is called', () => {
+        afterEach(() => mockInvoke.mockReset())
+
+        test('Then it should return true if the last message is true', async () => {
           mockInvoke.mockResolvedValue({ messages: [new AIMessage('true')] })
-          result = await playword.say('[AI] Test Message')
-        })
-
-        afterAll(() => mockInvoke.mockRestore())
-
-        test('Then it should return the result', () => {
+          const result = await playword.say('[AI] Test Message')
           expect(result).toBe(true)
         })
-      })
 
-      describe('When the say method return false', () => {
-        let result: string
-
-        beforeAll(async () => {
+        test('Then it should return false if the last message is false', async () => {
           mockInvoke.mockResolvedValue({ messages: [new AIMessage('false')] })
-          result = await playword.say('Test Message')
-        })
-
-        afterAll(() => mockInvoke.mockRestore())
-
-        test('Then it should return the result', () => {
+          const result = await playword.say('[AI] Test Message')
           expect(result).toBe(false)
         })
       })
     })
 
-    describe('And the record option is set to file path', () => {
+    describe('And the record option is set to true', () => {
       describe('When the recordings file exists', () => {
-        let result: string
-
-        beforeAll(async () => {
-          process.env.VARIABLE = 'mock-variable'
-          mockAll.mockResolvedValue([
-            {
-              click: vi.fn(),
-              evaluate: mockEvaluate.mockResolvedValue('mock-evaluate-result'),
-              hover: vi.fn(),
-              fill: vi.fn(),
-              isVisible: mockIsVisible,
-              selectOption: vi.fn()
-            }
-          ])
-          mockGetAttribute.mockResolvedValue('mock-attribute')
+        beforeAll(() => {
+          mockAll.mockResolvedValue([{ isVisible: mockIsVisible }])
           mockIsVisible.mockResolvedValue(true)
-          playword = new PlayWord(page, { debug: true, record: join(__dirname, 'mocks/mockActions.json') })
+
+          mockPages.mockReturnValue([mockPage])
+
+          playword = new PlayWord(mockContext as unknown as BrowserContext, { record: true })
+        })
+
+        afterAll(() => {
+          mockAll.mockReset()
+          mockIsVisible.mockReset()
+          mockPages.mockReset()
+        })
+
+        test('Then it should return the correct result for the first call', async () => {
+          const result = await playword.say('Check if the element with xpath "mock-xpath" contains text "mock-text"')
+          expect(result).toBe(false)
+        })
+
+        test('Then it should return the correct result for the second call', async () => {
+          const result = await playword.say('Check if PlayWord works when performing multiple actions')
+          expect(result).toBe('Clicked on mock-xpath')
+        })
+      })
+    })
+
+    describe('And the record option is set to a file path', () => {
+      describe('When the recordings file exists', () => {
+        beforeAll(() => {
+          process.env.VARIABLE = 'mock-variable'
+
+          mockAll.mockResolvedValue([{ isVisible: mockIsVisible }])
+          mockEvaluate.mockResolvedValue('mock-result')
+          mockIsVisible.mockResolvedValue(true)
+          mockTitle.mockResolvedValue('mock-title')
+
+          mockFrames.mockReturnValue([mockFrame])
+          mockPages.mockReturnValue([mockPage])
+          mockUrl.mockReturnValue('mock-url')
+
+          playword = new PlayWord(mockContext as unknown as BrowserContext, {
+            record: join(__dirname, 'mocks/mockActions.json')
+          })
         })
 
         afterAll(() => {
           delete process.env.VARIABLE
-          mockAll.mockRestore()
-          mockEvaluate.mockRestore()
-          mockGetAttribute.mockRestore()
-          mockIsVisible.mockRestore()
+          mockAll.mockReset()
+          mockEvaluate.mockReset()
+          mockFrames.mockReset()
+          mockIsVisible.mockReset()
+          mockPages.mockReset()
+          mockTitle.mockReset()
+          mockUrl.mockReset()
         })
 
         test('Then it should return the results for all of actions', async () => {
+          let result: boolean | string
+
+          result = await playword.say('assertElementContains')
+          expect(result).toEqual(true)
+
+          result = await playword.say('assertElementNotContain')
+          expect(result).toEqual(false)
+
           result = await playword.say('assertElementContentEquals')
           expect(result).toEqual(true)
 
-          result = await playword.say('assertElementContentNotEquals')
+          result = await playword.say('assertElementContentNotEqual')
           expect(result).toEqual(false)
 
           result = await playword.say('assertElementVisible')
@@ -202,13 +215,10 @@ describe('Spec: PlayWord Class', () => {
           result = await playword.say('assertElementNotVisible')
           expect(result).toEqual(false)
 
-          result = await playword.say('assertImageContains')
-          expect(result).toEqual(true)
-
           result = await playword.say('assertPageContains')
           expect(result).toEqual(true)
 
-          result = await playword.say('assertPageDoesNotContain')
+          result = await playword.say('assertPageNotContain')
           expect(result).toEqual(false)
 
           result = await playword.say('assertPageTitleEquals')
@@ -220,27 +230,15 @@ describe('Spec: PlayWord Class', () => {
           result = await playword.say('click')
           expect(result).toBe('Clicked on mock-xpath')
 
-          result = await playword.say('getAttribute')
-          expect(result).toBe('Attribute value: mock-attribute')
-
-          result = await playword.say('getImageInformation')
-          expect(result).toBe('mock-image-information')
-
-          result = await playword.say('getScreenshot')
-          expect(result).toBe('data:image/jpeg;base64,' + Buffer.from('mock-screenshot').toString('base64'))
-
           result = await playword.say('getSnapshot')
           expect(result).toBe('mock-snapshot')
 
           result = await playword.say('getText')
-          expect(result).toBe('mock-evaluate-result')
+          expect(result).toBe('mock-result')
 
-          mockEvaluate.mockResolvedValue(null)
-          result = await playword.say('getTextReturnNull')
+          mockEvaluate.mockResolvedValue('')
+          result = await playword.say('getEmptyText')
           expect(result).toBe('')
-
-          result = await playword.say('goBack')
-          expect(result).toBe('Navigated back')
 
           result = await playword.say('goto')
           expect(result).toBe('Navigated to mock-url')
@@ -249,16 +247,13 @@ describe('Spec: PlayWord Class', () => {
           expect(result).toBe('Hovered on mock-xpath')
 
           result = await playword.say('input')
-          expect(result).toBe('Filled in mock-xpath')
+          expect(result).toBe('Filled mock-xpath with mock-text')
 
-          result = await playword.say('input with existing variable')
-          expect(result).toBe('Filled in mock-xpath')
+          result = await playword.say('input with existing variables')
+          expect(result).toBe('Filled mock-xpath with mock-variable')
 
-          result = await playword.say('input with non-existing variable')
-          expect(result).toBe('Filled in mock-xpath')
-
-          result = await playword.say('mark')
-          expect(result).toBe('Marked mock-xpath with order 1')
+          result = await playword.say('input with non-existing variables')
+          expect(result).toBe('Filled mock-xpath with {NON_EXISTING_VARIABLE}')
 
           result = await playword.say('pressKeys')
           expect(result).toBe('Pressed keys mock-keys')
@@ -279,291 +274,172 @@ describe('Spec: PlayWord Class', () => {
           expect(result).toBe('Unsupported scroll target left')
 
           result = await playword.say('select')
-          expect(result).toBe('Selected mock-option')
+          expect(result).toBe('Selected mock-option from mock-xpath')
 
           result = await playword.say('sleep')
-          expect(result).toBe('Slept for 1000 seconds')
-
-          result = await playword.say('unmark')
-          expect(result).toBe('Unmarked mock-xpath with order 1')
-
-          result = await playword.say('waitForText')
-          expect(result).toBe('Waited for text: mock-text')
-        }, 30000)
-      })
-
-      describe('When the recordings file does not exist', () => {
-        let result: string
-
-        beforeAll(async () => {
-          mockInvoke.mockResolvedValue({ messages: [new AIMessage('result')] })
-          playword = new PlayWord(page, { record: join(__dirname, 'mocks/nonexistence.json') })
-          result = await playword.say('assertElementContentEquals')
-        })
-
-        afterAll(() => mockInvoke.mockRestore())
-
-        test('Then it should return the result', () => {
-          expect(result).toBe('result')
-        })
-      })
-
-      describe('When the page is switched to a frame', () => {
-        let result: string
-
-        beforeAll(async () => {
-          mockAll.mockResolvedValue([
-            {
-              click: vi.fn(),
-              evaluate: mockEvaluate.mockResolvedValue('mock-evaluate-result'),
-              hover: vi.fn(),
-              fill: vi.fn(),
-              isVisible: mockIsVisible,
-              selectOption: vi.fn()
-            }
-          ])
-          mockGetAttribute.mockResolvedValue('mock-attribute')
-          mockIsVisible.mockResolvedValue(true)
-          playword = new PlayWord(page, { record: join(__dirname, 'mocks/mockFrameActions.json') })
-        })
-
-        afterAll(() => {
-          mockAll.mockRestore()
-          mockIsVisible.mockRestore()
-          mockEvaluate.mockRestore()
-          mockGetAttribute.mockRestore()
-        })
-
-        test('Then it should return the results for all of actions', async () => {
-          result = await playword.say('back to main frame')
-          expect(result).toBe('Switched to frame')
+          expect(result).toBe('Slept for 1000 milliseconds')
 
           result = await playword.say('switchFrame')
           expect(result).toBe('Switched to frame')
 
-          result = await playword.say('assertElementContentEquals')
-          expect(result).toBe(true)
-
-          result = await playword.say('assertElementContentNotEquals')
-          expect(result).toBe(false)
-
-          result = await playword.say('assertElementVisible')
-          expect(result).toBe(true)
-
-          result = await playword.say('assertElementNotVisible')
-          expect(result).toBe(false)
-
-          result = await playword.say('assertImageContains')
-          expect(result).toEqual(true)
-
-          result = await playword.say('assertPageContains')
-          expect(result).toBe(true)
-
-          result = await playword.say('assertPageDoesNotContain')
-          expect(result).toBe(false)
-
-          result = await playword.say('click')
-          expect(result).toBe('Clicked on mock-xpath')
-
-          result = await playword.say('getAttribute')
-          expect(result).toBe('Attribute value: mock-attribute')
-
-          result = await playword.say('getFrames')
-          const pageContent = JSON.parse(result?.[0])
-          expect(pageContent).toHaveProperty('name', 'mock-frame')
-          expect(pageContent).toHaveProperty('url', 'mock-url')
-
-          result = await playword.say('getImageInformation')
-          expect(result).toBe('mock-image-information')
-
-          result = await playword.say('getSnapshot')
-          expect(result).toBe('mock-snapshot')
-
-          result = await playword.say('getText')
-          expect(result).toBe('mock-evaluate-result')
-
-          result = await playword.say('hover')
-          expect(result).toBe('Hovered on mock-xpath')
-
-          result = await playword.say('input')
-          expect(result).toBe('Filled in mock-xpath')
-
-          result = await playword.say('mark')
-          expect(result).toBe('Marked mock-xpath with order 1')
-
-          result = await playword.say('pressKeys')
-          expect(result).toBe('Pressed keys mock-keys')
-
-          result = await playword.say('scroll up')
-          expect(result).toBe('scrolled up')
-
-          result = await playword.say('scroll down')
-          expect(result).toBe('scrolled down')
-
-          result = await playword.say('scroll to top')
-          expect(result).toBe('scrolled to top')
-
-          result = await playword.say('scroll to bottom')
-          expect(result).toBe('scrolled to bottom')
-
-          result = await playword.say('scroll to left')
-          expect(result).toBe('Unsupported scroll target left')
-
-          result = await playword.say('select')
-          expect(result).toBe('Selected mock-option')
-
-          result = await playword.say('unmark')
-          expect(result).toBe('Unmarked mock-xpath with order 1')
+          result = await playword.say('switchPage')
+          expect(result).toBe('Switched to page')
 
           result = await playword.say('waitForText')
           expect(result).toBe('Waited for text: mock-text')
-        }, 30000)
+        })
       })
 
-      describe('When the element is not found', () => {
-        let result: string
-
-        beforeAll(async () => {
-          mockAll.mockResolvedValue([])
-          mockGetAttribute.mockResolvedValue(null)
-          playword = new PlayWord(page, { record: join(__dirname, 'mocks/mockNotFoundActions.json') })
+      describe('When the recordings file does not exist', () => {
+        beforeAll(() => {
+          mockInvoke.mockResolvedValue({ messages: [new AIMessage('result')] })
+          mockPages.mockReturnValue([mockPage])
+          playword = new PlayWord(mockContext as unknown as BrowserContext, {
+            record: join(__dirname, 'mocks/nonexistence.json')
+          })
         })
 
         afterAll(() => {
-          mockAll.mockRestore()
-          mockGetAttribute.mockRestore()
+          mockInvoke.mockReset()
+          mockPages.mockReset()
         })
 
-        test('Then it should return the results for all of actions', async () => {
-          result = await playword.say('click')
-          expect(result).toBe('No element found')
+        test('Then it should return the result', async () => {
+          const result = await playword.say('assertElementContentEquals')
+          expect(result).toBe('result')
+        })
+      })
+    })
 
-          result = await playword.say('getAttribute')
-          expect(result).toBe('No element found')
+    describe('And the action is failed to perform', () => {
+      describe('When the action returns "Failed to perform action"', () => {
+        beforeAll(() => {
+          mockGoTo.mockRejectedValue(new Error('mock-error'))
+          mockPress.mockRejectedValue(new Error('mock-error'))
+          mockTitle.mockRejectedValue(new Error('mock-error'))
+          mockWaitForLoadState.mockRejectedValue(new Error('mock-error'))
+          mockWaitForTimeout.mockRejectedValue(new Error('mock-error'))
+
+          mockUrl.mockImplementation(() => {
+            throw new Error('mock-error')
+          })
+
+          mockInvoke.mockResolvedValue({ messages: [new AIMessage('Failed to perform action')] })
+
+          mockPages.mockReturnValue([mockPage])
+
+          playword = new PlayWord(mockContext as unknown as BrowserContext, {
+            record: join(__dirname, 'mocks/mockActions.json')
+          })
+        })
+
+        afterAll(() => {
+          mockFrames.mockReset()
+          mockGoTo.mockReset()
+          mockInvoke.mockReset()
+          mockPages.mockReset()
+          mockPress.mockReset()
+          mockTitle.mockReset()
+          mockUrl.mockReset()
+          mockWaitForLoadState.mockReset()
+          mockWaitForTimeout.mockReset()
+        })
+
+        test('Then it should retry the action and return the result', async () => {
+          let result: boolean | string
+
+          result = await playword.say('assertElementContains')
+          expect(result).toEqual(false)
+
+          result = await playword.say('assertElementNotContain')
+          expect(result).toEqual(false)
+
+          result = await playword.say('assertElementContentEquals')
+          expect(result).toEqual(false)
+
+          result = await playword.say('assertElementContentNotEqual')
+          expect(result).toEqual(false)
+
+          result = await playword.say('assertElementVisible')
+          expect(result).toEqual(false)
+
+          result = await playword.say('assertElementNotVisible')
+          expect(result).toEqual(false)
+
+          result = await playword.say('assertPageContains')
+          expect(result).toEqual(false)
+
+          result = await playword.say('assertPageNotContain')
+          expect(result).toEqual(false)
+
+          result = await playword.say('assertPageTitleEquals')
+          expect(result).toEqual(false)
+
+          result = await playword.say('assertPageUrlMatches')
+          expect(result).toEqual(false)
+
+          result = await playword.say('click')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('getSnapshot')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('getText')
+          expect(result).toBe('Failed to perform action')
+
+          mockEvaluate.mockResolvedValue('')
+          result = await playword.say('getEmptyText')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('goto')
+          expect(result).toBe('Failed to perform action')
 
           result = await playword.say('hover')
-          expect(result).toBe('No element found')
+          expect(result).toBe('Failed to perform action')
 
           result = await playword.say('input')
-          expect(result).toBe('No element found')
+          expect(result).toBe('Failed to perform action')
 
-          result = await playword.say('mark')
-          expect(result).toBe('No element found')
+          result = await playword.say('input with existing variables')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('input with non-existing variables')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('pressKeys')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('scroll up')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('scroll down')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('scroll to top')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('scroll to bottom')
+          expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('scroll to left')
+          expect(result).toBe('Failed to perform action')
 
           result = await playword.say('select')
-          expect(result).toBe('No element found')
-        }, 15000)
-      })
-    })
+          expect(result).toBe('Failed to perform action')
 
-    describe('And the record option is set to true', () => {
-      describe('When the recordings file exists', () => {
-        let first: string
-        let second: string
+          result = await playword.say('sleep')
+          expect(result).toBe('Failed to perform action')
 
-        beforeAll(async () => {
-          mockAll.mockResolvedValue([
-            {
-              click: vi.fn(),
-              hover: vi.fn(),
-              isVisible: mockIsVisible
-            }
-          ])
-          mockIsVisible.mockResolvedValue(true)
-          playword = new PlayWord(page, { record: true })
-          first = await playword.say('Check if the element with xpath "mock-xpath" contains text "mock-text"')
-          second = await playword.say('Check if PlayWord works when performing multiple actions')
-        })
+          mockFrames.mockReturnValue(null)
+          result = await playword.say('switchFrame')
+          expect(result).toBe('Failed to perform action')
 
-        afterAll(() => {
-          mockAll.mockRestore()
-          mockIsVisible.mockRestore()
-        })
+          mockPages.mockReturnValue(null)
+          result = await playword.say('switchPage')
+          expect(result).toBe('Failed to perform action')
 
-        test('Then it should return the correct result for the first call', () => {
-          expect(first).toBe(false)
-        })
-
-        test('Then it should return the correct result for the second call', () => {
-          expect(second).toBe('Clicked on mock-xpath')
-        })
-      })
-    })
-
-    describe('And the useScreenshot option is set to true', () => {
-      let result: string
-
-      beforeAll(async () => {
-        mockInvoke.mockResolvedValue({ messages: [new AIMessage('result')] })
-        playword = new PlayWord(page, { useScreenshot: true })
-        result = await playword.say('Test Message')
-      })
-
-      afterAll(() => mockInvoke.mockRestore())
-
-      test('Then it should return the result with a screenshot', () => {
-        expect(result).toBe('result')
-      })
-    })
-
-    describe('And the retryOnFailure option is set', () => {
-      describe('When the retryOnFailure option is set to true', () => {
-        describe('And the element is not found', () => {
-          let result: string
-
-          beforeAll(async () => {
-            mockAll.mockResolvedValue([])
-            mockInvoke.mockResolvedValue({ messages: [new AIMessage('No element found')] })
-            playword = new PlayWord(page, {
-              record: join(__dirname, 'mocks/mockNotFoundActions.json'),
-              retryOnFailure: true
-            })
-            result = await playword.say('click')
-          })
-
-          afterAll(() => {
-            mockAll.mockRestore()
-            mockInvoke.mockRestore()
-          })
-
-          test('Then it should retry the action and return the result', () => {
-            expect(result).toBe('No element found')
-          })
-        })
-
-        describe('And an error occurs', () => {
-          let result: string
-
-          beforeAll(async () => {
-            mockInvoke.mockResolvedValue({ messages: [new AIMessage('true')] })
-            mockWaitForLoadState.mockRejectedValue(new Error('mock-error'))
-            playword = new PlayWord(page, { retryOnFailure: true, record: true })
-            result = await playword.say('Check if the element with xpath "mock-xpath" contains text "mock-text"')
-          })
-
-          afterAll(() => {
-            mockInvoke.mockRestore()
-            mockWaitForLoadState.mockRestore()
-          })
-
-          test('Then it should retry the action and return the result', () => {
-            expect(result).toBe(true)
-          })
-        })
-      })
-
-      describe('When the retryOnFailure option is set to false', () => {
-        beforeAll(() => {
-          mockWaitForLoadState.mockRejectedValue(new Error('mock-error'))
-          playword = new PlayWord(page, { record: true })
-        })
-
-        afterAll(() => mockWaitForLoadState.mockRestore())
-
-        test('Then it should not retry the action and throw an error', async () => {
-          await expect(
-            playword.say('Check if the element with xpath "mock-xpath" contains text "mock-text"')
-          ).rejects.toThrow('mock-error')
+          result = await playword.say('waitForText')
+          expect(result).toBe('Failed to perform action')
         })
       })
     })

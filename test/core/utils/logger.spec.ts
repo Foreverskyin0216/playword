@@ -1,43 +1,53 @@
-import { describe, expect, test, vi } from 'vitest'
-import { divider, info, startLog } from '../../../packages/core/src/utils'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import * as utils from '../../../packages/core/src/utils'
 
-const { mockConsoleLog } = await vi.hoisted(async () => ({
+const { mockConsoleLog } = vi.hoisted(() => ({
   mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
   mockStderr: vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
 }))
 
-vi.mock('spinner')
-vi.mock('ora')
-
 describe('Spec: Logger', () => {
-  describe('When divider is called', () => {
-    test('It should print a divider line', () => {
-      divider()
-      expect(mockConsoleLog).toHaveBeenCalledWith('-'.repeat(process.stdout.columns))
+  describe('When the divider function is called', () => {
+    beforeEach(() => (process.env.PLWD_DEBUG = 'true'))
+
+    afterEach(() => mockConsoleLog.mockClear())
+
+    test('Then it should print a divider line', () => {
+      utils.divider()
+      expect(mockConsoleLog).toBeCalledWith('-'.repeat(process.stdout.columns))
+    })
+
+    test('Then it should not print a divider line when turning off the debug mode', () => {
+      process.env.PLWD_DEBUG = 'false'
+      utils.divider()
+      expect(mockConsoleLog).not.toBeCalled()
     })
   })
 
-  describe('When info is called', () => {
-    test('It should print an information message', () => {
-      info('message')
-      expect(mockConsoleLog).toHaveBeenCalledWith('message')
+  describe('When the info function is called', () => {
+    beforeEach(() => (process.env.PLWD_DEBUG = 'true'))
+
+    afterEach(() => mockConsoleLog.mockClear())
+
+    test('Then it should print an info message', () => {
+      utils.info('message')
+      expect(mockConsoleLog).toBeCalledWith('message')
     })
 
-    test('It should print an information message with green color', () => {
-      info('message', 'green')
-      expect(mockConsoleLog).toHaveBeenCalledWith('\x1b[32mmessage\x1b[0m')
+    test('Then is should print an info message with green color', () => {
+      utils.info('message', 'green')
+      expect(mockConsoleLog).toBeCalledWith('\x1b[32mmessage\x1b[0m')
     })
 
-    test('It should print an information message with magenta color', () => {
-      info('message', 'magenta')
-      expect(mockConsoleLog).toHaveBeenCalledWith('\x1b[35mmessage\x1b[0m')
+    test('Then it should print an info message with magenta color', () => {
+      utils.info('message', 'magenta')
+      expect(mockConsoleLog).toBeCalledWith('\x1b[35mmessage\x1b[0m')
     })
-  })
 
-  describe('When startLog is called', () => {
-    test('It should start a progress spinner', async () => {
-      const spinner = await startLog('ora message')
-      expect(spinner.text).toBe('ora message')
+    test('Then it should not print an info message when turning off the debug mode', () => {
+      process.env.PLWD_DEBUG = 'false'
+      utils.info('message')
+      expect(mockConsoleLog).not.toBeCalled()
     })
   })
 })

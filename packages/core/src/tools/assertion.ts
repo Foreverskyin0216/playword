@@ -1,61 +1,118 @@
 import type { DynamicStructuredTool } from '@langchain/core/tools'
+import type { ToolConfig } from '../types'
 
 import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
-
 import * as actions from '../actions'
-import { getElementLocations, sanitize } from '../utils'
+import * as utils from '../utils'
 import { allowedTags } from '../validators'
 
 /**
- * Tools for asserting conditions on the page.
+ * Custom tools for asserting conditions on the page.
  *
- * Include the following tools:
- * - **AssertElementContentEquals**
- * - **AssertElementVisible**
- * - **AssertImageContains**
- * - **AssertPageContains**
- * - **AssertPageDoesNotContain**
- * - **AssertPageTitleEquals**
- * - **AssertPageUrlMatches**
+ * The following tools are available:
+ * - AssertElementContains
+ * - AssertElementNotContain
+ * - AssertElementContentEquals
+ * - AssertElementContentNotEqual
+ * - AssertElementVisible
+ * - AssertElementNotVisible
+ * - AssertPageContains
+ * - AssertPageNotContain
+ * - AssertPageTitleEquals
+ * - AssertPageUrlMatches
  */
 export const assertion = [
   tool(
     async ({ keywords, text }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
+      const { ref } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, allowedTags)
 
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
       const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
+      ref.recorder?.addAction({ name: 'assertAlert', params: { text } })
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
+      return (await actions.assertElementContains(ref, { text, xpath }))
+        ? 'PASS: Element contains text: ' + text
+        : 'FAIL: Element does not contain text: ' + text
+    },
+    {
+      name: 'AssertElementContains',
+      description: 'Call to verify that an element contains specific text',
+      schema: z.object({
+        keywords: z
+          .string()
+          .describe(
+            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
+          ),
+        text: z.string().describe('The text to verify on the element')
+      })
+    }
+  ),
 
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
+  tool(
+    async ({ keywords, text }, { configurable }) => {
+      const { ref } = configurable as ToolConfig
+      const snapshot = await actions.getSnapshot(ref)
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, allowedTags)
 
-      if (ref.record)
-        ref.recordings[ref.step].actions.push({ name: 'assertElementContentEquals', params: { xpath, text } })
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
-      if (await actions.assertElementContentEquals(ref, { xpath, text })) {
-        return 'PASS: Element content is equal to: ' + text
-      }
-      return 'FAIL: Element content is not equal to: ' + text
+      const retrieved = await ref.ai.searchDocuments(keywords)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
+
+      ref.recorder?.addAction({ name: 'assertElementNotContain', params: { text } })
+
+      return (await actions.assertElementNotContain(ref, { text, xpath }))
+        ? 'PASS: Element does not contain text: ' + text
+        : 'FAIL: Element contains text: ' + text
+    },
+    {
+      name: 'AssertElementNotContain',
+      description: 'Call to verify that an element does not contain specific text',
+      schema: z.object({
+        keywords: z
+          .string()
+          .describe(
+            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
+          ),
+        text: z.string().describe('The text to verify on the element')
+      })
+    }
+  ),
+
+  tool(
+    async ({ keywords, text }, { configurable }) => {
+      const { ref } = configurable as ToolConfig
+      const snapshot = await actions.getSnapshot(ref)
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, allowedTags)
+
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
+
+      const retrieved = await ref.ai.searchDocuments(keywords)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
+
+      ref.recorder?.addAction({ name: 'assertElementContentEquals', params: { xpath, text } })
+
+      return (await actions.assertElementContentEquals(ref, { xpath, text }))
+        ? 'PASS: Element content is equal to: ' + text
+        : 'FAIL: Element content is not equal to: ' + text
     },
     {
       name: 'AssertElementContentEquals',
@@ -73,43 +130,27 @@ export const assertion = [
 
   tool(
     async ({ keywords, text }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
+      const { ref } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, allowedTags)
 
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
       const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
+      ref.recorder?.addAction({ name: 'assertElementContentNotEqual', params: { xpath, text } })
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record)
-        ref.recordings[ref.step].actions.push({ name: 'assertElementContentNotEquals', params: { xpath, text } })
-
-      if (await actions.assertElementContentNotEquals(ref, { xpath, text })) {
-        return 'PASS: Element content is not equal to: ' + text
-      }
-      return 'FAIL: Element content is equal to: ' + text
+      return (await actions.assertElementContentNotEqual(ref, { xpath, text }))
+        ? 'PASS: Element content is not equal to: ' + text
+        : 'FAIL: Element content is equal to: ' + text
     },
     {
-      name: 'AssertElementContentNotEquals',
+      name: 'AssertElementContentNotEqual',
       description: 'Call to verify that an element does not have specific text',
       schema: z.object({
         keywords: z
@@ -124,40 +165,24 @@ export const assertion = [
 
   tool(
     async ({ keywords }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
+      const { ref } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, allowedTags)
 
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
       const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
+      ref.recorder?.addAction({ name: 'assertElementVisible', params: { xpath } })
 
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertElementVisible', params: { xpath } })
-
-      if (await actions.assertElementVisible(ref, { xpath })) {
-        return 'PASS: Element is visible'
-      }
-      return 'FAIL: Element is invisible'
+      return (await actions.assertElementVisible(ref, { xpath }))
+        ? 'PASS: Element is visible'
+        : 'FAIL: Element is invisible'
     },
     {
       name: 'AssertElementVisible',
@@ -174,40 +199,24 @@ export const assertion = [
 
   tool(
     async ({ keywords }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
+      const { ref } = configurable as ToolConfig
       const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
+      const html = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(html, allowedTags)
 
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
+      utils.info('Embedding the snapshot...')
+      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      utils.info('Snapshot embedded.')
 
       const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
+      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
+      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
 
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
+      ref.recorder?.addAction({ name: 'assertElementNotVisible', params: { xpath } })
 
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertElementNotVisible', params: { xpath } })
-
-      if (await actions.assertElementNotVisible(ref, { xpath })) {
-        return 'PASS: Element is invisible'
-      }
-      return 'FAIL: Element is visible'
+      return (await actions.assertElementNotVisible(ref, { xpath }))
+        ? 'PASS: Element is invisible'
+        : 'FAIL: Element is visible'
     },
     {
       name: 'AssertElementNotVisible',
@@ -223,65 +232,14 @@ export const assertion = [
   ),
 
   tool(
-    async ({ keywords }, { configurable }) => {
-      const { ref, use_screenshot } = configurable as ToolConfig
-      const snapshot = await actions.getSnapshot(ref)
-      const elements = getElementLocations(sanitize(snapshot), allowedTags)
-
-      if (snapshot !== ref.snapshot || elements.length !== ref.elements.length) {
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot changed. Embedding the new snapshot...'
-        ref.snapshot = snapshot
-        ref.elements = elements
-        await ref.ai.embedDocuments(elements.map(({ element }) => element))
-        if (ref.debug && ref.logger) ref.logger.text = 'Snapshot embedded.'
-      }
-
-      const retrieved = await ref.ai.searchDocuments(keywords)
-      const xpaths = retrieved.map(({ pageContent }) => elements.find(({ element }) => element === pageContent)?.xpath)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.mark(ref, { xpath, order })))
-      }
-
-      const screenshot = use_screenshot ? await actions.getScreenshot(ref) : undefined
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved, screenshot)
-
-      if (use_screenshot) {
-        await Promise.all(xpaths.map((xpath, order) => actions.unmark(ref, { xpath, order })))
-      }
-
-      const xpath = elements.find(({ element }) => element === retrieved[candidate].pageContent)?.xpath
-
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertImageContains', params: { xpath } })
-
-      if (await actions.assertImageContains(ref, { xpath })) {
-        return 'PASS: Image contains the information'
-      }
-      return 'FAIL: Image does not contain the information'
-    },
-    {
-      name: 'AssertImageContains',
-      description:
-        'Call to capture a screenshot and verify that the image contains specific information the user is looking for',
-      schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          )
-      })
-    }
-  ),
-
-  tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertPageContains', params: { text } })
 
-      if (await actions.assertPageContains(ref, { text })) {
-        return 'PASS: Page contains text: ' + text
-      }
-      return 'FAIL: Page does not contain text: ' + text
+      ref.recorder?.addAction({ name: 'assertPageContains', params: { text } })
+
+      return (await actions.assertPageContains(ref, { text }))
+        ? 'PASS: Page contains text: ' + text
+        : 'FAIL: Page does not contain text: ' + text
     },
     {
       name: 'AssertPageContains',
@@ -295,15 +253,15 @@ export const assertion = [
   tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertPageDoesNotContain', params: { text } })
 
-      if (await actions.assertPageDoesNotContain(ref, { text })) {
-        return 'PASS: Page does not contain text: ' + text
-      }
-      return 'FAIL: Page contains text: ' + text
+      ref.recorder?.addAction({ name: 'assertPageNotContain', params: { text } })
+
+      return (await actions.assertPageNotContain(ref, { text }))
+        ? 'PASS: Page does not contain text: ' + text
+        : 'FAIL: Page contains text: ' + text
     },
     {
-      name: 'AssertPageDoesNotContain',
+      name: 'AssertPageNotContain',
       description: 'Call to verify that the page does not contain specific text',
       schema: z.object({
         text: z.string().describe('The text to verify on the page')
@@ -314,12 +272,12 @@ export const assertion = [
   tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertPageTitleEquals', params: { text } })
 
-      if (await actions.assertPageTitleEquals(ref, { text })) {
-        return 'PASS: Page title is equal to: ' + text
-      }
-      return 'FAIL: Page title is not equal to: ' + text
+      ref.recorder?.addAction({ name: 'assertPageTitleContains', params: { text } })
+
+      return (await actions.assertPageTitleEquals(ref, { text }))
+        ? 'PASS: Page title is equal to: ' + text
+        : 'FAIL: Page title is not equal to: ' + text
     },
     {
       name: 'AssertPageTitleEquals',
@@ -333,12 +291,12 @@ export const assertion = [
   tool(
     async ({ pattern }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      if (ref.record) ref.recordings[ref.step].actions.push({ name: 'assertPageUrlMatches', params: { pattern } })
 
-      if (await actions.assertPageUrlMatches(ref, { pattern })) {
-        return 'PASS: Page URL matches the pattern: ' + pattern
-      }
-      return 'FAIL: Page URL does not match the pattern: ' + pattern
+      ref.recorder?.addAction({ name: 'assertPageTitleMatches', params: { pattern } })
+
+      return (await actions.assertPageUrlMatches(ref, { pattern }))
+        ? 'PASS: Page URL matches the pattern: ' + pattern
+        : 'FAIL: Page URL does not match the pattern: ' + pattern
     },
     {
       name: 'AssertPageUrlMatches',

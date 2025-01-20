@@ -19,62 +19,50 @@ vi.mock('../../packages/core/src/tools/page', () => ({
 describe('Spec: Action Graph', () => {
   describe('Given the action graph', () => {
     describe('When the page agent is invoked', () => {
-      const aiMessage = new AIMessage('response')
-      let state: { messages: AIMessage[] }
+      beforeAll(() => {
+        const aiResponse = new AIMessage('response')
+        aiResponse.tool_calls = [{ id: 'tool-call-id', name: 'tool-call-name', args: { arg: 'tool-call-args' } }]
+        mockUseTools.mockResolvedValue(aiResponse)
+      })
 
-      beforeAll(async () => {
-        aiMessage.tool_calls = [{ id: 'tool-call-id', name: 'tool-call-name', args: { arg: 'tool-call-args' } }]
-        mockUseTools.mockResolvedValue(aiMessage)
-        state = await actionGraph.invoke(
+      afterAll(() => mockUseTools.mockReset())
+
+      test('Then the graph returns the expected result', async () => {
+        const state = await actionGraph.invoke(
           {
             messages: [new HumanMessage('Page Action')]
           },
           {
             configurable: {
-              ref: {
-                ai: { useTools: mockUseTools, parseResult: vi.fn().mockResolvedValue('true') },
-                debug: true,
-                logger: { text: '' }
-              },
+              ref: { ai: { useTools: mockUseTools, parseResult: vi.fn().mockResolvedValue('true') } },
               thread_id: 'page-test-id'
             }
           }
         )
-      })
-
-      afterAll(() => mockUseTools.mockRestore())
-
-      test('Then the graph returns the expected result', async () => {
         expect(state.messages[0].content).toBe('Page Action')
         expect(state.messages.map(({ content }) => content)).toEqual(['Page Action', 'response', 'Tool call result'])
       })
     })
 
     describe('When the assertion agent is invoked', () => {
-      const aiMessage = new AIMessage('response')
-      let state: { messages: AIMessage[] }
+      beforeAll(() => {
+        const aiResponse = new AIMessage('response')
+        aiResponse.tool_calls = [{ id: 'tool-call-id', name: 'tool-call-name', args: { arg: 'tool-call-args' } }]
+        mockUseTools.mockResolvedValue(aiResponse)
+      })
 
-      beforeAll(async () => {
-        aiMessage.tool_calls = [{ id: 'tool-call-id', name: 'tool-call-name', args: { arg: 'tool-call-args' } }]
-        mockUseTools.mockResolvedValue(aiMessage)
-        state = await actionGraph.invoke(
+      test('Then the graph returns the expected result', async () => {
+        const state = await actionGraph.invoke(
           {
             messages: [new HumanMessage('Test something...')]
           },
           {
             configurable: {
-              ref: {
-                ai: { useTools: mockUseTools, parseResult: vi.fn().mockResolvedValue('true') },
-                debug: true,
-                logger: { text: '' }
-              },
+              ref: { ai: { useTools: mockUseTools, parseResult: vi.fn().mockResolvedValue('true') } },
               thread_id: 'assertion-test-id'
             }
           }
         )
-      })
-
-      test('Then the graph returns the expected result', async () => {
         expect(state.messages[0].content).toBe('Test something...')
         expect(state.messages.map(({ content }) => content.toString())).toEqual([
           'Test something...',

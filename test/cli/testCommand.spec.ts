@@ -1,7 +1,7 @@
 import { join } from 'path'
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import yargs from 'yargs'
-import TestCommand from '../../packages/cli/src/testCommand'
+import { TestCommand } from '../../packages/cli/src/commands'
 
 const { mockConfirm, mockSay } = vi.hoisted(() => ({
   mockConfirm: vi.fn(),
@@ -12,33 +12,36 @@ const { mockConfirm, mockSay } = vi.hoisted(() => ({
 }))
 
 vi.mock('@playword/core', () => ({ PlayWord: vi.fn(() => ({ say: mockSay })) }))
+
 vi.mock('playwright-core', () => ({
-  chromium: { launch: vi.fn(() => ({ newPage: vi.fn(), close: vi.fn() })) },
-  firefox: { launch: vi.fn(() => ({ newPage: vi.fn(), close: vi.fn() })) },
-  webkit: { launch: vi.fn(() => ({ newPage: vi.fn(), close: vi.fn() })) }
+  chromium: { launch: vi.fn(() => ({ close: vi.fn(), newContext: vi.fn() })) },
+  firefox: { launch: vi.fn(() => ({ close: vi.fn(), newContext: vi.fn() })) },
+  webkit: { launch: vi.fn(() => ({ close: vi.fn(), newContext: vi.fn() })) }
 }))
+
 vi.mock('@inquirer/input', () => ({ default: vi.fn().mockResolvedValue('mock input') }))
+
 vi.mock('@inquirer/confirm', () => ({ default: mockConfirm }))
 
 describe('Spec: Test Command', () => {
   describe('Given the test command is executed', () => {
-    const actualProcess = process
+    const originalProcess = process
     const defaultOptions = {
       browser: 'chrome',
+      delay: 250,
       envFile: '.env',
       headed: false,
-      openAIOptions: {},
+      openaiOptions: {},
       playback: false,
       record: false,
-      useScreenshot: false,
-      verbosity: 1
+      verbose: false
     }
     let workdir: string
 
-    afterEach(() => mockSay.mockRestore())
+    afterEach(() => mockSay.mockReset())
 
     describe('When the builder is called', () => {
-      test('Builder should work as expected', async () => {
+      test('Then the builder should work as expected', async () => {
         const builder = await TestCommand.builder(yargs())
         expect(builder.parse('--openai-options apiKey=sk-...')).toHaveProperty('openaiOptions', { apiKey: 'sk-...' })
         expect(() => builder.parse('--record invalid-record-file')).toThrowError()
@@ -49,9 +52,11 @@ describe('Spec: Test Command', () => {
       beforeAll(() => {
         workdir = process.cwd()
         global.process = {
-          ...actualProcess,
+          ...originalProcess,
           exit: vi.fn((code) => {
-            if (code !== 0) throw new Error('exit with ' + code)
+            if (code !== 0) {
+              throw new Error('exit with ' + code)
+            }
           }) as unknown as never
         }
         process.chdir(join(__dirname, 'mocks'))
@@ -59,12 +64,12 @@ describe('Spec: Test Command', () => {
       })
 
       afterAll(() => {
-        global.process = actualProcess
+        global.process = originalProcess
         process.chdir(workdir)
-        mockConfirm.mockRestore()
+        mockConfirm.mockReset()
       })
 
-      test('Should work as expected with the browser option', async () => {
+      test('Then the command should work as expected with the browser option', async () => {
         mockSay.mockResolvedValue(true)
         await TestCommand.handler({ ...defaultOptions, browser: 'chromium' })
         await TestCommand.handler({ ...defaultOptions, browser: 'chrome' })
@@ -74,13 +79,13 @@ describe('Spec: Test Command', () => {
         await expect(TestCommand.handler({ ...defaultOptions, browser: 'invalid' })).rejects.toThrow('exit with 1')
       })
 
-      test('Should work as expected with the env-file option', async () => {
+      test('Then the command should work as expected with the env-file option', async () => {
         mockSay.mockResolvedValue(false)
         await TestCommand.handler({ ...defaultOptions, envFile: '.env' })
         await TestCommand.handler({ ...defaultOptions, envFile: '' })
       })
 
-      test('Should work as expected with the record option', async () => {
+      test('Then the command should work as expected with the record option', async () => {
         mockConfirm.mockResolvedValue(false)
         await TestCommand.handler({ ...defaultOptions, record: true, playback: true })
         await TestCommand.handler({ ...defaultOptions, record: 'invalid' })
