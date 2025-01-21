@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.2.0...@playword/core@0.2.1) (2025-01-21)
+
+
+### Bug Fixes
+
+* fixed an issue of abnormal text size on certain pages of the Observer UI ([36ef1fe](https://github.com/Foreverskyin0216/playword/commit/36ef1fe1a5a121d5836789554eb2f5b7f9760084))
+
+
+
+
+
 # [0.2.0](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.1.5...@playword/core@0.2.0) (2025-01-20)
 
 
