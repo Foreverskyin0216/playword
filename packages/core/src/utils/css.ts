@@ -13,7 +13,7 @@ export const observerCSS = `
 
   #plwd-banner {
     color: #ffffff;
-    font-size: 2em;
+    font-size: 32px !important;
     font-weight: bold;
     left: 4vw;
     position: absolute;
@@ -25,7 +25,7 @@ export const observerCSS = `
     border: none;
     border-bottom: 1px solid #ffffff;
     color: #ffffff;
-    font-size: 20px;
+    font-size: 20px !important;
     font-weight: bold;
     letter-spacing: 2px;
     padding: 12px;
@@ -60,7 +60,7 @@ export const observerCSS = `
     color: #ffffff;
     display: inline-block;
     float: left;
-    font-size: 2em;
+    font-size: 32px !important;
     font-weight: bold;
     height: 40px;
     line-height: 40px;
@@ -82,7 +82,7 @@ export const observerCSS = `
     background: #333333;
     border-radius: 25px;
     bottom: 30px;
-    font-size: 1.5em;
+    font-size: 24px !important;
     font-weight: bold;
     height: 50px;
     left: 0;
@@ -117,7 +117,7 @@ export const observerCSS = `
 
   #plwd-input::placeholder {
     color: #ffffff;
-    font-size: 20px;
+    font-size: 20px !important;
     opacity: 0.4;
     padding: 12px;
   }
@@ -131,7 +131,7 @@ export const observerCSS = `
   #plwd-accept-btn {
     border-radius: 25px;
     color: #4db6ac;
-    font-size: 1.5em;
+    font-size: 24px !important;
     height: 50px;
     line-height: 50px;
     margin: 8px;
@@ -141,7 +141,7 @@ export const observerCSS = `
   #plwd-drop-btn {
     border-radius: 25px;
     color: #e0e0e0;
-    font-size: 1.5em;
+    font-size: 24px !important;
     height: 50px;
     line-height: 50px;
     margin: 8px;
@@ -152,7 +152,7 @@ export const observerCSS = `
     border-radius: 25px;
     color: #e5c07b;
     float: right;
-    font-size: 1.2em;
+    font-size: 20px !important;
     height: 40px;
     line-height: 40px;
     width: 100px;
@@ -163,7 +163,7 @@ export const observerCSS = `
     border-radius: 25px;
     color: #e0e0e0;
     float: right;
-    font-size: 1.2em;
+    font-size: 20px !important;
     height: 40px;
     line-height: 40px;
     width: 100px;
@@ -241,7 +241,7 @@ export const observerCSS = `
   }
 
   .plwd-marker {
-    font-size: 1em;
+    font-size: 16px !important;
     font-weight: bold;
     padding: 0 16px;
   }
@@ -255,7 +255,7 @@ export const observerCSS = `
     border-width: 2px;
     border-right-width: 0px;
     border-top-width: 0px;
-    font-size: 1.5em;
+    font-size: 24px !important;
     height: 100px;
     line-height: 100px;
     list-style-type: none;

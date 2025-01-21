@@ -19,7 +19,8 @@ export default {
       })
       .option('env-file', {
         alias: 'e',
-        describe: 'Which env file to use'
+        describe: 'Which env file to use',
+        default: '.env'
       })
       .option('verbose', {
         alias: 'v',

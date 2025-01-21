@@ -61,11 +61,12 @@ const browser = await chromium.launch()
 const context = await browser.newContext()
 
 const playword = new PlayWord(context, {
-  debug: true,             // Debug mode
+  debug: true, // Debug mode
+  delay: 500, // Delay between each step in milliseconds
   openAIOptions: {
-    apiKey: 'sk-...',      // Your OpenAI API Key
-    baseURL: 'https://...' // Custom endpoint (if applicable)
-    // ...                 // Additional OpenAI API options can also be configured here
+    apiKey: 'sk-...', // Your OpenAI API Key
+    baseURL: 'https://...', // Custom endpoint (if applicable)
+    // Additional OpenAI API options can also be configured here
   }
 })
 ```
@@ -101,10 +102,8 @@ test('Bootstrap Website Test', async function () {
   const context = await browser.newContext()
   const playword = new PlayWord(context)
 
-  // Navigate to the website
+  // Perform page actions
   await playword.say('Navigate to https://getbootstrap.com')
-
-  // Interact with elements
   await playword.say('Click the search field')
   await playword.say('Input "Quick Start" in the search bar')
   await playword.say('Press enter')
@@ -153,15 +152,15 @@ To interact with elements inside frames, simply instruct PlayWord to switch to t
 
 ```typescript
 await playword.say('Go to https://iframetester.com')
+
 await playword.say('Type "https://www.saucedemo.com" in the URL field')
+
 await playword.say('Click the render button')
 
 await playword.say('Switch to the frame with the url "https://www.saucedemo.com"')
 
 // Perform actions inside the frame
-// ...
-
-await playword.say('Switch to the main frame')
+await playword.say('Type standard_user into the username field')
 ```
 
 ### 🔧 Custom Variables
@@ -169,20 +168,21 @@ await playword.say('Switch to the main frame')
 Hardcoding sensitive information in your test cases is not a good practice.
 Instead, use custom variables with the syntax `{VARIABLE_NAME}` and define them in your environment settings.
 
-```typescript
-// In your .env file
-// USERNAME=standard_user
-// PASSWORD=secret_sauce
+Assume the following environment variables are set in .env
 
+```bash
+# .env
+USERNAME=standard_user
+PASSWORD=secret_sauce
+```
+
+```typescript
+// Load environment variables
 import 'dotenv/config'
 
-await playword.say('Navigate to https://www.saucedemo.com')
-
-// {USERNAME} and {PASSWORD} are replaced with the values from the environment
+// {USERNAME} and {PASSWORD} will be replaced with the values from the environment
 await playword.say('Input {USERNAME} in the username field')
 await playword.say('Input {PASSWORD} in the password field')
-
-await playword.say('Log in')
 ```
 
 ## 🔴 Recordings
@@ -193,7 +193,7 @@ PlayWord supports recording test executions and replaying them later for efficie
 // Save recordings to the default path (.playword/recordings.json)
 const playword = new PlayWord(context, { record: true })
 
-// Save recordings to a custom path (must end with .json)
+// Save recordings to a custom path (Must be `.json`)
 const playword = new PlayWord(context, { record: 'path/to/recordings.json' })
 ```
 
@@ -211,7 +211,7 @@ await playword.say('[AI] click the "Login" button')
 await playword.say('[AI] verify the URL matches "https://www.saucedemo.com/inventory.html"')
 ```
 
-## 👁️‍🗨️ Observer
+## 🖥️ Observer
 
 The Observer module enables tracking and recording user interactions on web pages.
 By leveraging AI, the Observer converts user behaviors into precise and reliable
@@ -226,7 +226,9 @@ and pass it as a parameter to the Observer.
 import { chromium } from 'playwright'
 import { Observer, PlayWord } from '@playword/core'
 
-const browser = await chromium.launch()
+const browser = await chromium.launch({
+  headless: false // Headed mode is required for displaying the Observer UI
+})
 const context = await browser.newContext()
 
 const playword = new PlayWord(context)
