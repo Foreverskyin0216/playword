@@ -1,4 +1,4 @@
-import type { Action, ObserverEvent, ObserverOptions, ObserverState, PlayWordInterface } from './types'
+import type { Action, ObserverAction, ObserverOptions, ObserverState, PlayWordInterface } from './types'
 
 import { HumanMessage } from '@langchain/core/messages'
 import { setTimeout } from 'timers/promises'
@@ -59,11 +59,6 @@ export class Observer {
   private input = ''
 
   /**
-   * The `p-queue` instance for managing tasks for generating step descriptions.
-   */
-  private queue: import('p-queue').default | undefined
-
-  /**
    * The recorder instance used to save the actions performed.
    */
   private recorder: Recorder
@@ -71,19 +66,18 @@ export class Observer {
   /**
    * The current state of the Observer. See {@link ObserverState} for details.
    */
-  private state: ObserverState = { isDryRunning: false, isWaitingForAI: false, isWaitingForUserAction: false }
+  public state: ObserverState = { dryRunning: false, waitingForAI: false, waitingForUserAction: false }
 
   constructor(
     private playword: PlayWordInterface,
-    observerOptions: ObserverOptions = {}
+    { delay = 250, recordPath = '.playword/recordings.json' }: ObserverOptions = {}
   ) {
-    const { delay = 250, recordPath = '.playword/recordings.json' } = observerOptions
-
     this.delay = Math.abs(delay)
 
     this.recorder = new Recorder(recordPath)
-
     this.playword.recorder = undefined
+
+    this.observe = this.observe.bind(this)
   }
 
   /**
@@ -114,40 +108,34 @@ export class Observer {
     /**
      * Accepts the generated action and saves it to the recorder.
      */
-    const acceptEvent = async () => {
-      await generateEvent()
+    const accept = async () => {
+      if (this.state.waitingForAI) return
+
+      await Promise.all([generateAction(), notify('Accepted', '✓', '#4db6ac')])
+
       this.recorder.initStep(this.recorder.count(), this.input)
       this.recorder.addAction(this.action)
-      this.recorder.save(['html', 'success'])
+      await this.recorder.save(['html', 'success'])
 
-      this.action = { name: '', params: {} }
-      this.input = ''
-      this.state.isWaitingForUserAction = false
+      this.state.waitingForUserAction = false
     }
 
     /**
-     * Cleans up the page by clearing cookies and closing all pages.
+     * Cancels the current action.
      */
-    const cleanUp = async () => {
-      const context = this.context()
-      await Promise.all([context.clearCookies(), setTimeout(2000)])
-      await Promise.all(context.pages().map((page) => page.close()))
-      await context.newPage()
+    const cancel = async () => {
+      if (this.state.waitingForAI) {
+        return
+      }
+      this.state.waitingForUserAction = false
     }
 
     /**
      * Clears all the recorded actions and resets the UI.
      */
     const clearAll = async () => {
-      dropEvent()
       this.recorder.clear()
-      await Promise.all([notify('Cleared', '✓', '#e0e0e0'), setTimeout(2000)])
-      await Promise.all([
-        locate('#plwd-timeline').evaluate(utils.setTestCasePreview, []),
-        locate('#plwd-preview-title').evaluate(utils.removeClass, 'open'),
-        locate('#plwd-clear-btn').evaluate(utils.removeClass, 'open'),
-        locate('#plwd-dry-run-btn').evaluate(utils.removeClass, 'open')
-      ])
+      await Promise.all([this.recorder.save(), preview()])
     }
 
     /**
@@ -155,20 +143,36 @@ export class Observer {
      */
     const closePanel = async () => {
       await Promise.all([
-        locate('#plwd-preview-title').evaluate(utils.removeClass, 'open'),
-        locate('#plwd-clear-btn').evaluate(utils.removeClass, 'open'),
-        locate('#plwd-dry-run-btn').evaluate(utils.removeClass, 'open'),
-        locate('#plwd-panel').evaluate(utils.removeClass, 'open')
+        locate('.plwd-preview-title').evaluate(utils.removeClass, 'open'),
+        locate('.plwd-clear-btn').evaluate(utils.removeClass, 'open'),
+        locate('.plwd-dry-run-btn').evaluate(utils.removeClass, 'open'),
+        locate('.plwd-panel').evaluate(utils.removeClass, 'open')
       ])
     }
 
     /**
-     * Cancels the current action.
+     * Deletes the specified step from the recorded actions.
+     *
+     * @param position The position of the step to delete.
      */
-    const dropEvent = async () => {
-      this.action = { name: '', params: {} }
-      this.input = ''
-      this.state.isWaitingForUserAction = false
+    const deleteStep = async (position: number) => {
+      this.recorder.delete(position)
+      await Promise.all([this.recorder.save(['html', 'success']), preview()])
+    }
+
+    /**
+     * Describes the emitted action to generate the step description.
+     *
+     * @param action The emitted action to generate the step description. See {@link ObserverAction} for details.
+     */
+    const describeAction = async (action: ObserverAction) => {
+      updateInput('')
+      await Promise.all([setInputValue(), waitForAI(true)])
+
+      const summary = await this.ai().summarizeAction(JSON.stringify(action))
+      updateInput(summary)
+
+      await Promise.all([setInputValue(), waitForAI(false)])
     }
 
     /**
@@ -177,33 +181,33 @@ export class Observer {
      * You can press the **Esc** key to stop the execution during a dry run.
      */
     const dryRun = async () => {
-      utils.divider()
-      utils.info('Starting the dry run process...', 'green')
+      utils.info('Starting the dry run process...', 'green', true)
+      this.state.dryRunning = true
+      this.state.waitingForUserAction = false
 
-      this.state = { ...this.state, isDryRunning: true, isWaitingForUserAction: false }
-
-      await cleanUp()
-      utils.info('Reset the page', 'green')
+      await Promise.all([notify('Dry Run', '🚀', '#e5c07b'), resetPageState()])
 
       for (const recording of this.recorder.list()) {
-        const action = recording.actions[0]
-        const result = await actions[action.name as keyof typeof actions](this.playword, action.params)
-        action.success = Boolean(result === 'Failed to perform the action' ? false : result)
-        utils.info((action.success ? 'PASS: ' : 'FAIL: ') + recording.input)
+        if (this.state.dryRunning) {
+          const action = recording.actions[0]
+          const result = await actions[action.name as keyof typeof actions](this.playword, action.params)
+          action.success = Boolean(result === 'Failed to perform the action' ? false : result)
 
-        await setTimeout(this.delay)
+          utils.info((action.success ? 'PASS: ' : 'FAIL: ') + recording.input)
+          await setTimeout(this.delay)
+        }
       }
 
-      this.state.isDryRunning = false
-
-      utils.info('Dry run completed', 'green')
       await notify('Completed', '🚀', '#e5c07b')
+
+      this.state.dryRunning = false
+      utils.info('Dry Run Completed')
     }
 
     /**
-     * Before accepting the event, leverage AI to adjust the action to match the user's intent.
+     * Before accepting the action, leverage AI to adjust the action to match the user's intent.
      */
-    const generateEvent = async () => {
+    const generateAction = async () => {
       await waitForAI(true)
 
       const { tool_calls } = await this.ai().useTools(tools.classifier, [new HumanMessage(this.input)])
@@ -222,83 +226,34 @@ export class Observer {
       }
 
       this.action = JSON.parse(content)
-      utils.divider()
-      utils.info('Input: ' + this.input + '\nAction: ' + JSON.stringify(this.action, null, 2), 'green')
+      utils.info('Input: ' + this.input + '\nAction: ' + JSON.stringify(this.action, null, 2), 'green', true)
 
       return waitForAI(false)
     }
 
     /**
-     * Generates the step description for the current action via AI.
+     * Receives and processes the emitted actions from the browser.
      *
-     * @param event The emitted event to generate the step description. See {@link ObserverEvent} for details.
+     * @param action The emitted action. See {@link ObserverAction} for details.
      */
-    const generateInput = async (event: ObserverEvent) => {
-      await waitForAI(true)
-
-      switch (event.name) {
-        case 'goto': {
-          updateInput('Navigate to ' + event.params.url)
-          break
-        }
-
-        case 'click': {
-          const phrase = await this.ai().summarizeHTML(event.params.html)
-          updateInput('Click on ' + phrase)
-          break
-        }
-
-        case 'hover': {
-          const phrase = await this.ai().summarizeHTML(event.params.html)
-          updateInput('Hover over ' + phrase)
-          break
-        }
-
-        case 'input': {
-          const phrase = await this.ai().summarizeHTML(event.params.html)
-          updateInput('Input "' + event.params.text + '" into ' + phrase)
-          break
-        }
-
-        case 'select': {
-          const phrase = await this.ai().summarizeHTML(event.params.html)
-          updateInput('Select "' + event.params.option + '" from ' + phrase)
-          break
-        }
+    const handleEmit = async (action: ObserverAction) => {
+      if (this.state.dryRunning || this.state.waitingForAI || this.state.waitingForUserAction) {
+        return
       }
 
-      await Promise.all([setInputValue(), waitForAI(false)])
-    }
-
-    /**
-     * The exposed function to retrieve the current state of the Observer.
-     *
-     * @returns The current state of the Observer. See {@link ObserverState} for details.
-     */
-    const getState = () => {
-      return this.state
-    }
-
-    /**
-     * Receives and processes the emitted events from the browser.
-     *
-     * @param event The emitted event. See {@link ObserverEvent} for details.
-     */
-    const handleEmits = async (event: ObserverEvent) => {
-      const { isDryRunning, isWaitingForAI, isWaitingForUserAction } = this.state
-      if (isDryRunning || isWaitingForAI || isWaitingForUserAction || !this.page()) return
-
-      this.action = event
-      this.state.isWaitingForUserAction = true
+      this.action = action
+      this.state.waitingForUserAction = true
 
       await setTimeout(500)
+      describeAction(action)
 
-      this.queue?.add(async () => await generateInput(event))
+      while (this.state.waitingForUserAction) {
+        const opened = await isPanelOpened()
 
-      while (this.state.isWaitingForUserAction) {
-        if (!(await isPanelOpened())) {
+        if (!opened) {
           await Promise.all([openPanel(), preview(), setInputValue()])
         }
+
         await setTimeout(200)
       }
 
@@ -309,14 +264,13 @@ export class Observer {
      * Checks if the Observer UI is opened.
      */
     const isPanelOpened = async () => {
-      return locate('#plwd-panel').evaluate(utils.hasClass, 'open')
+      return locate('.plwd-panel').evaluate(utils.hasClass, 'open')
     }
 
     /**
      * Locates the element on the page using the provided selector.
      *
      * @param selector The selector to locate the element.
-     * @returns The Playwright locator for the element.
      */
     const locate = (selector: string) => {
       return this.page().locator(selector).first()
@@ -337,27 +291,72 @@ export class Observer {
      * Opens the Observer UI panel.
      */
     const openPanel = async () => {
-      await locate('#plwd-panel').evaluate(utils.addClass, 'open')
+      await locate('.plwd-panel').evaluate(utils.addClass, 'open')
     }
 
     /**
      * Preview the recorded test steps in the PlayWord panel.
      */
     const preview = async () => {
-      if (this.recorder.count() === 0) return
-      await Promise.all([
-        locate('#plwd-timeline').evaluate(utils.setTestCasePreview, this.recorder.list()),
-        locate('#plwd-preview-title').evaluate(utils.addClass, 'open'),
-        locate('#plwd-clear-btn').evaluate(utils.addClass, 'open'),
-        locate('#plwd-dry-run-btn').evaluate(utils.addClass, 'open')
-      ])
+      if (this.recorder.count() > 0) {
+        await Promise.all([
+          locate('.plwd-preview-title').evaluate(utils.addClass, 'open'),
+          locate('.plwd-clear-btn').evaluate(utils.addClass, 'open'),
+          locate('.plwd-dry-run-btn').evaluate(utils.addClass, 'open')
+        ])
+      }
+      await locate('.plwd-timeline').evaluate(utils.setTestCasePreview, this.recorder.list())
+    }
+
+    /**
+     * Resets the page and clears all the caches, cookies, storages, and workers.
+     *
+     * After cleaning up, it closes all the pages and opens a new one.
+     */
+    const resetPageState = async () => {
+      /**
+       * Clears all the caches.
+       */
+      const clearCaches = () => this.page().evaluate(utils.clearCaches)
+
+      /**
+       * Clears all the cookies.
+       */
+      const clearCookies = () => this.context().clearCookies()
+
+      /**
+       * Clears all the IndexedDB databases.
+       */
+      const clearIndexedDB = () => this.page().evaluate(utils.clearIndexedDB)
+
+      /**
+       * Clears the local and session storages.
+       */
+      const clearStorage = () => this.page().evaluate(utils.clearStorage)
+
+      /**
+       * Clears all the service workers.
+       */
+      const clearServiceWorkers = () => this.page().evaluate(utils.clearServiceWorkers)
+
+      await Promise.all([clearCaches(), clearCookies(), clearIndexedDB(), clearServiceWorkers(), clearStorage()])
+      await setTimeout(2000)
+
+      for (const page of this.context().pages()) {
+        await page.close()
+      }
+      await this.context().newPage()
     }
 
     /**
      * Sets the value of the input element in the Observer UI.
      */
     const setInputValue = async () => {
-      await locate('#plwd-input').evaluate(utils.setAttribute, { name: 'value', value: this.input })
+      await locate('.plwd-input').evaluate(utils.setAttribute, { name: 'value', value: this.input })
+    }
+
+    const stopDryRun = () => {
+      this.state.dryRunning = false
     }
 
     /**
@@ -376,24 +375,23 @@ export class Observer {
      */
     const waitForAI = async (on: boolean) => {
       await Promise.all([
-        locate('#plwd-input').evaluate(utils.setAttribute, { name: 'disabled', value: on }),
-        locate('#plwd-loader-box').evaluate(utils.toggleLoader, on)
+        locate('.plwd-input').evaluate(utils.setAttribute, { name: 'disabled', value: on }),
+        locate('.plwd-loader-box').evaluate(utils.toggleLoader, on)
       ])
-      this.state.isWaitingForAI = on
+      this.state.waitingForAI = on
     }
 
     /**
-     * Set up the page listeners to observe the navigation events.
+     * Set up the page listeners to observe the navigation actions.
      */
     this.page().on('framenavigated', (frame) => {
-      const mainFrameUrl = this.page().mainFrame().url()
       const frameUrl = frame.url()
 
-      if (frameUrl === 'about:blank' || frameUrl !== mainFrameUrl) {
+      if (frameUrl === 'about:blank' || frameUrl !== this.page().mainFrame().url()) {
         return
       }
 
-      return handleEmits({ name: 'goto', params: { url: frameUrl } })
+      return handleEmit({ name: 'goto', params: { url: frameUrl } })
     })
 
     await Promise.all([
@@ -402,25 +400,26 @@ export class Observer {
     ])
 
     await Promise.all([
-      this.page().exposeFunction('acceptEvent', acceptEvent),
+      this.page().exposeFunction('accept', accept),
+      this.page().exposeFunction('cancel', cancel),
       this.page().exposeFunction('clearAll', clearAll),
-      this.page().exposeFunction('dropEvent', dropEvent),
+      this.page().exposeFunction('deleteStep', deleteStep),
       this.page().exposeFunction('dryRun', dryRun),
-      this.page().exposeFunction('emit', handleEmits),
+      this.page().exposeFunction('emit', handleEmit),
       this.page().exposeFunction('notify', notify),
-      this.page().exposeFunction('state', getState),
+      this.page().exposeFunction('stopDryRun', stopDryRun),
       this.page().exposeFunction('updateInput', updateInput)
     ])
   }
 
   /**
    * Starts observing the user interactions on the page.
-   *
-   * During the observation, the page instance will be automatically reloaded.
    */
   public async observe() {
-    if (!this.queue) this.queue = new (await import('p-queue')).default({ concurrency: 1 })
-    this.context().on('page', async () => await this.setPageListeners())
+    this.context().on('page', async () => {
+      await this.setPageListeners()
+      await this.page().reload()
+    })
     await this.recorder.load()
   }
 }

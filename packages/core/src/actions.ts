@@ -1,7 +1,7 @@
 import type { ActionParams, PlayWordInterface } from './types'
 
 import { setTimeout } from 'timers/promises'
-import { variablePattern } from './validators'
+import * as utils from './utils'
 
 /**
  * Get the handle used to interact with the page or frame.
@@ -10,11 +10,9 @@ import { variablePattern } from './validators'
  * If the frame source is not provided, get the handle of the page.
  *
  * @param ref The PlayWord instance.
- * @param params.frameSrc The source of the frame.
- *
- * @returns The handle used to interact with the page or frame.
+ * @param params The parameters for the action.
  */
-const getHandle = async (ref: PlayWordInterface, params: Partial<Partial<ActionParams>> = {}) => {
+const getHandle = async (ref: PlayWordInterface, params: Partial<ActionParams> = {}) => {
   ref.frame = undefined
 
   if (params.frameSrc && (await waitForFrame(ref, params.frameSrc))) {
@@ -31,13 +29,10 @@ const getHandle = async (ref: PlayWordInterface, params: Partial<Partial<ActionP
 /**
  * Get the input variable from the environment variables.
  *
- * @param input
- *
- * @returns If the input variable is found in the environment variables, return the value of the input variable.
- * Otherwise, return the original input.
+ * @param input The user input.
  */
 const getInputVariable = (input: string) => {
-  const matched = input.match(variablePattern)
+  const matched = input.match(utils.variablePattern)
 
   if (!matched) {
     return input
@@ -68,8 +63,7 @@ const waitForFrame = async (ref: PlayWordInterface, frameSrc: string) => {
  * Assert that an element on the page or within the current frame contains a specific text.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the element.
- * @param params.text The text to check if it exists in the element.
+ * @param params The parameters for the action.
  */
 export const assertElementContains = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -87,8 +81,7 @@ export const assertElementContains = async (ref: PlayWordInterface, params: Part
  * Assert that an element on the page or within the current frame does not contain a specific text.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the element.
- * @param params.text The text to check if it does not exis in the element.
+ * @param params The parameters for the action.
  */
 export const assertElementNotContain = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -106,8 +99,7 @@ export const assertElementNotContain = async (ref: PlayWordInterface, params: Pa
  * Assert that the content of an element on the page or within the current frame is equal to a specific text.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the element.
- * @param params.text The text to compare with the element's content.
+ * @param params The parameters for the action.
  */
 export const assertElementContentEquals = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -125,8 +117,7 @@ export const assertElementContentEquals = async (ref: PlayWordInterface, params:
  * Assert that the content of an element on the page or within the current frame is not equal to a specific text.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the element.
- * @param params.text The text to compare with the element's content.
+ * @param params The parameters for the action.
  */
 export const assertElementContentNotEqual = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -144,7 +135,7 @@ export const assertElementContentNotEqual = async (ref: PlayWordInterface, param
  * Assert that an element on the page or within the current frame is visible.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the element.
+ * @param params The parameters for the action.
  */
 export const assertElementVisible = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -161,7 +152,7 @@ export const assertElementVisible = async (ref: PlayWordInterface, params: Parti
  * Assert that an element on the page or within the current frame is not visible.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the element.
+ * @param params The parameters for the action.
  */
 export const assertElementNotVisible = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -178,7 +169,7 @@ export const assertElementNotVisible = async (ref: PlayWordInterface, params: Pa
  * Assert that the page contains a specific text.
  *
  * @param ref The PlayWord instance.
- * @param params.text The text to check if it exists on the page.
+ * @param params The parameters for the action.
  */
 export const assertPageContains = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -198,7 +189,7 @@ export const assertPageContains = async (ref: PlayWordInterface, params: Partial
  * Assert that the page does not contain a specific text.
  *
  * @param ref The PlayWord instance.
- * @param params.text The text to check if it does not exist on the page.
+ * @param params The parameters for the action.
  */
 export const assertPageNotContain = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -218,7 +209,7 @@ export const assertPageNotContain = async (ref: PlayWordInterface, params: Parti
  * Assert that the page title is equal to a specific text.
  *
  * @param ref The PlayWord instance.
- * @param params.text The text to compare with the page title.
+ * @param params The parameters for the action.
  */
 export const assertPageTitleEquals = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -233,7 +224,7 @@ export const assertPageTitleEquals = async (ref: PlayWordInterface, params: Part
  * Assert that the page URL matches a specific regular expression.
  *
  * @param ref The PlayWord instance.
- * @param params.pattern The regular expression to match against the page URL.
+ * @param params The parameters for the action.
  */
 export const assertPageUrlMatches = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -247,7 +238,7 @@ export const assertPageUrlMatches = async (ref: PlayWordInterface, params: Parti
  * Click on an element on the page or within the current frame.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the clickable element.
+ * @param params The parameters for the action.
  */
 export const click = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -281,7 +272,7 @@ export const getSnapshot = async (ref: PlayWordInterface) => {
  * Get text of an element on the page or within the current frame.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the element.
+ * @param params The parameters for the action.
  */
 export const getText = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -299,7 +290,7 @@ export const getText = async (ref: PlayWordInterface, params: Partial<ActionPara
  * Go to a specific URL.
  *
  * @param ref The PlayWord instance.
- * @param params.url The URL to navigate to.
+ * @param params The parameters for the action.
  */
 export const goto = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -314,8 +305,7 @@ export const goto = async (ref: PlayWordInterface, params: Partial<ActionParams>
  * Hover over an element on the page or within the current frame.
  *
  * @param ref The PlayWord instance.
- * @param params.duration The number of milliseconds to hover over the element.
- * @param params.xpath The xpath to locate the element.
+ * @param params The parameters for the action.
  */
 export const hover = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -339,8 +329,7 @@ export const hover = async (ref: PlayWordInterface, params: Partial<ActionParams
  * Fill in an element on the page or within the current frame.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the input/textarea element.
- * @param params.text The text to fill in the element.
+ * @param params The parameters for the action.
  */
 export const input = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -361,7 +350,7 @@ export const input = async (ref: PlayWordInterface, params: Partial<ActionParams
  * Press specific keys on the keyboard.
  *
  * @param ref The PlayWord instance.
- * @param params.keys The keys to press.
+ * @param params The parameters for the action.
  */
 export const pressKeys = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -376,7 +365,7 @@ export const pressKeys = async (ref: PlayWordInterface, params: Partial<ActionPa
  * Scroll the page or current frame in a specific direction.
  *
  * @param ref The PlayWord instance.
- * @param params.direction The supported values for `direction` are `up`, `down`, `top`, and `bottom`.
+ * @param params The parameters for the action.
  */
 export const scroll = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -411,8 +400,7 @@ export const scroll = async (ref: PlayWordInterface, params: Partial<ActionParam
  * Select an option from a dropdown element on the page or within the current frame.
  *
  * @param ref The PlayWord instance.
- * @param params.xpath The xpath to locate the dropdown element.
- * @param params.option The option to select from the dropdown.
+ * @param params The parameters for the action.
  */
 export const select = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -432,7 +420,7 @@ export const select = async (ref: PlayWordInterface, params: Partial<ActionParam
  * Sleep for a specific duration.
  *
  * @param ref The PlayWord instance.
- * @param params.duration The number of seconds to sleep.
+ * @param params The parameters for the action.
  */
 export const sleep = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -447,7 +435,7 @@ export const sleep = async (ref: PlayWordInterface, params: Partial<ActionParams
  * Switch to a specific frame on the page.
  *
  * @param ref The PlayWord instance.
- * @param params.frameNumber The index of the frame to switch to.
+ * @param params The parameters for the action.
  */
 export const switchFrame = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -467,7 +455,7 @@ export const switchFrame = async (ref: PlayWordInterface, params: Partial<Action
  * Switch to a specific page on the browser.
  *
  * @param ref The PlayWord instance.
- * @param params.pageNumber The index of the page to switch to.
+ * @param params The parameters for the action.
  */
 export const switchPage = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
@@ -484,7 +472,7 @@ export const switchPage = async (ref: PlayWordInterface, params: Partial<ActionP
  * If the text is not found within 30 seconds, the action will fail.
  *
  * @param ref The PlayWord instance.
- * @param params.text The text to wait for.
+ * @param params The parameters for the action.
  */
 export const waitForText = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {

@@ -133,7 +133,7 @@ export const classifier = [
     }
   ),
 
-  tool(async ({ text }, { configurable }) => ({ name: 'input', params: { ...configurable.action.params, text } }), {
+  tool(async ({ text }, { configurable }) => ({ name: 'input', params: { text, ...configurable.action.params } }), {
     name: 'Input',
     description: 'Call to handle the input event',
     schema: z.object({ text: z.string().describe('The text to input') })
@@ -152,7 +152,7 @@ export const classifier = [
   ),
 
   tool(
-    async ({ option }, { configurable }) => ({ name: 'select', params: { ...configurable.action.params, option } }),
+    async ({ option }, { configurable }) => ({ name: 'select', params: { option, ...configurable.action.params } }),
     {
       name: 'Select',
       description: 'Call to handle the select event',

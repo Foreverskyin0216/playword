@@ -6,7 +6,6 @@ import { tool } from '@langchain/core/tools'
 import { z } from 'zod'
 import * as actions from '../actions'
 import * as utils from '../utils'
-import { allowedTags } from '../validators'
 
 /**
  * Custom tools for interacting with the page.
@@ -29,19 +28,21 @@ export const page = [
   tool(
     async ({ keywords }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+      const { ai, input, recorder } = ref
+
       const snapshot = await actions.getSnapshot(ref)
-      const html = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(html, allowedTags)
+      const resource = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(resource, utils.allowedTags)
 
       utils.info('Embedding the snapshot...')
-      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      await ai.embedTexts(elements.map(({ html }) => html))
       utils.info('Snapshot embedded.')
 
-      const retrieved = await ref.ai.searchDocuments(keywords)
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
-      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
+      const documents = await ai.searchDocuments(keywords)
+      const candidate = await ai.getBestCandidate(input, documents)
+      const { xpath } = elements.find(({ html }) => html === documents[candidate].pageContent)!
 
-      ref.recorder?.addAction({ name: 'click', params: { xpath } })
+      recorder?.addAction({ name: 'click', params: { xpath } })
 
       return actions.click(ref, { xpath })
     },
@@ -61,19 +62,21 @@ export const page = [
   tool(
     async ({ keywords }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+      const { ai, input, recorder } = ref
+
       const snapshot = await actions.getSnapshot(ref)
-      const html = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(html, allowedTags)
+      const resource = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(resource, utils.allowedTags)
 
       utils.info('Embedding the snapshot...')
-      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      await ai.embedTexts(elements.map(({ html }) => html))
       utils.info('Snapshot embedded.')
 
-      const retrieved = await ref.ai.searchDocuments(keywords)
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
-      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
+      const documents = await ai.searchDocuments(keywords)
+      const candidate = await ai.getBestCandidate(input, documents)
+      const { xpath } = elements.find(({ html }) => html === documents[candidate].pageContent)!
 
-      ref.recorder?.addAction({ name: 'hover', params: { xpath } })
+      recorder?.addAction({ name: 'getText', params: { xpath } })
 
       return actions.getText(ref, { xpath })
     },
@@ -108,19 +111,21 @@ export const page = [
   tool(
     async ({ duration, keywords }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+      const { ai, input, recorder } = ref
+
       const snapshot = await actions.getSnapshot(ref)
-      const html = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(html, allowedTags)
+      const resource = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(resource, utils.allowedTags)
 
       utils.info('Embedding the snapshot...')
-      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      await ai.embedTexts(elements.map(({ html }) => html))
       utils.info('Snapshot embedded.')
 
-      const retrieved = await ref.ai.searchDocuments(keywords)
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
-      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
+      const documents = await ai.searchDocuments(keywords)
+      const candidate = await ai.getBestCandidate(input, documents)
+      const { xpath } = elements.find(({ html }) => html === documents[candidate].pageContent)!
 
-      ref.recorder?.addAction({ name: 'hover', params: { xpath } })
+      recorder?.addAction({ name: 'hover', params: { xpath } })
 
       return actions.hover(ref, { duration, xpath })
     },
@@ -141,19 +146,21 @@ export const page = [
   tool(
     async ({ keywords, text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+      const { ai, input, recorder } = ref
+
       const snapshot = await actions.getSnapshot(ref)
-      const html = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(html, ['input', 'textarea'])
+      const resource = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(resource, ['input', 'textarea'])
 
       utils.info('Embedding the snapshot...')
-      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      await ai.embedTexts(elements.map(({ html }) => html))
       utils.info('Snapshot embedded.')
 
-      const retrieved = await ref.ai.searchDocuments(keywords)
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
-      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
+      const documents = await ai.searchDocuments(keywords)
+      const candidate = await ai.getBestCandidate(input, documents)
+      const { xpath } = elements.find(({ html }) => html === documents[candidate].pageContent)!
 
-      ref.recorder?.addAction({ name: 'input', params: { text, xpath } })
+      recorder?.addAction({ name: 'input', params: { text, xpath } })
 
       return actions.input(ref, { text, xpath })
     },
@@ -204,19 +211,21 @@ export const page = [
   tool(
     async ({ keywords, option }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+      const { ai, input, recorder } = ref
+
       const snapshot = await actions.getSnapshot(ref)
-      const html = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(html, ['select'])
+      const resource = utils.sanitize(snapshot)
+      const elements = utils.getElementLocations(resource, ['select'])
 
       utils.info('Embedding the snapshot...')
-      await ref.ai.embedTexts(elements.map(({ html }) => html))
+      await ai.embedTexts(elements.map(({ html }) => html))
       utils.info('Snapshot embedded.')
 
-      const retrieved = await ref.ai.searchDocuments(keywords)
-      const candidate = await ref.ai.getBestCandidate(ref.input, retrieved)
-      const xpath = elements.find(({ html }) => html === retrieved[candidate].pageContent)?.xpath
+      const documents = await ai.searchDocuments(keywords)
+      const candidate = await ai.getBestCandidate(input, documents)
+      const { xpath } = elements.find(({ html }) => html === documents[candidate].pageContent)!
 
-      ref.recorder?.addAction({ name: 'select', params: { option, xpath } })
+      recorder?.addAction({ name: 'select', params: { option, xpath } })
 
       return actions.select(ref, { option, xpath })
     },
@@ -252,18 +261,18 @@ export const page = [
   tool(
     async ({ enterFrame }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const frames = ref.page?.frames().map((frame) => JSON.stringify({ name: frame.name(), url: frame.url() }))
+      const { ai, input, page, recorder } = ref
+
+      const frames = page?.frames().map((frame) => JSON.stringify({ name: frame.name(), url: frame.url() }))
 
       if (enterFrame && frames?.length) {
-        const docs = frames.map((frame) => new Document({ pageContent: frame }))
-        const candidate = await ref.ai.getBestCandidate(ref.input, docs)
-
-        ref.recorder?.addAction({ name: 'switchFrame', params: { frameNumber: candidate } })
-
+        const documents = frames.map((frame) => new Document({ pageContent: frame }))
+        const candidate = await ai.getBestCandidate(input, documents)
+        recorder?.addAction({ name: 'switchFrame', params: { frameNumber: candidate } })
         return actions.switchFrame(ref, { frameNumber: candidate })
       }
 
-      ref.recorder?.addAction({ name: 'switchFrame', params: {} })
+      recorder?.addAction({ name: 'switchFrame', params: {} })
 
       return actions.switchFrame(ref, {})
     },

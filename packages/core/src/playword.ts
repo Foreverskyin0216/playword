@@ -4,12 +4,11 @@ import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording } from
 import { HumanMessage } from '@langchain/core/messages'
 import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers/promises'
-import { actionGraph } from './graph'
+import { actionGraph } from './actionGraph'
 import * as actions from './actions'
 import { AI } from './ai'
 import { Recorder } from './recorder'
 import * as utils from './utils'
-import { aiPattern } from './validators'
 
 /**
  * PlayWord enables users to automate browsers with AI.
@@ -120,15 +119,16 @@ export class PlayWord implements PlayWordInterface {
 
   constructor(
     public context: BrowserContext,
-    playwordOptions: PlayWordOptions = {}
+    { debug = false, delay = 250, openAIOptions = {}, record = false }: PlayWordOptions = {}
   ) {
-    const { debug = false, delay = 250, openAIOptions = {}, record = false } = playwordOptions
-
     process.env.PLWD_DEBUG = debug.toString()
 
     this.ai = new AI(openAIOptions)
 
-    this.context.on('page', (page) => (this.page = page))
+    this.context.on('page', (page) => {
+      this.page = page
+      this.page.on('close', () => (this.page = this.context.pages()[this.context.pages().length - 1]))
+    })
 
     this.delay = Math.abs(delay)
 
@@ -160,7 +160,7 @@ export class PlayWord implements PlayWordInterface {
         await Promise.all([playword.context.newPage(), playword.recorder?.load()])
       }
 
-      playword.input = message.replace(aiPattern, '').trim()
+      playword.input = message.replace(utils.aiPattern, '').trim()
 
       // Action
       const result = await method.apply(playword, [message])
@@ -174,12 +174,9 @@ export class PlayWord implements PlayWordInterface {
 
   /**
    * Invoke the action graph to perform actions.
-   *
-   * @returns The action result. See {@link ActionResult} for details.
    */
   private async useActionGraph() {
-    utils.divider()
-    utils.info('[AI] ' + this.input, 'green')
+    utils.info('[AI] ' + this.input, 'green', true)
 
     this.recorder?.initStep(this.stepCount, this.input)
 
@@ -205,12 +202,9 @@ export class PlayWord implements PlayWordInterface {
    * Use recordings to perform actions. If the action fails, retry with AI.
    *
    * @param recording The recording to perform actions. See {@link Recording} for details.
-   *
-   * @returns The action result. See {@link ActionResult} for details.
    */
   private async useRecording(recording: Recording) {
-    utils.divider()
-    utils.info(`[RECORDING] ${this.input}`, 'green')
+    utils.info(`[RECORDING] ${this.input}`, 'green', true)
 
     let result: ActionResult = ''
 
@@ -236,8 +230,6 @@ export class PlayWord implements PlayWordInterface {
    * on the browser page.
    *
    * @param message Natural language input to specify the action.
-   * @returns The action result, which can be a boolean (for assertions)
-   * or a string message indicating the outcome. See {@link ActionResult} for details.
    *
    * @example
    * **Navigate to a webpage**
@@ -261,7 +253,7 @@ export class PlayWord implements PlayWordInterface {
   public async say(message: string) {
     const recording = this.recorder?.list().find((r, i) => r.input === this.input && i === this.stepCount)
 
-    if (aiPattern.test(message) || !recording) {
+    if (utils.aiPattern.test(message) || !recording) {
       return this.useActionGraph()
     }
 

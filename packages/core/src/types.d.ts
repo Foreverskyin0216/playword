@@ -24,54 +24,44 @@ declare global {
     __name: (fn: unknown) => unknown
 
     /**
-     * Accepts the current action event and saves it to the recorder.
+     * Accepts the current action and saves it to the recorder.
      */
-    acceptEvent: () => Promise<void>
+    accept: () => void
+
+    /**
+     * Cancels the current action.
+     */
+    cancel: () => void
 
     /**
      * Clears all recorded actions in the recorder.
      */
-    clearAll: () => Promise<void>
+    clearAll: () => void
 
     /**
-     * Cancels the current action event.
+     * Deletes the specified step on the timeline.
      */
-    dropEvent: () => Promise<void>
+    deleteStep: (index: number) => void
 
     /**
      * Starts the dry run process.
      */
-    dryRun: () => Promise<void>
+    dryRun: () => void
 
     /**
-     * Sends an action event to the observer for processing.
-     *
-     * @param event The action event to process. See {@link ObserverEvent} for details.
+     * Emits an action to the observer for processing.
      */
-    emit: (event: ObserverEvent) => Promise<void>
+    emit: (action: ObserverAction) => void
 
     /**
-     * Displays a toast notification with the specified message, icon, and color.
-     *
-     * @param content The message content to display in the notification.
-     * @param icon The icon to display in the notification.
-     * @param color The text color for the notification. Accepts color names or HEX values (e.g., `#ffffff`).
+     * Stop the dry run process.
      */
-    notify: (content: string, icon: string, color: string) => Promise<void>
-
-    /**
-     * Retrieves the current state of the observer.
-     *
-     * @returns A promise resolving to the current observer state. See {@link ObserverState} for details.
-     */
-    state: () => Promise<ObserverState>
+    stopDryRun: () => void
 
     /**
      * Updates the step description recorded in the observer.
-     *
-     * @param input The new step description to update.
      */
-    updateInput: (input: string) => Promise<void>
+    updateInput: (input: string) => void
   }
 }
 
@@ -184,15 +174,7 @@ export interface ActionParams {
 }
 
 /**
- * The response from an action performed on the page.
- *
- * - For assertion actions, the result is a boolean value indicating success (`true`) or failure (`false`).
- * - For non-assertion actions, the result is a string message describing the outcome.
- */
-export type ActionResult = boolean | string
-
-/**
- * The state for the action graph.
+ * The action graph state.
  *
  * This interface defines the required properties to record the state during the execution
  * of the action graph. It includes a list of messages exchanged during the process.
@@ -253,7 +235,7 @@ export interface MemoryVector {
 }
 
 /**
- * Configuration options for the observer.
+ * Configuration options for the Observer class.
  */
 export interface ObserverOptions {
   /**
@@ -278,7 +260,7 @@ export interface ObserverOptions {
 }
 
 /**
- * Configuration options for the PlayWord instance.
+ * Configuration options for the PlayWord class.
  */
 export interface PlayWordOptions {
   /**
@@ -300,7 +282,7 @@ export interface PlayWordOptions {
   delay?: number
 
   /**
-   * Configuration options for the OpenAI client.
+   * Configuration options for the AI instance.
    *
    * These options allow customization of the OpenAI API client, such as specifying
    * an API key or custom endpoint.
@@ -318,7 +300,7 @@ export interface PlayWordOptions {
    *
    * @default {}
    */
-  openAIOptions?: ClientOptions
+  openAIOptions?: AIOptions
 
   /**
    * Configures whether to record actions performed and where to save the recordings.
@@ -441,8 +423,6 @@ export interface PlayWordInterface {
    * on the browser page.
    *
    * @param message Natural language input to specify the action.
-   * @returns The result of the action, which can be a boolean (for assertions)
-   * or a string message indicating the outcome. See {@link ActionResult} for details.
    *
    * @example
    * **Navigate to a webpage**
@@ -494,63 +474,6 @@ export interface ToolConfig {
 }
 
 /**
- * Represents an event observed during user interactions.
- *
- * The `ObserverEvent` type includes various event types and their associated parameters.
- */
-export type ObserverEvent =
-  | {
-      /** The name of the event. */
-      name: 'click'
-      /**
-       * The parameters for the `click` event.
-       *
-       * Includes the location of the element to be clicked.
-       */
-      params: ElementLocation
-    }
-  | {
-      /** The name of the event. */
-      name: 'hover'
-      /**
-       * The parameters for the `hover` event.
-       *
-       * Includes the location of the element and the duration of the hover action.
-       */
-      params: ElementLocation & { duration: number }
-    }
-  | {
-      /** The name of the event. */
-      name: 'input'
-      /**
-       * The parameters for the `input` event.
-       *
-       * Includes the location of the element and the text to input.
-       */
-      params: ElementLocation & { text: string }
-    }
-  | {
-      /** The name of the event. */
-      name: 'select'
-      /**
-       * The parameters for the `select` event.
-       *
-       * Includes the location of the dropdown element and the option to select.
-       */
-      params: ElementLocation & { option: string }
-    }
-  | {
-      /** The name of the event. */
-      name: 'goto'
-      /**
-       * The parameters for the `goto` event.
-       *
-       * Includes the URL to navigate to.
-       */
-      params: { url: string }
-    }
-
-/**
  * Represents the current state of the observer.
  *
  * The `ObserverState` interface tracks various states during the execution of the observer.
@@ -559,15 +482,98 @@ export interface ObserverState {
   /**
    * Indicates whether the observer is currently performing a dry run.
    */
-  isDryRunning?: boolean
+  dryRunning?: boolean
   /**
    * Indicates whether the Observer is waiting for AI to generate
    * a step description or adjust the current action.
    */
-  isWaitingForAI?: boolean
+  waitingForAI?: boolean
   /**
    * Indicates whether the Observer is waiting for user input
    * to accept, modify, or drop the action.
    */
-  isWaitingForUserAction?: boolean
+  waitingForUserAction?: boolean
 }
+
+/**
+ * The response from an action performed on the page.
+ *
+ * - For assertion actions, the result is a boolean value indicating success (`true`) or failure (`false`).
+ * - For non-assertion actions, the result is a string message describing the outcome.
+ */
+export type ActionResult = boolean | string
+
+/**
+ * Configuration options for the AI class.
+ */
+export type AIOptions = ClientOptions & {
+  /**
+   * The chat model to use for general tasks.
+   *
+   * @default 'gpt-4o-mini'
+   */
+  chat?: string
+  /**
+   * The embeddings model to use for generating embeddings.
+   *
+   * @default 'text-embedding-3-small'
+   */
+  embeddings?: string
+}
+
+/**
+ * Represents an action observed during user interactions.
+ *
+ * This type includes various action types and their associated parameters.
+ */
+export type ObserverAction =
+  | {
+      /** The name of the action. */
+      name: 'click'
+      /**
+       * The parameters for the `click` action.
+       *
+       * Includes the location of the element to be clicked.
+       */
+      params: ElementLocation
+    }
+  | {
+      /** The name of the action. */
+      name: 'hover'
+      /**
+       * The parameters for the `hover` action.
+       *
+       * Includes the location of the element and the duration of the hover action.
+       */
+      params: ElementLocation & { duration: number }
+    }
+  | {
+      /** The name of the action. */
+      name: 'input'
+      /**
+       * The parameters for the `input` action.
+       *
+       * Includes the location of the element and the text to input.
+       */
+      params: ElementLocation & { text: string }
+    }
+  | {
+      /** The name of the action. */
+      name: 'select'
+      /**
+       * The parameters for the `select` action.
+       *
+       * Includes the location of the dropdown element and the option to select.
+       */
+      params: ElementLocation & { option: string }
+    }
+  | {
+      /** The name of the action. */
+      name: 'goto'
+      /**
+       * The parameters for the `goto` action.
+       *
+       * Includes the URL to navigate to.
+       */
+      params: { url: string }
+    }

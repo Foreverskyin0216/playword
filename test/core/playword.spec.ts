@@ -42,9 +42,12 @@ vi.mock('fs/promises', async () => ({
 
 vi.mock('timers/promises', () => ({ setTimeout: vi.fn() }))
 
-vi.mock('../../packages/core/src/graph', () => ({ actionGraph: { invoke: mockInvoke } }))
+vi.mock('../../packages/core/src/actionGraph', () => ({ actionGraph: { invoke: mockInvoke } }))
 
-vi.mock('../../packages/core/src/utils', () => ({ divider: vi.fn(), info: vi.fn(), log: vi.fn(), logResult: vi.fn() }))
+vi.mock('../../packages/core/src/utils', async () => {
+  const { aiPattern, variablePattern } = await vi.importActual('../../packages/core/src/utils')
+  return { aiPattern, info: vi.fn(), variablePattern }
+})
 
 describe('Spec: PlayWord', () => {
   describe('Given a PlayWord instance', () => {
@@ -84,6 +87,7 @@ describe('Spec: PlayWord', () => {
         textContent: vi.fn().mockResolvedValue('mock-text')
       })),
       content: vi.fn().mockResolvedValue('mock-snapshot'),
+      on: vi.fn(),
       waitForSelector: vi.fn(),
       waitForLoadState: mockWaitForLoadState,
       waitForTimeout: mockWaitForTimeout,

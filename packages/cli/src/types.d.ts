@@ -109,6 +109,24 @@ export interface ActionParams {
 }
 
 /**
+ * Configuration options for the AI class.
+ */
+export type AIOptions = ClientOptions & {
+  /**
+   * The chat model to use for general tasks.
+   *
+   * @default 'gpt-4o-mini'
+   */
+  chat?: string
+  /**
+   * The embeddings model to use for generating embeddings.
+   *
+   * @default 'text-embedding-3-small'
+   */
+  embeddings?: string
+}
+
+/**
  * This interface defines the options that can be passed to the observe command
  */
 export interface ObserveOptions {
@@ -140,7 +158,7 @@ export interface ObserveOptions {
   /**
    * Additional OpenAI API options.
    */
-  openaiOptions: ClientOptions
+  openaiOptions: AIOptions
 }
 
 /**
@@ -187,7 +205,7 @@ export interface TestOptions {
   /**
    * Additional OpenAI API options.
    */
-  openaiOptions: ClientOptions
+  openaiOptions: AIOptions
 
   /**
    * Whether to record the test steps.

@@ -1,5 +1,5 @@
 import type { BrowserContext } from 'playwright-core'
-import type { Action, ObserverEvent, ObserverState } from '../../packages/core/src/types'
+import type { Action, ObserverAction } from '../../packages/core/src/types'
 
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { Observer, PlayWord } from '../../packages/core/src'
@@ -16,7 +16,7 @@ const {
   mockInvoke,
   mockMainFrame,
   mockSetTimeout,
-  mockSummarizeHTML,
+  mockSummarizeAction,
   mockUseTools
 } = vi.hoisted(() => ({
   mockAddInitScript: vi.fn(),
@@ -30,30 +30,26 @@ const {
   mockInvoke: vi.fn(),
   mockMainFrame: vi.fn(),
   mockSetTimeout: vi.fn(),
-  mockSummarizeHTML: vi.fn(),
+  mockSummarizeAction: vi.fn(),
   mockUseTools: vi.fn()
 }))
 
-vi.mock('@langchain/core/tools', () => ({
-  tool: vi.fn(() => ({ name: 'tool', invoke: mockInvoke }))
-}))
+vi.mock('@langchain/core/tools', () => ({ tool: vi.fn(() => ({ name: 'tool', invoke: mockInvoke })) }))
 
-vi.mock('fs/promises', async () => ({
-  access: (await vi.importActual('fs/promises')).access,
-  readFile: (await vi.importActual('fs/promises')).readFile,
-  mkdir: vi.fn(),
-  writeFile: vi.fn()
-}))
+vi.mock('fs/promises', async () => {
+  const { access, readFile } = await vi.importActual('fs/promises')
+  return { access, readFile, mkdir: vi.fn(), writeFile: vi.fn() }
+})
 
-vi.mock('timers/promises', async () => ({ setTimeout: mockSetTimeout }))
+vi.mock('timers/promises', () => ({ setTimeout: mockSetTimeout }))
 
-vi.mock('../../packages/core/src/ai', async () => ({
-  AI: vi.fn(() => ({ summarizeHTML: mockSummarizeHTML, useTools: mockUseTools }))
+vi.mock('../../packages/core/src/ai', () => ({
+  AI: vi.fn(() => ({ summarizeAction: mockSummarizeAction, useTools: mockUseTools }))
 }))
 
 describe('Spec: Observer', () => {
   describe('Given an Observer instance', () => {
-    const functions = [] as { name: string; fn: () => Promise<ObserverState & void> }[]
+    const functions = [] as { name: string; fn: () => Promise<void> }[]
 
     const mockPage = {
       locator: vi.fn(() => ({
@@ -66,6 +62,7 @@ describe('Spec: Observer', () => {
       exposeFunction: vi.fn((name, fn) => functions.push({ name, fn })),
       on: vi.fn(async (_, fn) => await fn({ url: mockFrameUrl })),
       waitForLoadState: vi.fn(),
+      reload: vi.fn(),
       addInitScript: mockAddInitScript,
       mainFrame: mockMainFrame,
       evaluate: mockEvaluate,
@@ -125,13 +122,12 @@ describe('Spec: Observer', () => {
           /**
            * This test invokes the observe() method twice.
            *
-           * The purpose of the first invocation is to retrieve the dropEvent() function,
+           * The purpose of the first invocation is to retrieve the cancel() function,
            * which is used to stop the emit handler.
            *
            * The second invocation calls the emit() function and expects the evaluate() function to be called.
            * If the evaluate() function is called, it means that the emit() function is working as expected.
            */
-
           let counter = 0
 
           await observer.observe()
@@ -139,17 +135,34 @@ describe('Spec: Observer', () => {
           // Wait for the next tick
           await new Promise(process.nextTick)
 
-          const dropEvent = functions.find(({ name }) => name === 'dropEvent')!.fn
+          const cancel = functions.find(({ name }) => name === 'cancel')!.fn
 
+          mockSummarizeAction.mockResolvedValue({ summary: 'mock-summary' })
           mockEvaluate.mockResolvedValue(true)
           mockFrameUrl.mockReturnValue('https://frame.url')
           mockMainFrame.mockReturnValue({ url: vi.fn().mockReturnValue('https://frame.url') })
           mockSetTimeout.mockImplementation(() => {
             if (counter++ === 1) {
-              dropEvent()
+              cancel()
               counter = 0
             }
           })
+
+          /**
+           * If the state is waitingForAI is set to true, the emit() function should be ignored.
+           */
+          observer.state.waitingForAI = true
+          await observer.observe()
+
+          // Wait for the next tick
+          await new Promise(process.nextTick)
+
+          expect(mockEvaluate).not.toBeCalled()
+
+          /**
+           * If the waitingForAI state is set to false, the emit() function should be called.
+           */
+          observer.state.waitingForAI = false
           await observer.observe()
 
           // Wait for the next tick
@@ -169,12 +182,13 @@ describe('Spec: Observer', () => {
       })
 
       describe('When the exposed functions are called', () => {
-        let acceptEvent: () => Promise<void>
+        let accept: () => Promise<void>
+        let cancel: () => Promise<void>
         let clearAll: () => Promise<void>
-        let dropEvent: () => Promise<void>
+        let deleteStep: (index: number) => Promise<void>
         let dryRun: () => Promise<void>
-        let emit: (action: Action | ObserverEvent) => Promise<void>
-        let state: () => Promise<ObserverState>
+        let emit: (action: Action | ObserverAction) => Promise<void>
+        let stopDryRun: () => Promise<void>
 
         beforeEach(async () => {
           await observer.observe()
@@ -182,12 +196,13 @@ describe('Spec: Observer', () => {
           // Wait for the next tick
           await new Promise(process.nextTick)
 
-          acceptEvent = functions.find(({ name }) => name === 'acceptEvent')!.fn
+          accept = functions.find(({ name }) => name === 'accept')!.fn
+          cancel = functions.find(({ name }) => name === 'cancel')!.fn
           clearAll = functions.find(({ name }) => name === 'clearAll')!.fn
-          dropEvent = functions.find(({ name }) => name === 'dropEvent')!.fn
+          deleteStep = functions.find(({ name }) => name === 'deleteStep')!.fn
           dryRun = functions.find(({ name }) => name === 'dryRun')!.fn
           emit = functions.find(({ name }) => name === 'emit')!.fn
-          state = functions.find(({ name }) => name === 'state')!.fn
+          stopDryRun = functions.find(({ name }) => name === 'stopDryRun')!.fn
         })
 
         afterEach(() => {
@@ -201,22 +216,47 @@ describe('Spec: Observer', () => {
         })
 
         test('The all exposed functions should be defined', () => {
-          expect(acceptEvent).toBeDefined()
-          expect(dropEvent).toBeDefined()
+          expect(accept).toBeDefined()
+          expect(cancel).toBeDefined()
+          expect(clearAll).toBeDefined()
+          expect(deleteStep).toBeDefined()
+          expect(dryRun).toBeDefined()
           expect(emit).toBeDefined()
+          expect(stopDryRun).toBeDefined()
         })
 
-        test('Then the acceptEvent(), dropEvent(), dryRun(), emit() and state() should work as expected', async () => {
+        test('Then the accept(), cancel(), deleteStep(), dryRun(), emit() and stopDryRun() should work as expected', async () => {
+          /**
+           * The emit() function serves as the primary entry point for various related functionalities.
+           *
+           * This test suite comprehensively verifies all associated behaviors triggered by invoking emit().
+           */
           let counter = 0
 
-          // Accept event
+          /**
+           * Test the accpet() function.
+           */
           mockEvaluate.mockResolvedValue(false)
           mockSetTimeout.mockImplementation(async () => {
             if (counter++ === 1) {
-              await acceptEvent()
+              /**
+               * When state.waitingForAI is true, accept() should be ignored.
+               */
+              observer.state.waitingForAI = true
+              await accept()
+
+              /**
+               * Otherwise, the action should be added to the recording.
+               */
+              observer.state.waitingForAI = false
+              await accept()
               counter = 0
             }
           })
+
+          /**
+           * Emit different types of actions.
+           */
           mockUseTools.mockResolvedValue({ tool_calls: [] })
           await emit({ name: 'goto', params: { url: 'https://mock.url' } })
 
@@ -230,37 +270,63 @@ describe('Spec: Observer', () => {
           mockInvoke.mockResolvedValue({ content: '{"name":"hover","params":{"xpath":"mock-xpath"}}' })
           await emit({ name: 'hover', params: { xpath: 'mock-xpath' } })
 
-          // // Dry run
-          mockSetTimeout.mockImplementation(() => {})
+          /**
+           * Simulate a failure scenario where the GoTo action throws an error,
+           * and verify the correct handling of a failed dryRun.
+           */
           mockGoTo.mockRejectedValue(new Error('mock-error'))
+          mockSetTimeout.mockImplementation(() => {})
           await dryRun()
 
+          /**
+           * Verify that stopDryRun operates correctly.
+           */
+          await stopDryRun()
+
+          /**
+           * Ensure that actions: GoTo, Click, and Hover are properly invoked during the dryRun
+           */
           expect(mockGoTo).toBeCalled()
           expect(mockClick).toBeCalled()
           expect(mockHover).toBeCalled()
 
-          // Drop event
+          /**
+           * Test the cancel() function.
+           */
           mockEvaluate.mockResolvedValue(true)
           mockSetTimeout.mockImplementation(async () => {
             if (counter++ === 1) {
-              await dropEvent()
+              await cancel()
               counter = 0
             }
           })
           await emit({ name: 'select', params: { option: 'mock-option', xpath: 'mock-xpath' } })
 
-          // Clear all
+          /**
+           * Test clear()-related methods.
+           */
+          mockEvaluate.mockResolvedValue(false)
+          mockSetTimeout.mockImplementation(async () => {
+            if (counter++ === 1) {
+              await accept()
+              counter = 0
+            }
+          })
+
+          /**
+           * Test the clearAll() function.
+           */
           await clearAll()
 
-          // Get state
-          const stateValue = await state()
-          stateValue.isDryRunning = true
-
-          await emit({ name: 'goto', params: { url: 'https://mock.url' } })
-
-          stateValue.isDryRunning = false
-
-          expect(stateValue).toEqual({ isDryRunning: false, isWaitingForAI: false, isWaitingForUserAction: false })
+          /**
+           * Test the deleteStep() function.
+           *
+           * First, add a new action to the recording.
+           * Then, perform two separate deletion operations to cover different branches of the logic.
+           */
+          await emit({ name: 'select', params: { option: 'mock-option', xpath: 'mock-xpath' } })
+          await deleteStep(0)
+          await deleteStep(0)
         })
       })
     })

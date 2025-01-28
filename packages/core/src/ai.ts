@@ -1,22 +1,35 @@
 import type { Document } from '@langchain/core/documents'
 import type { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages'
 import type { DynamicStructuredTool } from '@langchain/core/tools'
+import type { AIOptions } from './types'
 
-import { type ClientOptions, ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { z } from 'zod'
-import { MemoryVectorStore } from './memory'
+import { MemoryVectorStore } from './memoryStore'
 
-export const CANDIDATE_LIST_REFERENCE = `I will provide you with some candidates of elements.
-Your goal is to find the most relevant candidate that user mentioned in the input and want to interact with.
-Refer to the candidates list to find the index of the most relevant result that matches the requirements.
-When you find the candidate you believe to be the best match, return the index of that candidate.`
+export const CANDIDATE_LIST_REFERENCE = `I will provide you with some HTML elements.
+Your goal is to find the most relevant element that user mentioned in the input and want to interact with.
+When you find the element you believe to be the best match, return the index of that element.`
 
 export const DETERMINE_ASSERTION_RESULT = `Determine if the AI response is passed on the user's input.
 Return true if the AI believes the assertion passes, false otherwise.`
 
-export const SUMMARIZE_HTML = `I will provide the HTML code of an element, including its tag, attributes, and content.
-Your task is to identify the distinctive attribute or feature of the element that best defines its purpose or identity.
-Summarize what the element represents using a simple and short phrase based on its tag, attribute, or content.`
+export const SUMMARIZE_ACTION = `I will provide a JSON string that contains an action's name and its associated params.
+Each JSON string represents a single test step within a test case.
+
+Your tasks are as follows:
+
+1. Action Summary:
+- Objective: Create a concise summary of the action described in the JSON.
+- Guidelines:
+  - The summary should be brief, clear, and accurately reflect the intent of the action.
+  - If the input action is performed on a password field, avoid including the actual password in the summary.
+
+2. HTML Element Simplification:
+- Objective: When the params include details about an HTML element, present the element's information without using attributes that are random, dynamic, or difficult to interpret.
+- Guidelines:
+  - Exclude: Attributes that are likely to change frequently (e.g., dynamically generated IDs, timestamps or session-specific data).
+  - Include: Static and meaningful attributes that clearly identify or describe the element (e.g., class, id with meaningful names, data-* attributes relevant to the test).`
 
 /**
  * The AI is a class to interact with the OpenAI API. It provides the following functionalities:
@@ -25,21 +38,11 @@ Summarize what the element represents using a simple and short phrase based on i
  * - Search for the most similar documents from the vector store.
  * - Determine if the assertion passes based on the user's input and the AI response.
  * - Get the best candidate from the embedded documents based on the user's input.
- * - Summarize the purpose or identity of HTML elements.
+ * - Summarize the Observer action.
  *
- * @param clientOptions The options for the OpenAI API. See {@link ClientOptions} for details.
+ * @param options The options for the OpenAI API. See {@link ModelOptions} and {@link ClientOptions} for details.
  */
 export class AI {
-  /**
-   * The chat model name.
-   */
-  private chatModel = 'gpt-4o-mini'
-
-  /**
-   * The embeddings model name.
-   */
-  private embeddingModel = 'text-embedding-3-small'
-
   /**
    * The chat model to use for the general tasks.
    */
@@ -50,15 +53,9 @@ export class AI {
    */
   private store: MemoryVectorStore
 
-  constructor(configuration: ClientOptions = {}) {
-    this.model = new ChatOpenAI({ ...configuration, configuration, model: this.chatModel, temperature: 0 })
-    this.store = new MemoryVectorStore(
-      new OpenAIEmbeddings({
-        ...configuration,
-        configuration,
-        model: this.embeddingModel
-      })
-    )
+  constructor({ chat = 'gpt-4o-mini', embeddings = 'text-embedding-3-small', ...opts }: AIOptions = {}) {
+    this.model = new ChatOpenAI({ ...opts, configuration: opts, model: chat })
+    this.store = new MemoryVectorStore(new OpenAIEmbeddings({ ...opts, configuration: opts, model: embeddings }))
   }
 
   /**
@@ -75,8 +72,6 @@ export class AI {
    * Embed texts into a new vector store.
    *
    * @param texts The texts to embed.
-   *
-   * @returns A new vector store with the embedded documents.
    */
   public async embedTexts(texts: string[]) {
     this.store = await MemoryVectorStore.fromTexts(texts, this.store.embeddings)
@@ -87,8 +82,6 @@ export class AI {
    *
    * @param query The query to search for the most similar documents.
    * @param topN The number of top results to return.
-   *
-   * @returns The most similar documents.
    */
   public async searchDocuments(query: string, topN: number = 10) {
     return this.store.asRetriever(topN).invoke(query)
@@ -98,8 +91,6 @@ export class AI {
    * Determine if the assertion passes based on the messages.
    *
    * @param messages The messages stored the user's input and the AI response.
-   *
-   * @returns The result from the assertion.
    */
   public async parseResult(messages: (AIMessage | HumanMessage | ToolMessage)[]) {
     const question = messages.findLast((message) => message.getType() === 'human')!
@@ -125,8 +116,6 @@ export class AI {
    *
    * @param input The user's input to find the best candidate.
    * @param docs The candidate documents.
-   *
-   * @returns The index of the best candidate.
    */
   public async getBestCandidate(input: string, docs: Document[]) {
     const schema = z.object({ index: z.enum(docs.map((_, index) => index.toString()) as [string, ...string[]]) })
@@ -138,7 +127,7 @@ export class AI {
           { type: 'text', text: 'User input: ' + input },
           {
             type: 'text',
-            text: 'Candidates: ' + docs.map((doc, index) => `Index ${index}: ${doc.pageContent}`).join('\n')
+            text: 'Elements: ' + docs.map((doc, index) => `Index ${index}: ${doc.pageContent}`).join('\n')
           }
         ]
       }
@@ -148,28 +137,26 @@ export class AI {
   }
 
   /**
-   * Summarize the purpose or identity of HTML elements.
+   * Summarize the Observer action
    *
-   * @param html The full HTML content of a DOM element.
-   *
-   * @returns The short phrase to summarize the purpose or identity of the element.
+   * @param action The action to summarize.
    */
-  public async summarizeHTML(html: string) {
-    const { phrase } = await this.model
+  public async summarizeAction(action: string) {
+    const { summary } = await this.model
       .withStructuredOutput(
         z.object({
-          phrase: z.string().describe('Short phrase to summarize the purpose or identity of the element.')
+          summary: z.string().describe('A concise summary of the action described in the JSON.')
         })
       )
       .invoke([
         {
           role: 'user',
           content: [
-            { type: 'text', text: SUMMARIZE_HTML },
-            { type: 'text', text: 'HTML: ' + html }
+            { type: 'text', text: SUMMARIZE_ACTION },
+            { type: 'text', text: action }
           ]
         }
       ])
-    return phrase
+    return summary
   }
 }
