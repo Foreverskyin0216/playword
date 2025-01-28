@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.2.1...@playword/core@0.2.2) (2025-01-28)
+
+
+### Bug Fixes
+
+* **observer:** resolve issues with the operation page ([09970c3](https://github.com/Foreverskyin0216/playword/commit/09970c3591935e22202cf6d5e91379bcb70ba540))
+
+
+
+
+
 ## [0.2.1](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.2.0...@playword/core@0.2.1) (2025-01-21)
 
 
