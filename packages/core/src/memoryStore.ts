@@ -1,10 +1,3 @@
-/**
- * This is a simple implementation of the memory vector store.
- *
- * **Reference**
- *
- * https://github.com/langchain-ai/langchainjs/blob/main/langchain/src/vectorstores/memory.ts
- */
 import type { EmbeddingsInterface } from '@langchain/core/embeddings'
 import type { MemoryVector } from './types'
 
@@ -26,8 +19,6 @@ export class MemoryVectorStore extends VectorStore {
 
   /**
    * Defines the type of vector store.
-   *
-   * @returns 'memory' as the type of vector store.
    */
   _vectorstoreType() {
     return 'memory'
@@ -39,8 +30,6 @@ export class MemoryVectorStore extends VectorStore {
    *
    * @param docs Array of `Document` instances to be added to the store.
    * @param embeddings `Embeddings` instance used to generate embeddings for the documents.
-   *
-   * @returns Promise that resolves with a new `MemoryVectorStore` instance.
    */
   static async fromDocuments(docs: Document[], embeddings: EmbeddingsInterface) {
     const store = new MemoryVectorStore(embeddings)
@@ -55,8 +44,6 @@ export class MemoryVectorStore extends VectorStore {
    *
    * @param texts Array of texts to be added to the store.
    * @param embeddings `Embeddings` instance used to generate embeddings for texts.
-   *
-   * @returns Promise that resolves with a new `MemoryVectorStore` instance.
    */
   static async fromTexts(texts: string[], embeddings: EmbeddingsInterface) {
     const documents = texts.map((text) => new Document({ pageContent: text }))
@@ -70,8 +57,6 @@ export class MemoryVectorStore extends VectorStore {
    *
    * @param query The query vector to compare against the vectors in the store.
    * @param k The number of top results to return.
-   *
-   * @returns Promise that resolves with an array of `MemoryVector`. See {@link MemoryVector} for details.
    */
   protected async _queryVectors(query: number[], k: number) {
     return this.vectors
@@ -88,8 +73,8 @@ export class MemoryVectorStore extends VectorStore {
   /**
    * Returns the average of cosine distances between vectors a and b.
    *
-   * @param a The first vector
-   * @param b The second vector
+   * @param a The first vector.
+   * @param b The second vector.
    */
   private cosine(a: number[], b: number[]) {
     let [p, p2, q2] = [0, 0, 0]
@@ -107,8 +92,6 @@ export class MemoryVectorStore extends VectorStore {
    * resulting vectors to the store.
    *
    * @param documents The array of `Document` instances to be added to the store.
-   *
-   * @returns Promise that resolves when all documents have been added.
    */
   async addDocuments(documents: Document[]) {
     const texts = documents.map(({ pageContent }) => pageContent)
@@ -121,9 +104,8 @@ export class MemoryVectorStore extends VectorStore {
    * them to the store.
    *
    * @param vectors The array of vectors to be added to the store.
-   * @param documents The array of `Document` instances corresponding to the vectors. See {@link Document} for details.
-   *
-   * @returns Promise that resolves when all vectors have been added.
+   * @param documents The array of `Document` instances corresponding to the vectors.
+   * See {@link Document} for details.
    */
   async addVectors(vectors: number[][], documents: Document[]) {
     const memoryVectors = vectors.map((embedding, index) => ({ content: documents[index].pageContent, embedding }))
@@ -138,8 +120,6 @@ export class MemoryVectorStore extends VectorStore {
    *
    * @param query The query vector to compare against the vectors in the store.
    * @param topN The number of top results to return.
-   *
-   * @returns Promise that resolves with an array of tuples, each containing a `Document` and its similarity score.
    */
   async similaritySearchVectorWithScore(query: number[], topN: number) {
     const vectors = await this._queryVectors(query, topN)

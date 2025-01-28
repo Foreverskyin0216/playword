@@ -88,6 +88,29 @@ export class Recorder {
   }
 
   /**
+   * Deletes the recording at the specified position.
+   *
+   * If the position is out of bounds, this method does nothing.
+   *
+   * @param position The position in the recordings list to delete.
+   */
+  public delete(position: number) {
+    if (position < 0 || position >= this.recordings.length) {
+      return
+    }
+
+    this.recordings.splice(position, 1)
+
+    if (this.position >= position) {
+      this.position--
+    }
+
+    if (this.position < 0) {
+      this.position = 0
+    }
+  }
+
+  /**
    * Initializes a new recording step at the specified position.
    *
    * @param position The position in the recordings list to initialize.

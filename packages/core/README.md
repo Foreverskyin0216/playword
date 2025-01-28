@@ -66,6 +66,8 @@ const playword = new PlayWord(context, {
   openAIOptions: {
     apiKey: 'sk-...', // Your OpenAI API Key
     baseURL: 'https://...', // Custom endpoint (if applicable)
+    chat: 'gpt-4o', // Chat model to use
+    embeddings: 'text-embedding-3-large', // Text embedding model to use
     // Additional OpenAI API options can also be configured here
   }
 })
@@ -213,14 +215,32 @@ await playword.say('[AI] verify the URL matches "https://www.saucedemo.com/inven
 
 ## 🖥️ Observer
 
-The Observer module enables tracking and recording user interactions on web pages.
-By leveraging AI, the Observer converts user behaviors into precise and reliable
-test cases, making it an essential tool for automated testing of web applications.
+The Observer module tracks user interactions on web pages and swiftly generates accurate test steps using AI.
 
-![Observer](https://i.ibb.co/PrPDrNJ/observer.png)
+![Observer](https://i.ibb.co/3FGGnZL/observer.gif)
 
-To start using the Observer, you need to first create a PlayWord instance in **headed** mode
-and pass it as a parameter to the Observer.
+Upon activation, Playwright injects the Observer UI into every launched browser webpage.
+As you manually interact with the page, the AI interprets your actions, generates corresponding test steps, and records action details.
+
+### ✨ Observer Features
+The Observer provides several controls to manage and interact with your test recordings:
+- **Accept**: Add test steps to the recording. (Can also be invoked by pressing the `a` key)
+- **Cancel**: Skip test steps without adding them to the recording. (Can also be invoked by pressing the `c` key)
+- **Preview**: View the test steps recorded so far.
+- **Clear**: Delete recorded test steps.
+- **Dry Run**: Trial-run the recorded test steps. (Can press the `esc` key to stop the dry-run process)
+
+And it captures various user interactions on the webpage as follows:
+- **Click**: Triggered when an element on the webpage is clicked.
+- **Hover**: Triggered when hovering over an element for more than three seconds
+- **Input**: Triggered after entering content into an input field and then clicking the input field again.
+- **Navigate**: Triggered when the page navigates to a new URL or is refreshed.
+- **Select**: Triggered after selecting an option from a dropdown menu.
+
+For complex actions and assertions that the Observer cannot directly record, you can manually edit the step descriptions, enabling the AI to accurately capture your intentions.
+
+### 📘 Getting Started with Observer
+To start using the Observer, create a PlayWord instance in **headed** mode, pass it to the Observer, and initiate observation with Playwright.
 
 ```typescript
 import { chromium } from 'playwright'
@@ -239,20 +259,10 @@ const observer = new Observer(playword, {
 
 // Start the Observer
 await observer.observe()
+
+// Open a new page to observe
 await context.newPage()
 ```
-
-After starting the Observer, the Observer UI automatically mounts each time a new page is opened.
-When you interact with web elements, the AI determines the element you intend to operate on
-and generates the corresponding action description.
-If you modify the step descriptions, the AI will interpret your intent and record the correct actions
-
-Currently, the Observer UI supports the following actions:
-- **Accept events**: Add test steps to the recording.
-- **Drop events**: Skip test steps without adding them to the recording.
-- **Preview**: View the test steps recorded so far.
-- **Clear All**: Delete all recorded test steps.
-- **Dry Run**: Trial-run the recorded test steps.
 
 ## 🌟 Why use PlayWord?
 
@@ -293,11 +303,6 @@ Currently, the Observer UI supports the following actions:
 - Check if the page title is equal to specific text
 - Check if the page URL matches specific RegExp patterns
 
-**Note**:
-Some page actions and assertions cannot be directly recorded through the Observer UI.
-In such cases, by manually editing the step descriptions,
-the AI will interpret your intent and record the correct actions.
-
-### More actions will be supported in future releases 🚀
+### More actions will be supported in future releases. 🚀
 
 ## Finally, Have Fun with PlayWord! 🎉

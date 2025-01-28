@@ -1,7 +1,7 @@
 import { AIMessage, HumanMessage } from '@langchain/core/messages'
 import { tool } from '@langchain/core/tools'
 import { afterAll, beforeAll, describe, test, expect, vi } from 'vitest'
-import { actionGraph } from '../../packages/core/src/graph'
+import { actionGraph } from '../../packages/core/src/actionGraph'
 
 const { mockUseTools } = vi.hoisted(() => ({
   mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),

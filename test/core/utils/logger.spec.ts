@@ -7,24 +7,24 @@ const { mockConsoleLog } = vi.hoisted(() => ({
 }))
 
 describe('Spec: Logger', () => {
-  describe('When the divider function is called', () => {
+  describe('When the info function is called with divider', () => {
     beforeEach(() => (process.env.PLWD_DEBUG = 'true'))
 
     afterEach(() => mockConsoleLog.mockClear())
 
     test('Then it should print a divider line', () => {
-      utils.divider()
+      utils.info('message', 'none', true)
       expect(mockConsoleLog).toBeCalledWith('-'.repeat(process.stdout.columns))
     })
 
     test('Then it should not print a divider line when turning off the debug mode', () => {
       process.env.PLWD_DEBUG = 'false'
-      utils.divider()
+      utils.info('message', 'none', true)
       expect(mockConsoleLog).not.toBeCalled()
     })
   })
 
-  describe('When the info function is called', () => {
+  describe('When the info function is called without divider', () => {
     beforeEach(() => (process.env.PLWD_DEBUG = 'true'))
 
     afterEach(() => mockConsoleLog.mockClear())

@@ -9,8 +9,6 @@ import { chromium, firefox, webkit } from 'playwright-core'
  *
  * @param browserType The type of browser to use.
  * @param headless Whether to run the browser in headless mode.
- *
- * @returns The browser instance.
  */
 export const getBrowser = (browserType = 'chrome', headless = true) => {
   switch (browserType) {
@@ -38,8 +36,6 @@ export const getBrowser = (browserType = 'chrome', headless = true) => {
  * Get the recordings from the specified path.
  *
  * @param path The path to the recordings file.
- *
- * @returns If the file exists, return the recordings; otherwise, return an empty array.
  */
 export const getRecordings = (path: string): Recording[] => {
   return existsSync(path) ? JSON.parse(readFileSync(path, 'utf-8')) : []

@@ -1,7 +1,7 @@
 import { Document } from '@langchain/core/documents'
 import { AIMessage, HumanMessage } from '@langchain/core/messages'
 import { afterAll, beforeAll, describe, test, expect, vi } from 'vitest'
-import { AI, CANDIDATE_LIST_REFERENCE, DETERMINE_ASSERTION_RESULT, SUMMARIZE_HTML } from '../../packages/core/src/ai'
+import { AI, CANDIDATE_LIST_REFERENCE, DETERMINE_ASSERTION_RESULT, SUMMARIZE_ACTION } from '../../packages/core/src/ai'
 
 const { mockFromTexts, mockMemoryVectorStore, mockOpenAIEmbeddings, mockInvoke } = vi.hoisted(() => ({
   mockFromTexts: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock('@langchain/openai', () => ({
   OpenAIEmbeddings: vi.fn()
 }))
 
-vi.mock('../../packages/core/src/memory', () => ({ MemoryVectorStore: mockMemoryVectorStore }))
+vi.mock('../../packages/core/src/memoryStore', () => ({ MemoryVectorStore: mockMemoryVectorStore }))
 
 describe('Spec: AI', () => {
   describe('Given the AI class', () => {
@@ -99,23 +99,23 @@ describe('Spec: AI', () => {
             content: [
               { type: 'text', text: CANDIDATE_LIST_REFERENCE },
               { type: 'text', text: 'User input: ' + input },
-              { type: 'text', text: 'Candidates: Index 0: Document 1\nIndex 1: Document 2' }
+              { type: 'text', text: 'Elements: Index 0: Document 1\nIndex 1: Document 2' }
             ]
           }
         ])
       })
     })
 
-    describe('When the summarizeHTML method is called', () => {
-      const html = '<div>Content</div>'
+    describe('When the summarizeAction method is called', () => {
+      const action = JSON.stringify({ name: 'click', params: { html: '<div></div>', xpath: '//div' } })
 
-      beforeAll(() => mockInvoke.mockResolvedValue({ phrase: 'Element summary' }))
+      beforeAll(() => mockInvoke.mockResolvedValue({ summary: 'Test Step' }))
 
       afterAll(() => mockInvoke.mockReset())
 
       test('Then the result is returned', async () => {
-        const phrase = await ai.summarizeHTML(html)
-        expect(phrase).toBe('Element summary')
+        const phrase = await ai.summarizeAction(action)
+        expect(phrase).toBe('Test Step')
       })
 
       test('Then the mockParse method is called', () => {
@@ -123,8 +123,8 @@ describe('Spec: AI', () => {
           {
             role: 'user',
             content: [
-              { type: 'text', text: SUMMARIZE_HTML },
-              { type: 'text', text: 'HTML: ' + html }
+              { type: 'text', text: SUMMARIZE_ACTION },
+              { type: 'text', text: action }
             ]
           }
         ])

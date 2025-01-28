@@ -8,28 +8,36 @@ import * as utils from '../../../packages/core/src/utils'
  */
 
 describe('Spec: DOM Utils', () => {
-  const html = readFileSync(join(__dirname, '../mocks/mockObserverUI.html'), 'utf-8')
-  document.documentElement.innerHTML = html
-
-  const mockAcceptEvent = vi.fn()
+  const mockAccept = vi.fn()
+  const mockCacheKeys = vi.fn(() => Promise.resolve(['cache-key']))
+  const mockCacheDelete = vi.fn(() => Promise.resolve())
+  const mockCancel = vi.fn()
   const mockClearAll = vi.fn()
-  const mockDropEvent = vi.fn()
+  const mockDatabases = vi.fn(() => Promise.resolve([{ name: 'indexedDB-db' }]))
+  const mockDeleteDatabase = vi.fn(() => Promise.resolve())
+  const mockDeleteStep = vi.fn()
   const mockDryRun = vi.fn()
   const mockElementFromPoint = vi.fn()
   const mockEmit = vi.fn()
-  const mockNotify = vi.fn()
-  const mockState = vi.fn()
+  const mockUnregister = vi.fn()
+  const mockGetRegistrations = vi.fn(() => Promise.resolve([{ unregister: mockUnregister }]))
+  const mockStopDryRun = vi.fn()
   const mockUpdateInput = vi.fn()
 
+  const html = readFileSync(join(__dirname, '../mocks/mockObserverUI.html'), 'utf-8')
+  document.documentElement.innerHTML = html
   document.elementFromPoint = mockElementFromPoint
 
-  window.acceptEvent = mockAcceptEvent
+  window.accept = mockAccept
+  window.caches = { delete: mockCacheDelete, keys: mockCacheKeys } as unknown as CacheStorage
+  window.cancel = mockCancel
   window.clearAll = mockClearAll
-  window.dropEvent = mockDropEvent
+  window.deleteStep = mockDeleteStep
   window.dryRun = mockDryRun
   window.emit = mockEmit
-  window.notify = mockNotify
-  window.state = mockState
+  window.indexedDB = { deleteDatabase: mockDeleteDatabase, databases: mockDatabases } as unknown as IDBFactory
+  window.navigator = { serviceWorker: { getRegistrations: mockGetRegistrations } } as unknown as Navigator
+  window.stopDryRun = mockStopDryRun
   window.updateInput = mockUpdateInput
 
   describe('Given the addClass function', () => {
@@ -40,6 +48,66 @@ describe('Spec: DOM Utils', () => {
 
       test('Then it should add the class name to the element', () => {
         expect(div.classList.contains('test')).toBe(true)
+      })
+    })
+  })
+
+  describe('Given the clearCaches function', () => {
+    describe('When it is called', () => {
+      afterEach(() => {
+        mockCacheKeys.mockReset()
+        mockCacheDelete.mockReset()
+      })
+
+      test('Then it should clear the caches', async () => {
+        await utils.clearCaches()
+        expect(mockCacheKeys).toBeCalled()
+        expect(mockCacheDelete).toBeCalledWith('cache-key')
+      })
+    })
+  })
+
+  describe('Given the clearIndexedDB function', () => {
+    describe('When it is called', () => {
+      afterEach(() => {
+        mockDatabases.mockReset()
+        mockDeleteDatabase.mockReset()
+      })
+
+      test('Then it should clear the indexedDB', async () => {
+        await utils.clearIndexedDB()
+        expect(mockDatabases).toBeCalled()
+        expect(mockDeleteDatabase).toBeCalledWith('indexedDB-db')
+      })
+    })
+  })
+
+  describe('Given the clearStorage function', () => {
+    describe('When it is called', () => {
+      beforeAll(() => {
+        localStorage.setItem('test', 'test')
+        sessionStorage.setItem('test', 'test')
+      })
+
+      test('Then it should clear the storage', async () => {
+        utils.clearStorage()
+        expect(localStorage.length).toBe(0)
+        expect(sessionStorage.length).toBe(0)
+      })
+    })
+  })
+
+  describe('Given the clearServiceWorkers function', () => {
+    describe('When it is called', () => {
+      afterEach(() => {
+        mockGetRegistrations.mockReset()
+        mockUnregister.mockReset()
+      })
+
+      test('Then it should clear the service workers', async () => {
+        await utils.clearServiceWorkers()
+        expect(mockGetRegistrations).toBeCalled()
+        expect(mockUnregister).toBeCalled()
       })
     })
   })
@@ -110,7 +178,7 @@ describe('Spec: DOM Utils', () => {
     })
 
     describe('And a change event is triggered', () => {
-      const event = new Event('change', { bubbles: true })
+      const event = new Event('change', { bubbles: true, cancelable: true })
 
       describe('When the target is a select element', () => {
         const select = document.createElement('select')
@@ -140,7 +208,7 @@ describe('Spec: DOM Utils', () => {
       })
 
       describe('When the target is the PlayWord input element', () => {
-        const input = document.getElementById('plwd-input') as HTMLInputElement
+        const input = document.querySelector('.plwd-input') as HTMLInputElement
 
         afterEach(() => mockUpdateInput.mockReset())
 
@@ -155,14 +223,32 @@ describe('Spec: DOM Utils', () => {
       })
     })
 
+    describe('And a click event is triggered', () => {
+      describe('When the PlayWord panel is opened', () => {
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true })
+        const panel = document.querySelector('.plwd-panel') as HTMLDivElement
+
+        afterEach(() => mockElementFromPoint.mockReset())
+
+        test('Then it should prevent the default behavior', async () => {
+          mockElementFromPoint.mockReturnValue(panel)
+          document.dispatchEvent(event)
+
+          // Wait for the next tick
+          await new Promise(process.nextTick)
+
+          expect(event.defaultPrevented).toBe(true)
+        })
+      })
+    })
+
     describe('And a keydown event is triggered', () => {
       describe('When the PlayWord panel is closed', () => {
-        const event = new KeyboardEvent('keydown', { key: 'Escape' })
+        const event = new KeyboardEvent('keydown', { key: 'mock-key' })
 
         afterEach(() => {
-          mockAcceptEvent.mockReset()
-          mockDropEvent.mockReset()
-          mockNotify.mockReset()
+          mockAccept.mockReset()
+          mockCancel.mockReset()
         })
 
         test('Then it should not call any method', async () => {
@@ -171,59 +257,191 @@ describe('Spec: DOM Utils', () => {
           // Wait for the next tick
           await new Promise(process.nextTick)
 
-          expect(mockAcceptEvent).not.toBeCalled()
-          expect(mockDropEvent).not.toBeCalled()
-          expect(mockNotify).not.toBeCalled()
+          expect(mockAccept).not.toBeCalled()
+          expect(mockCancel).not.toBeCalled()
+        })
+      })
+
+      describe('When the key is "Escape"', () => {
+        const event = new KeyboardEvent('keydown', { key: 'Escape' })
+        const panel = document.querySelector('.plwd-panel') as HTMLDivElement
+
+        beforeAll(() => utils.addClass(panel, 'open'))
+
+        afterAll(() => utils.removeClass(panel, 'open'))
+
+        afterEach(() => mockStopDryRun.mockReset())
+
+        test('Then it should call the stopDryRun()', async () => {
+          document.dispatchEvent(event)
+
+          // Wait for the next tick
+          await new Promise(process.nextTick)
+
+          expect(mockStopDryRun).toBeCalled()
         })
       })
 
       describe('When the key is "a"', () => {
         const event = new KeyboardEvent('keydown', { key: 'a' })
-        const panel = document.getElementById('plwd-panel') as HTMLDivElement
+        const panel = document.querySelector('.plwd-panel') as HTMLDivElement
 
         beforeAll(() => utils.addClass(panel, 'open'))
 
         afterAll(() => utils.removeClass(panel, 'open'))
 
-        afterEach(() => {
-          mockAcceptEvent.mockReset()
-          mockNotify.mockReset()
-        })
+        afterEach(() => mockAccept.mockReset())
 
-        test('Then it should call the acceptEvent() and notify() with the correct parameters', async () => {
+        test('Then it should call the accept() with the correct parameters', async () => {
           document.dispatchEvent(event)
 
           // Wait for the next tick
           await new Promise(process.nextTick)
 
-          expect(mockAcceptEvent).toBeCalled()
-          expect(mockNotify).toBeCalledWith('Accepted', '✓', '#4db6ac')
+          expect(mockAccept).toBeCalled()
         })
       })
 
       describe('When the key is "c"', () => {
         const event = new KeyboardEvent('keydown', { key: 'c' })
-        const panel = document.getElementById('plwd-panel') as HTMLDivElement
+        const panel = document.querySelector('.plwd-panel') as HTMLDivElement
 
         beforeAll(() => utils.addClass(panel, 'open'))
 
         afterAll(() => utils.removeClass(panel, 'open'))
 
-        afterEach(() => mockDropEvent.mockReset())
+        afterEach(() => mockCancel.mockReset())
 
-        test('Then it should call the dropEvent()', async () => {
+        test('Then it should call the cancel()', async () => {
           document.dispatchEvent(event)
 
           // Wait for the next tick
           await new Promise(process.nextTick)
 
-          expect(mockDropEvent).toBeCalled()
+          expect(mockCancel).toBeCalled()
         })
       })
     })
 
     describe('And a mousedown event is triggered', () => {
-      const event = new MouseEvent('mousedown', { bubbles: true })
+      describe('When the PlayWord panel is opened', () => {
+        const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+        const panel = document.querySelector('.plwd-panel') as HTMLDivElement
+
+        afterEach(() => mockElementFromPoint.mockReset())
+
+        test('Then it should prevent the default behavior', async () => {
+          mockElementFromPoint.mockReturnValue(panel)
+          document.dispatchEvent(event)
+
+          // Wait for the next tick
+          await new Promise(process.nextTick)
+
+          expect(event.defaultPrevented).toBe(true)
+        })
+      })
+    })
+
+    describe('And a mouseleave event is triggered', () => {
+      const event = new MouseEvent('mouseleave', { bubbles: true, cancelable: true })
+      let clearTimeoutSpy: MockInstance<typeof clearTimeout>
+
+      beforeAll(() => (clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')))
+
+      afterAll(() => clearTimeoutSpy.mockRestore())
+
+      test('Then it should call the clearTimeout()', async () => {
+        document.dispatchEvent(event)
+
+        // Wait for the next tick
+        await new Promise(process.nextTick)
+
+        expect(clearTimeoutSpy).toBeCalled()
+      })
+    })
+
+    describe('And a mouseout event is triggered', () => {
+      const event = new MouseEvent('mouseout', { bubbles: true, cancelable: true })
+      let clearTimeoutSpy: MockInstance<typeof clearTimeout>
+
+      beforeAll(() => (clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')))
+
+      afterAll(() => clearTimeoutSpy.mockRestore())
+
+      test('Then it should call the clearTimeout()', async () => {
+        document.dispatchEvent(event)
+
+        // Wait for the next tick
+        await new Promise(process.nextTick)
+
+        expect(clearTimeoutSpy).toBeCalled()
+      })
+    })
+
+    describe('And a mouseover event is triggered', () => {
+      const event = new MouseEvent('mouseover', { bubbles: true, cancelable: true })
+      const heading = document.createElement('h1')
+      const iframe = document.createElement('iframe')
+
+      let setTimeoutSpy: MockInstance<typeof setTimeout>
+
+      beforeAll(() => {
+        document.body.appendChild(heading)
+        document.body.appendChild(iframe)
+        setTimeoutSpy = vi.spyOn(window, 'setTimeout')
+        vi.useFakeTimers()
+      })
+
+      afterAll(() => {
+        heading.remove()
+        iframe.remove()
+        setTimeoutSpy.mockReset()
+        vi.useRealTimers()
+      })
+
+      afterEach(() => {
+        mockElementFromPoint.mockReset()
+        mockEmit.mockReset()
+      })
+
+      test('Then it should call the setTimeout() and the emit() with the correct parameters', async () => {
+        mockElementFromPoint.mockReturnValue(heading)
+
+        heading.dispatchEvent(event)
+
+        vi.advanceTimersByTime(3000)
+
+        // Wait for the next tick
+        await new Promise(process.nextTick)
+
+        expect(setTimeoutSpy).toBeCalled()
+        expect(mockEmit).toBeCalledWith({
+          name: 'hover',
+          params: {
+            duration: 1000,
+            frameSrc: undefined,
+            html: '<h1 ></h1>',
+            xpath: '//html[1]/body[1]/h1[1]'
+          }
+        })
+      })
+
+      test('Then it should not call the emit() if the target is an iframe', async () => {
+        mockElementFromPoint.mockReturnValue(iframe)
+
+        iframe.dispatchEvent(event)
+
+        vi.advanceTimersByTime(3000)
+
+        // Wait for the next tick
+        await new Promise(process.nextTick)
+
+        expect(mockEmit).not.toBeCalled()
+      })
+    })
+
+    describe('And a mouseup event is triggered', () => {
+      const event = new MouseEvent('mouseup', { bubbles: true, cancelable: true })
 
       describe('When the target is a select element or its option', () => {
         const select = document.createElement('select')
@@ -272,7 +490,6 @@ describe('Spec: DOM Utils', () => {
         afterEach(() => {
           mockElementFromPoint.mockReset()
           mockEmit.mockReset()
-          mockState.mockReset()
         })
 
         test('Then it should call the emit() if the input has a value', async () => {
@@ -280,8 +497,6 @@ describe('Spec: DOM Utils', () => {
           input.value = 'input-value'
 
           mockElementFromPoint.mockReturnValue(input)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           input.dispatchEvent(event)
 
           // Wait for the next tick
@@ -302,8 +517,6 @@ describe('Spec: DOM Utils', () => {
           textarea.value = 'textarea-value'
 
           mockElementFromPoint.mockReturnValue(textarea)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           textarea.dispatchEvent(event)
 
           // Wait for the next tick
@@ -325,8 +538,6 @@ describe('Spec: DOM Utils', () => {
           input.value = 'submit-value'
 
           mockElementFromPoint.mockReturnValue(input)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           input.dispatchEvent(event)
 
           // Wait for the next tick
@@ -346,8 +557,6 @@ describe('Spec: DOM Utils', () => {
           input.value = ''
 
           mockElementFromPoint.mockReturnValue(input)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           input.dispatchEvent(event)
 
           // Wait for the next tick
@@ -377,7 +586,6 @@ describe('Spec: DOM Utils', () => {
           mockBlur.mockReset()
           mockElementFromPoint.mockReset()
           mockEmit.mockReset()
-          mockState.mockReset()
         })
 
         test('Then it should call the blur() and emit() if the input is focused', async () => {
@@ -385,8 +593,6 @@ describe('Spec: DOM Utils', () => {
           input.focus()
 
           mockElementFromPoint.mockReturnValue(p)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           document.dispatchEvent(event)
 
           // Wait for the next tick
@@ -405,39 +611,43 @@ describe('Spec: DOM Utils', () => {
       })
 
       describe('When the target is in the PlayWord panel', () => {
-        const acceptButton = document.getElementById('plwd-accept-btn') as HTMLButtonElement
-        const clearButton = document.getElementById('plwd-clear-btn') as HTMLButtonElement
-        const dropButton = document.getElementById('plwd-drop-btn') as HTMLButtonElement
-        const dryRunButton = document.getElementById('plwd-dry-run-btn') as HTMLButtonElement
-        const panel = document.getElementById('plwd-panel') as HTMLDivElement
+        const acceptButton = document.querySelector('.plwd-accept-btn') as HTMLButtonElement
+        const cancelButton = document.querySelector('.plwd-cancel-btn') as HTMLButtonElement
+        const clearButton = document.querySelector('.plwd-clear-btn') as HTMLButtonElement
+        const dryRunButton = document.querySelector('.plwd-dry-run-btn') as HTMLButtonElement
+        const deleteButton = document.querySelector('.plwd-delete-btn') as HTMLButtonElement
+        const panel = document.querySelector('.plwd-panel') as HTMLDivElement
 
         afterEach(() => {
-          mockAcceptEvent.mockReset()
+          mockAccept.mockReset()
+          mockCancel.mockReset()
           mockClearAll.mockReset()
-          mockDropEvent.mockReset()
           mockDryRun.mockReset()
           mockElementFromPoint.mockReset()
-          mockNotify.mockReset()
-          mockState.mockReset()
         })
 
-        test('Then it should call the acceptEvent() and notify() if the accept button is clicked', async () => {
+        test('Then it should call the accept() if the accept button is clicked', async () => {
           mockElementFromPoint.mockReturnValue(acceptButton)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           document.dispatchEvent(event)
 
           // Wait for the next tick
           await new Promise(process.nextTick)
 
-          expect(mockAcceptEvent).toBeCalled()
-          expect(mockNotify).toBeCalledWith('Accepted', '✓', '#4db6ac')
+          expect(mockAccept).toBeCalled()
+        })
+
+        test('Then it should call the cancel() if the cancel button is clicked', async () => {
+          mockElementFromPoint.mockReturnValue(cancelButton)
+          document.dispatchEvent(event)
+
+          // Wait for the next tick
+          await new Promise(process.nextTick)
+
+          expect(mockCancel).toBeCalled()
         })
 
         test('Then it should call the clearAll() if the clear button is clicked', async () => {
           mockElementFromPoint.mockReturnValue(clearButton)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           document.dispatchEvent(event)
 
           // Wait for the next tick
@@ -446,56 +656,36 @@ describe('Spec: DOM Utils', () => {
           expect(mockClearAll).toBeCalled()
         })
 
-        test('Then it should call the dropEvent() if the drop button is clicked', async () => {
-          mockElementFromPoint.mockReturnValue(dropButton)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
+        test('Then it should call the deleteStep() if the trash button is clicked', async () => {
+          mockElementFromPoint.mockReturnValue(deleteButton)
           document.dispatchEvent(event)
 
           // Wait for the next tick
           await new Promise(process.nextTick)
 
-          expect(mockDropEvent).toBeCalled()
+          expect(mockDeleteStep).toBeCalledWith(0)
         })
 
-        test('Then it should call the dryRun() and notify() if the dry run button is clicked', async () => {
+        test('Then it should call the dryRun() if the dry run button is clicked', async () => {
           mockElementFromPoint.mockReturnValue(dryRunButton)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           document.dispatchEvent(event)
 
           // Wait for the next tick
           await new Promise(process.nextTick)
 
           expect(mockDryRun).toBeCalled()
-          expect(mockNotify).toBeCalledWith('Dry Run', '🚀', '#e5c07b')
-        })
-
-        test('Then it should not call any action if the AI is waiting for a response', async () => {
-          mockElementFromPoint.mockReturnValue(acceptButton)
-          mockState.mockResolvedValue({ isWaitingForAI: true })
-
-          document.dispatchEvent(event)
-
-          // Wait for the next tick
-          await new Promise(process.nextTick)
-
-          expect(mockAcceptEvent).not.toBeCalled()
-          expect(mockNotify).not.toBeCalled()
         })
 
         test('Then it should not call any action if the target is not a button', async () => {
           mockElementFromPoint.mockReturnValue(panel)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           document.dispatchEvent(event)
 
           // Wait for the next tick
           await new Promise(process.nextTick)
 
-          expect(mockAcceptEvent).not.toBeCalled()
+          expect(mockAccept).not.toBeCalled()
+          expect(mockCancel).not.toBeCalled()
           expect(mockClearAll).not.toBeCalled()
-          expect(mockDropEvent).not.toBeCalled()
           expect(mockDryRun).not.toBeCalled()
         })
       })
@@ -521,8 +711,6 @@ describe('Spec: DOM Utils', () => {
 
         test('Then it should call the emit() with the frameSrc parameter', async () => {
           mockElementFromPoint.mockReturnValue(span)
-          mockState.mockResolvedValue({ isWaitingForAI: false })
-
           document.dispatchEvent(event)
 
           // Wait for the next tick
@@ -539,104 +727,6 @@ describe('Spec: DOM Utils', () => {
         })
       })
     })
-
-    describe('And a mouseleave event is triggered', () => {
-      const event = new MouseEvent('mouseleave', { bubbles: true })
-      let clearTimeoutSpy: MockInstance<typeof clearTimeout>
-
-      beforeAll(() => (clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')))
-
-      afterAll(() => clearTimeoutSpy.mockRestore())
-
-      test('Then it should call the clearTimeout()', async () => {
-        document.dispatchEvent(event)
-
-        // Wait for the next tick
-        await new Promise(process.nextTick)
-
-        expect(clearTimeoutSpy).toBeCalled()
-      })
-    })
-
-    describe('And a mouseout event is triggered', () => {
-      const event = new MouseEvent('mouseout', { bubbles: true })
-      let clearTimeoutSpy: MockInstance<typeof clearTimeout>
-
-      beforeAll(() => (clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')))
-
-      afterAll(() => clearTimeoutSpy.mockRestore())
-
-      test('Then it should call the clearTimeout()', async () => {
-        document.dispatchEvent(event)
-
-        // Wait for the next tick
-        await new Promise(process.nextTick)
-
-        expect(clearTimeoutSpy).toBeCalled()
-      })
-    })
-
-    describe('And a mouseover event is triggered', () => {
-      const event = new MouseEvent('mouseover', { bubbles: true })
-      const heading = document.createElement('h1')
-      const iframe = document.createElement('iframe')
-
-      let setTimeoutSpy: MockInstance<typeof setTimeout>
-
-      beforeAll(() => {
-        document.body.appendChild(heading)
-        document.body.appendChild(iframe)
-        setTimeoutSpy = vi.spyOn(window, 'setTimeout')
-        vi.useFakeTimers()
-      })
-
-      afterAll(() => {
-        heading.remove()
-        iframe.remove()
-        setTimeoutSpy.mockRestore()
-        vi.useRealTimers()
-      })
-
-      afterEach(() => {
-        mockElementFromPoint.mockReset()
-        mockEmit.mockReset()
-      })
-
-      test('Then it should call the setTimeout() and the emit() with the correct parameters', async () => {
-        mockElementFromPoint.mockReturnValue(heading)
-
-        heading.dispatchEvent(event)
-
-        vi.advanceTimersByTime(3000)
-
-        // Wait for the next tick
-        await new Promise(process.nextTick)
-
-        expect(setTimeoutSpy).toBeCalled()
-        expect(mockEmit).toBeCalledWith({
-          name: 'hover',
-          params: {
-            duration: 1000,
-            frameSrc: undefined,
-            html: '<h1 ></h1>',
-            xpath: '//html[1]/body[1]/h1[1]'
-          }
-        })
-      })
-
-      test('Then it should not call the emit() if the target is an iframe', async () => {
-        mockElementFromPoint.mockReturnValue(iframe)
-
-        iframe.dispatchEvent(event)
-
-        vi.advanceTimersByTime(3000)
-
-        // Wait for the next tick
-        await new Promise(process.nextTick)
-
-        expect(mockEmit).not.toBeCalled()
-      })
-    })
   })
 
   describe('Given the setPanel function', () => {
@@ -650,7 +740,7 @@ describe('Spec: DOM Utils', () => {
     afterAll(() => (document.body.innerHTML = originalBody))
 
     describe('When the DOMContentLoaded event is triggered', () => {
-      const event = new Event('DOMContentLoaded', { bubbles: true })
+      const event = new Event('DOMContentLoaded', { bubbles: true, cancelable: true })
 
       test('Then it should set the panel content', async () => {
         document.dispatchEvent(event)
@@ -662,8 +752,8 @@ describe('Spec: DOM Utils', () => {
 
         expect(html).contains('plwd-accept-btn')
         expect(html).contains('plwd-banner')
+        expect(html).contains('plwd-cancel-btn')
         expect(html).contains('plwd-clear-btn')
-        expect(html).contains('plwd-drop-btn')
         expect(html).contains('plwd-dry-run-btn')
         expect(html).contains('plwd-input')
         expect(html).contains('plwd-input-box')
@@ -680,7 +770,7 @@ describe('Spec: DOM Utils', () => {
   })
 
   describe('Given the setTestCasePreview function', () => {
-    const timeline = document.getElementById('plwd-timeline') as HTMLDivElement
+    const timeline = document.querySelector('.plwd-timeline') as HTMLDivElement
     const mockRecordings = [
       {
         input: 'input-value',
@@ -719,6 +809,9 @@ describe('Spec: DOM Utils', () => {
 
         expect(markers[0].style.color).toBe('rgb(38, 166, 154)')
         expect(markers[1].style.color).toBe('rgb(244, 67, 54)')
+
+        const deleteButtons = timeline.getElementsByClassName('plwd-delete-btn')
+        expect(deleteButtons.length).toBe(2)
       })
     })
   })
@@ -732,13 +825,13 @@ describe('Spec: DOM Utils', () => {
       beforeAll(() => utils.showMessage({ content: 'Test Message', icon: '✓', color: '#4db6ac' }))
 
       test('Then it should display the message in the toast notification', () => {
-        const content = document.getElementById('plwd-toast-content') as HTMLDivElement
+        const content = document.querySelector('.plwd-toast-content') as HTMLDivElement
         expect(content.innerText).toBe('Test Message')
 
-        const icon = document.getElementById('plwd-toast-icon') as HTMLDivElement
+        const icon = document.querySelector('.plwd-toast-icon') as HTMLDivElement
         expect(icon.innerText).toBe('✓')
 
-        const toast = document.getElementById('plwd-toast') as HTMLDivElement
+        const toast = document.querySelector('.plwd-toast') as HTMLDivElement
         expect(toast.style.color).toBe('rgb(77, 182, 172)')
         expect(toast.classList.contains('open')).toBe(true)
 
@@ -754,21 +847,21 @@ describe('Spec: DOM Utils', () => {
 
     describe('When the loader is toggled on', () => {
       beforeAll(() => {
-        loaderBox = document.getElementById('plwd-loader-box') as HTMLDivElement
+        loaderBox = document.querySelector('.plwd-loader-box') as HTMLDivElement
         utils.toggleLoader(loaderBox, true)
       })
 
       afterAll(() => loaderBox.replaceChildren(...[]))
 
       test('Then it should display the loader', () => {
-        const loader = document.getElementById('plwd-loader') as HTMLDivElement
+        const loader = document.querySelector('.plwd-loader') as HTMLDivElement
         expect(loader).not.toBeNull()
       })
     })
 
     describe('When the loader is toggled off', () => {
       beforeAll(() => {
-        loaderBox = document.getElementById('plwd-loader-box') as HTMLDivElement
+        loaderBox = document.querySelector('.plwd-loader-box') as HTMLDivElement
         utils.toggleLoader(loaderBox, false)
       })
 
@@ -777,7 +870,7 @@ describe('Spec: DOM Utils', () => {
       })
 
       test('Then it should hide the loader', () => {
-        const loader = document.getElementById('plwd-loader') as HTMLDivElement
+        const loader = document.querySelector('.plwd-loader') as HTMLDivElement
         expect(loader).toBeNull()
       })
     })

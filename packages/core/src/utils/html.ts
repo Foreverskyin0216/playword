@@ -9,8 +9,6 @@ import sanitizeHTML from 'sanitize-html'
  *
  * @param html The sanitized HTML snapshot to generate locations from.
  * @param types The types of elements to generate locations for.
- *
- * @returns The locations of the target elements. See {@link ElementLocation} for details.
  */
 export const getElementLocations = (html: string, types: string[] = []) => {
   const allowedTags = JSON.stringify(types).toUpperCase()
@@ -20,29 +18,29 @@ export const getElementLocations = (html: string, types: string[] = []) => {
     const elements = document.querySelectorAll('*:not(head):not(script):not(style)')
     const locations = []
 
-    const getElementXPath = (e) => {
-      const path = []
+    const getElementXPath = (element) => {
+      const nodes = []
 
-      for (; e && e.nodeType == 1; e = e.parentNode) {
+      for (; element && element.nodeType == 1; element = element.parentNode) {
         let position = 1
 
-        for (let sibling = e.previousSibling; sibling; sibling = sibling.previousSibling) {
-          if (sibling.nodeType === 1 && sibling.nodeName === e.nodeName) position++
+        for (let sib = element.previousSibling; sib; sib = sib.previousSibling) {
+          if (sib.nodeType === 1 && sib.nodeName === element.nodeName) position++
         }
 
-        path.unshift(e.nodeName.toLowerCase() + '[' + position + ']')
+        nodes.unshift(element.nodeName.toLowerCase() + '[' + position + ']')
       }
 
-      return path.length ? '//' + path.join('/') : null
+      return '//' + nodes.join('/')
     }
 
-    for (const e of elements) {
-      if (!${allowedTags}.includes(e.nodeName)) continue
+    for (const element of elements) {
+      if (!${allowedTags}.includes(element.nodeName)) continue
 
-      const clone = e.cloneNode(true)
+      const clone = element.cloneNode(true)
       clone.innerHTML = [...clone.childNodes].filter((n) => n.nodeType === 3).map((n) => n.nodeValue).join('').trim()
 
-      locations.push({ html: clone.outerHTML, xpath: getElementXPath(e) })
+      locations.push({ html: clone.outerHTML, xpath: getElementXPath(element) })
     }
 
     window.locations = locations
@@ -52,11 +50,9 @@ export const getElementLocations = (html: string, types: string[] = []) => {
 }
 
 /**
- * To reduce the size of the HTML snapshot and make it easier to do similarity searches, we need to sanitize the HTML.
+ * Sanitizes the HTML to reduce the size of the HTML snapshot.
  *
  * @param html The original HTML snapshot.
- *
- * @returns The sanitized HTML snapshot.
  */
 export const sanitize = (html: string) => {
   return sanitizeHTML(html, {

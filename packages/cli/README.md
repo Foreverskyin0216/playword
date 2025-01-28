@@ -38,7 +38,7 @@ npx @playword/cli test [options]
 | `--playback`       | `-p`  | string         | **false**  | Whether to playback the test steps from a recording file.<br>This should be used with the `--record` option.   |
 | `--browser`        | `-b`  | string         | **chrome** | Which browser to use. Supported values are `chromium`, `chrome`, `msedge`, `firefox` and `webkit`.             |
 | `--verbose`        | `-v`  | bool           | **false**  | Whether to enable verbose mode.                                                                                |
-| `--openai-options` | `-o`  | list           | **[]**     | Additional OpenAI API options. e.g.<br>`-o apiKey=sk-... baseURL=https://...`.                                 |
+| `--openai-options` | `-o`  | list           | **[]**     | Additional OpenAI API options. e.g.<br>`--openai-options apiKey=sk-... baseURL=https://...`.                   |
 | `--help`           |       | bool           | **false**  | Show help information.                                                                                         |
 
 ### `observe`
@@ -58,5 +58,5 @@ npx @playword/cli observe [options]
 | `--record-path`    | `-r`  | string | **.playword/recordings.json** | Where to save the recordings. (Must be `.json`)                                                    |
 | `--browser`        | `-b`  | string | **chrome**                    | Which browser to use. Supported values are `chromium`, `chrome`, `msedge`, `firefox` and `webkit`. |
 | `--verbose`        | `-v`  | bool   | **false**                     | Whether to enable verbose mode.                                                                    |
-| `--openai-options` | `-o`  | list   | **[]**                        | Additional OpenAI API options. e.g.<br>`-o apiKey=sk-... baseURL=https://...`.                     |
+| `--openai-options` | `-o`  | list   | **[]**                        | Additional OpenAI API options. e.g.<br>`-o chat=gpt-4o embeddings=text-embedding-3-large `.        |
 | `--help`           |       | bool   | **false**                     | Show help information.                                                                             |

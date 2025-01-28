@@ -2,7 +2,7 @@
  * The custom style sheet to apply to the observer UI.
  */
 export const observerCSS = `
-  #plwd-panel {
+  .plwd-panel {
     background: rgba(0, 0, 0, .7);
     height: 100%;
     opacity: 0;
@@ -11,8 +11,8 @@ export const observerCSS = `
     width: 100%;
   }
 
-  #plwd-banner {
-    color: #ffffff;
+  .plwd-banner {
+    color: #ffffff !important;
     font-size: 32px !important;
     font-weight: bold;
     left: 4vw;
@@ -20,11 +20,11 @@ export const observerCSS = `
     top: 6vh;
   }
 
-  #plwd-input {
+  .plwd-input {
     background: transparent;
     border: none;
     border-bottom: 1px solid #ffffff;
-    color: #ffffff;
+    color: #ffffff !important;
     font-size: 20px !important;
     font-weight: bold;
     letter-spacing: 2px;
@@ -32,32 +32,33 @@ export const observerCSS = `
     width: 90%;
   }
 
-  #plwd-input[disabled] {
+  .plwd-input[disabled] {
     cursor: not-allowed;
     opacity: 0.5;
   }
 
-  #plwd-input-box {
+  .plwd-input-box {
     margin: 10% auto 0 auto;
     width: 90%;
   }
 
-  #plwd-timeline {
+  .plwd-timeline {
     max-height: 55vh;
     overflow-x: hidden;
     overflow-y: auto;
+    padding: 0;
     position: relative;
     width: 100%;
   }
 
-  #plwd-preview {
+  .plwd-preview {
     margin: auto;
     width: 80%;
     text-align: left;
   }
 
-  #plwd-preview-title {
-    color: #ffffff;
+  .plwd-preview-title {
+    color: #ffffff !important;
     display: inline-block;
     float: left;
     font-size: 32px !important;
@@ -68,7 +69,7 @@ export const observerCSS = `
     visibility: hidden;
   }
 
-  #plwd-panel {
+  .plwd-panel {
     display: block;
     left: 0;
     position: fixed;
@@ -78,7 +79,7 @@ export const observerCSS = `
     z-index: 2147483647;
   }
 
-  #plwd-toast {
+  .plwd-toast {
     background: #333333;
     border-radius: 25px;
     bottom: 30px;
@@ -96,41 +97,41 @@ export const observerCSS = `
     z-index: 2147483647;
   }
 
-  #plwd-toast-icon {
+  .plwd-toast-icon {
     float: left;
     width: 50px;
   }
 
-  #plwd-toast-content {
+  .plwd-toast-content {
     overflow: hidden;
     white-space: nowrap;
   }
 
-  #plwd-toast.open {
+  .plwd-toast.open {
     animation: fade-in 0.5s, expand 0.5s 0.5s, stay 0.5s 1s, fade-out 0.5s 1.5s;
     visibility: visible;
   }
 
-  #plwd-input:focus {
+  .plwd-input:focus {
     outline: none;
   }
 
-  #plwd-input::placeholder {
-    color: #ffffff;
+  .plwd-input::placeholder {
+    color: #ffffff !important;
     font-size: 20px !important;
     opacity: 0.4;
     padding: 12px;
   }
 
-  #plwd-loader-box {
+  .plwd-loader-box {
     display: inline-block;
     height: 20px;
     width: 20px;
   }
 
-  #plwd-accept-btn {
+  .plwd-accept-btn {
     border-radius: 25px;
-    color: #4db6ac;
+    color: #4db6ac !important;
     font-size: 24px !important;
     height: 50px;
     line-height: 50px;
@@ -138,9 +139,9 @@ export const observerCSS = `
     width: 150px;
   }
 
-  #plwd-drop-btn {
+  .plwd-cancel-btn {
     border-radius: 25px;
-    color: #e0e0e0;
+    color: #e0e0e0 !important;
     font-size: 24px !important;
     height: 50px;
     line-height: 50px;
@@ -148,9 +149,9 @@ export const observerCSS = `
     width: 150px;
   }
 
-  #plwd-dry-run-btn {
+  .plwd-dry-run-btn {
     border-radius: 25px;
-    color: #e5c07b;
+    color: #e5c07b !important;
     float: right;
     font-size: 20px !important;
     height: 40px;
@@ -159,9 +160,9 @@ export const observerCSS = `
     visibility: hidden;
   }
 
-  #plwd-clear-btn {
+  .plwd-clear-btn {
     border-radius: 25px;
-    color: #e0e0e0;
+    color: #e0e0e0 !important;
     float: right;
     font-size: 20px !important;
     height: 40px;
@@ -170,7 +171,16 @@ export const observerCSS = `
     visibility: hidden;
   }
 
-  #plwd-accept-btn, #plwd-drop-btn, #plwd-dry-run-btn, #plwd-clear-btn {
+  .plwd-delete-btn {
+    border-radius: 25px;
+    color: #ff6c6c !important;
+    height: 40px;
+    line-height: 40px;
+    margin: 0 8px;
+    width: 80px;
+  }
+
+  .plwd-accept-btn, .plwd-cancel-btn, .plwd-dry-run-btn, .plwd-clear-btn, .plwd-delete-btn {
     background: transparent;
     border: none;
     box-sizing: border-box;
@@ -183,7 +193,11 @@ export const observerCSS = `
     vertical-align: middle;
   }
 
-  #plwd-accept-btn::before, #plwd-drop-btn::before, #plwd-dry-run-btn::before, #plwd-clear-btn::before {
+  .plwd-accept-btn::before,
+  .plwd-cancel-btn::before,
+  .plwd-dry-run-btn::before,
+  .plwd-clear-btn::before,
+  .plwd-delete-btn::before {
     background: currentColor;
     bottom: 0;
     content: '';
@@ -195,7 +209,11 @@ export const observerCSS = `
     transition: opacity .3s;
   }
 
-  #plwd-accept-btn::after, #plwd-drop-btn::after, #plwd-dry-run-btn::after, #plwd-clear-btn::after {
+  .plwd-accept-btn::after,
+  .plwd-cancel-btn::after,
+  .plwd-dry-run-btn::after,
+  .plwd-clear-btn::after,
+  .plwd-delete-btn::after {
     background: currentColor;
     border-radius: 25px;
     content: '';
@@ -208,28 +226,30 @@ export const observerCSS = `
     transition: opacity 1s, transform .5s;
   }
 
-  #plwd-accept-btn:hover::before,
-  #plwd-drop-btn:hover::before,
-  #plwd-dry-run-btn:hover::before,
-  #plwd-clear-btn:hover::before {
+  .plwd-accept-btn:hover::before,
+  .plwd-cancel-btn:hover::before,
+  .plwd-dry-run-btn:hover::before,
+  .plwd-clear-btn:hover::before,
+  .plwd-delete-btn:hover::before {
     opacity: .1;
   }
 
-  #plwd-accept-btn:active::after,
-  #plwd-drop-btn:active::after,
-  #plwd-dry-run-btn:active::after,
-  #plwd-clear-btn:active::after {
+  .plwd-accept-btn:active::after,
+  .plwd-cancel-btn:active::after,
+  .plwd-dry-run-btn:active::after,
+  .plwd-clear-btn:active::after,
+  .plwd-delete-btn:active::after {
     opacity: .2;
     transform: translate(-50%, -50%) scale(0);
     transition: transform 0s;
   }
 
-  #plwd-panel.open, #plwd-preview-title.open, #plwd-dry-run-btn.open, #plwd-clear-btn.open {
+  .plwd-panel.open, .plwd-preview-title.open, .plwd-dry-run-btn.open, .plwd-clear-btn.open {
     opacity: 1;
     visibility: visible;
   }
 
-  #plwd-loader {
+  .plwd-loader {
     animation: loading .75s infinite linear;
     border-bottom: 4px solid rgba(255, 255, 255, .5);
     border-left: 4px solid rgba(255, 255, 255, .5);
@@ -248,7 +268,7 @@ export const observerCSS = `
 
   .plwd-timeline-item {
     animation: draw-border 1s;
-    color: #ffffff;
+    color: #ffffff !important;
     content-visibility: auto;
     border-color: #26a69a;
     border-style: solid;
@@ -270,6 +290,33 @@ export const observerCSS = `
 
   .plwd-timeline-item:last-child {
     border-bottom: none;
+  }
+
+  .plwd-delete-btn::before {
+    background: currentColor;
+    bottom: 0;
+    content: '';
+    left: 0;
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: opacity .3s;
+  }
+
+  .plwd-trash-icon {
+    fill: #ff6c6c;
+    height: 40px;
+    width: 40%;
+  }
+
+  .plwd-trash-lid {
+    transform-origin: right bottom;
+    transition: transform .2s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  .plwd-delete-btn:hover .plwd-trash-lid {
+    transform: translateY(-1px) rotate(10deg);
   }
 
   @keyframes expand {
