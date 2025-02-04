@@ -28,16 +28,16 @@
     "dist"
   ],
   "dependencies": {
-    "@inquirer/confirm": "^5.1.3",
-    "@inquirer/input": "^4.1.3",
+    "@inquirer/confirm": "^5.1.5",
+    "@inquirer/input": "^4.1.5",
     "@playword/core": "^0.2.2",
     "dotenv": "^16.4.7",
-    "playwright-core": "^1.50.0",
+    "playwright-core": "^1.50.1",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@types/yargs": "^17.0.33",
-    "openai": "^4.80.1",
+    "openai": "^4.82.0",
     "tsup": "^8.3.6"
   },
   "publishConfig": {
