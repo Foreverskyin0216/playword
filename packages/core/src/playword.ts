@@ -208,6 +208,8 @@ export class PlayWord implements PlayWordInterface {
 
     let result: ActionResult = ''
 
+    this.recorder?.initStep(this.stepCount, this.input)
+
     for (const { name, params } of recording.actions) {
       result = await actions[name as keyof typeof actions](this, params)
       utils.info(result.toString())
@@ -217,8 +219,11 @@ export class PlayWord implements PlayWordInterface {
         return this.useActionGraph()
       }
 
+      this.recorder?.addAction({ name, params })
       await setTimeout(this.delay)
     }
+
+    this.recorder?.save()
 
     return result
   }
