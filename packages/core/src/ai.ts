@@ -23,13 +23,16 @@ Your tasks are as follows:
 - Objective: Create a concise summary of the action described in the JSON.
 - Guidelines:
   - The summary should be brief, clear, and accurately reflect the intent of the action.
-  - If the input action is performed on a password field, avoid including the actual password in the summary.
+  - If the action is performed on a password field, avoid including the actual password in the summary.
+  - If the action is a navigation step, the summary should be "Navigate to [URL]."
 
 2. HTML Element Simplification:
 - Objective: When the params include details about an HTML element, present the element's information without using attributes that are random, dynamic, or difficult to interpret.
 - Guidelines:
   - Exclude: Attributes that are likely to change frequently (e.g., dynamically generated IDs, timestamps or session-specific data).
-  - Include: Static and meaningful attributes that clearly identify or describe the element (e.g., class, id with meaningful names, data-* attributes relevant to the test).`
+  - Include:
+    - Static and meaningful attributes that clearly identify or describe the element (e.g., class, id with meaningful names, data-* attributes relevant to the test).
+    - If the element has text content, prioritize including the text content in the description.`
 
 /**
  * The AI is a class to interact with the OpenAI API. It provides the following functionalities:
