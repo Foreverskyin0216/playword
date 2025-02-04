@@ -7,7 +7,7 @@
 
 Supercharge your web test automation experience with AI.
 
-![PlayWord](https://i.ibb.co/p0jdhQC/demo.gif)
+![playword](https://i.ibb.co/cc0xHf1Z/playword.gif)
 
 ## 📦 Installation
 
@@ -217,7 +217,7 @@ await playword.say('[AI] verify the URL matches "https://www.saucedemo.com/inven
 
 The Observer module tracks user interactions on web pages and swiftly generates accurate test steps using AI.
 
-![Observer](https://i.ibb.co/3FGGnZL/observer.gif)
+![observer](https://i.ibb.co/3FGGnZL/observer.gif)
 
 Upon activation, Playwright injects the Observer UI into every launched browser webpage.
 As you manually interact with the page, the AI interprets your actions, generates corresponding test steps, and records action details.
