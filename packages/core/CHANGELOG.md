@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.4](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.2.3...@playword/core@0.2.4) (2025-02-04)
+
+
+### Bug Fixes
+
+* fix the recordings issue ([90c3f44](https://github.com/Foreverskyin0216/playword/commit/90c3f443ce83ba3b919e7c1e3adbbdd92e20cbf3))
+
+
+
+
+
 ## [0.2.3](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.2.2...@playword/core@0.2.3) (2025-02-04)
 
 **Note:** Version bump only for package @playword/core
