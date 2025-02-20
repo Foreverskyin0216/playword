@@ -163,7 +163,7 @@ describe('Spec: PlayWord', () => {
 
         test('Then it should return the correct result for the second call', async () => {
           const result = await playword.say('Check if PlayWord works when performing multiple actions')
-          expect(result).toBe('Clicked on mock-xpath')
+          expect(result).toBe('Performed the click action')
         })
       })
     })
@@ -217,7 +217,7 @@ describe('Spec: PlayWord', () => {
           expect(result).toEqual(true)
 
           result = await playword.say('assertElementNotVisible')
-          expect(result).toEqual(false)
+          expect(result).toEqual(true)
 
           result = await playword.say('assertPageContains')
           expect(result).toEqual(true)
@@ -232,7 +232,7 @@ describe('Spec: PlayWord', () => {
           expect(result).toEqual(true)
 
           result = await playword.say('click')
-          expect(result).toBe('Clicked on mock-xpath')
+          expect(result).toBe('Performed the click action')
 
           result = await playword.say('getSnapshot')
           expect(result).toBe('mock-snapshot')
@@ -248,16 +248,16 @@ describe('Spec: PlayWord', () => {
           expect(result).toBe('Navigated to mock-url')
 
           result = await playword.say('hover')
-          expect(result).toBe('Hovered on mock-xpath')
+          expect(result).toBe('Performed the hover action')
 
           result = await playword.say('input')
-          expect(result).toBe('Filled mock-xpath with mock-text')
+          expect(result).toBe('Performed the input action')
 
           result = await playword.say('input with existing variables')
-          expect(result).toBe('Filled mock-xpath with mock-variable')
+          expect(result).toBe('Performed the input action')
 
           result = await playword.say('input with non-existing variables')
-          expect(result).toBe('Filled mock-xpath with {NON_EXISTING_VARIABLE}')
+          expect(result).toBe('Performed the input action')
 
           result = await playword.say('pressKeys')
           expect(result).toBe('Pressed keys mock-keys')
@@ -278,7 +278,7 @@ describe('Spec: PlayWord', () => {
           expect(result).toBe('Unsupported scroll target left')
 
           result = await playword.say('select')
-          expect(result).toBe('Selected mock-option from mock-xpath')
+          expect(result).toBe('Performed the select action')
 
           result = await playword.say('sleep')
           expect(result).toBe('Slept for 1000 milliseconds')

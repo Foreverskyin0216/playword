@@ -30,22 +30,22 @@
   "devDependencies": {
     "@commitlint/cli": "^19.7.1",
     "@commitlint/config-conventional": "^19.7.1",
-    "@eslint/js": "^9.19.0",
+    "@eslint/js": "^9.20.0",
     "@types/eslint__js": "^8.42.3",
-    "@types/node": "^22.13.1",
-    "@vitest/coverage-v8": "^3.0.5",
-    "eslint": "^9.19.0",
+    "@types/node": "^22.13.4",
+    "@vitest/coverage-v8": "^3.0.6",
+    "eslint": "^9.20.1",
     "husky": "^9.1.7",
-    "lerna": "^8.1.9",
+    "lerna": "^8.2.0",
     "lint-staged": "^15.4.3",
-    "prettier": "^3.4.2",
+    "prettier": "^3.5.1",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.23.0",
-    "vite": "^6.0.11",
-    "vitest": "^3.0.5"
+    "typescript-eslint": "^8.24.1",
+    "vite": "^6.1.1",
+    "vitest": "^3.0.6"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.34.2"
+    "@rollup/rollup-linux-x64-gnu": "^4.34.8"
   },
   "engines": {
     "node": ">=20"
@@ -59,5 +59,8 @@
       "eslint --fix",
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "tsup": "8.3.6"
   }
 }
