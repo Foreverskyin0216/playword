@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.5](https://github.com/Foreverskyin0216/playword/compare/@playword/cli@0.2.4...@playword/cli@0.2.5) (2025-02-20)
+
+
+### Bug Fixes
+
+* fix the waiting time issue ([ed0147b](https://github.com/Foreverskyin0216/playword/commit/ed0147b4cb4362c12332646860faa0d7145698f4))
+
+
+
+
+
 ## [0.2.4](https://github.com/Foreverskyin0216/playword/compare/@playword/cli@0.2.3...@playword/cli@0.2.4) (2025-02-04)
 
 **Note:** Version bump only for package @playword/cli
