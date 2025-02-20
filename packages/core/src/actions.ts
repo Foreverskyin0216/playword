@@ -46,12 +46,13 @@ const getInputVariable = (input: string) => {
  *
  * @param ref The PlayWord instance.
  * @param frameSrc The source of the frame to wait for.
+ * @param timeout The timeout in milliseconds. Default is 30 seconds.
  */
-const waitForFrame = async (ref: PlayWordInterface, frameSrc: string) => {
+const waitForFrame = async (ref: PlayWordInterface, frameSrc: string, timeout = 30000) => {
   const start = Date.now()
   let isFound = false
 
-  while (!isFound && Date.now() - start < 30000) {
+  while (!isFound && Date.now() - start < timeout) {
     isFound = Boolean(ref.page?.frames().some((f) => f.url() === frameSrc))
     await setTimeout(500)
   }
@@ -71,6 +72,8 @@ export const assertElementContains = async (ref: PlayWordInterface, params: Part
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
 
+    await locator.waitFor({ state: 'visible', timeout: 5000 })
+
     return Boolean((await locator.textContent())?.includes(text))
   } catch {
     return false
@@ -88,6 +91,8 @@ export const assertElementNotContain = async (ref: PlayWordInterface, params: Pa
     const handle = await getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
+
+    await locator.waitFor({ state: 'visible', timeout: 5000 })
 
     return !(await locator.textContent())?.includes(text) || false
   } catch {
@@ -107,6 +112,8 @@ export const assertElementContentEquals = async (ref: PlayWordInterface, params:
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
 
+    await locator.waitFor({ state: 'visible', timeout: 5000 })
+
     return (await locator.textContent())?.trim() === text.trim()
   } catch {
     return false
@@ -125,6 +132,8 @@ export const assertElementContentNotEqual = async (ref: PlayWordInterface, param
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
 
+    await locator.waitFor({ state: 'visible', timeout: 5000 })
+
     return (await locator.textContent())?.trim() !== text.trim()
   } catch {
     return false
@@ -142,7 +151,9 @@ export const assertElementVisible = async (ref: PlayWordInterface, params: Parti
     const handle = await getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
-    return locator.isVisible()
+    await locator.waitFor({ state: 'visible', timeout: 5000 })
+
+    return true
   } catch {
     return false
   }
@@ -159,7 +170,9 @@ export const assertElementNotVisible = async (ref: PlayWordInterface, params: Pa
     const handle = await getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
-    return locator.isHidden()
+    await locator.waitFor({ state: 'hidden', timeout: 5000 })
+
+    return true
   } catch {
     return false
   }
@@ -214,7 +227,8 @@ export const assertPageNotContain = async (ref: PlayWordInterface, params: Parti
 export const assertPageTitleEquals = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
     const text = getInputVariable(params.text!)
-    return (await ref.page?.title()) === text
+    const title = await ref.page?.title()
+    return title === text
   } catch {
     return false
   }
@@ -228,7 +242,8 @@ export const assertPageTitleEquals = async (ref: PlayWordInterface, params: Part
  */
 export const assertPageUrlMatches = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    return new RegExp(params.pattern!).test(ref.page!.url())
+    const url = ref.page!.url()
+    return new RegExp(params.pattern!).test(url)
   } catch {
     return false
   }
@@ -245,10 +260,10 @@ export const click = async (ref: PlayWordInterface, params: Partial<ActionParams
     const handle = await getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
-    await locator.waitFor({ state: 'visible' })
-    await locator.click({ timeout: 10000 })
+    await locator.waitFor({ state: 'visible', timeout: 5000 })
+    await locator.click({ timeout: 5000 })
 
-    return 'Clicked on ' + params.xpath
+    return 'Performed the click action'
   } catch {
     return 'Failed to perform the action'
   }
@@ -312,14 +327,14 @@ export const hover = async (ref: PlayWordInterface, params: Partial<ActionParams
     const handle = await getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
-    await locator.waitFor({ state: 'visible' })
-    await locator.hover({ timeout: 10000 })
+    await locator.waitFor({ state: 'visible', timeout: 5000 })
+    await locator.hover({ timeout: 5000 })
 
     if (params.duration) {
       await ref.page?.waitForTimeout(params.duration)
     }
 
-    return 'Hovered on ' + params.xpath
+    return 'Performed the hover action'
   } catch {
     return 'Failed to perform the action'
   }
@@ -337,10 +352,10 @@ export const input = async (ref: PlayWordInterface, params: Partial<ActionParams
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
 
-    await locator.waitFor({ state: 'visible' })
-    await locator.fill(text, { timeout: 10000 })
+    await locator.waitFor({ state: 'visible', timeout: 5000 })
+    await locator.fill(text, { timeout: 5000 })
 
-    return 'Filled ' + params.xpath + ' with ' + text
+    return 'Performed the input action'
   } catch {
     return 'Failed to perform the action'
   }
@@ -407,10 +422,10 @@ export const select = async (ref: PlayWordInterface, params: Partial<ActionParam
     const handle = await getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
-    await locator.waitFor({ state: 'visible' })
-    await locator.selectOption({ value: params.option! }, { timeout: 10000 })
+    await locator.waitFor({ state: 'visible', timeout: 5000 })
+    await locator.selectOption({ value: params.option! }, { timeout: 5000 })
 
-    return 'Selected ' + params.option + ' from ' + params.xpath
+    return 'Performed the select action'
   } catch {
     return 'Failed to perform the action'
   }
