@@ -234,16 +234,6 @@ describe('Spec: PlayWord', () => {
           result = await playword.say('click')
           expect(result).toBe('Performed the click action')
 
-          result = await playword.say('getSnapshot')
-          expect(result).toBe('mock-snapshot')
-
-          result = await playword.say('getText')
-          expect(result).toBe('mock-result')
-
-          mockEvaluate.mockResolvedValue('')
-          result = await playword.say('getEmptyText')
-          expect(result).toBe('')
-
           result = await playword.say('goto')
           expect(result).toBe('Navigated to mock-url')
 
@@ -383,16 +373,6 @@ describe('Spec: PlayWord', () => {
           expect(result).toEqual(false)
 
           result = await playword.say('click')
-          expect(result).toBe('Failed to perform action')
-
-          result = await playword.say('getSnapshot')
-          expect(result).toBe('Failed to perform action')
-
-          result = await playword.say('getText')
-          expect(result).toBe('Failed to perform action')
-
-          mockEvaluate.mockResolvedValue('')
-          result = await playword.say('getEmptyText')
           expect(result).toBe('Failed to perform action')
 
           result = await playword.say('goto')

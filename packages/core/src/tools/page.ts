@@ -12,7 +12,6 @@ import * as utils from '../utils'
  *
  * The following tools are available:
  * - Click
- * - GetText
  * - GoTo
  * - Hover
  * - Input
@@ -28,11 +27,10 @@ export const page = [
   tool(
     async ({ keywords }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, utils.allowedTags)
+      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -49,73 +47,32 @@ export const page = [
     {
       name: 'Click',
       description: 'Call to click on an element',
-      schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          )
-      })
-    }
-  ),
-
-  tool(
-    async ({ keywords }, { configurable }) => {
-      const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
-
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, utils.allowedTags)
-
-      utils.info('Embedding the snapshot...')
-      await ai.embedTexts(elements.map(({ html }) => html))
-      utils.info('Snapshot embedded.')
-
-      const documents = await ai.searchDocuments(keywords)
-      const candidate = await ai.getBestCandidate(input, documents)
-      const { xpath } = elements.find(({ html }) => html === documents[candidate].pageContent)!
-
-      recorder?.addAction({ name: 'getText', params: { xpath } })
-
-      return actions.getText(ref, { xpath })
-    },
-    {
-      name: 'GetText',
-      description: 'Call to get text of an element',
-      schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          )
-      })
+      schema: z.object({ keywords: z.string().describe('Keywords for searching the relevant element from user input') })
     }
   ),
 
   tool(
     async ({ url }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       ref.recorder?.addAction({ name: 'goto', params: { url } })
+
       return actions.goto(ref, { url })
     },
     {
       name: 'GoTo',
       description: 'Call to go to a specific URL',
-      schema: z.object({
-        url: z.string().describe('The URL to navigate to')
-      })
+      schema: z.object({ url: z.string().describe('The URL to navigate to') })
     }
   ),
 
   tool(
     async ({ duration, keywords }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, utils.allowedTags)
+      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -134,11 +91,7 @@ export const page = [
       description: 'Call to hover over an element',
       schema: z.object({
         duration: z.number().describe('The duration to hover over the element. Default is 1000ms'),
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          )
+        keywords: z.string().describe('Keywords for searching the relevant element from user input')
       })
     }
   ),
@@ -146,11 +99,10 @@ export const page = [
   tool(
     async ({ keywords, text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, ['input', 'textarea'])
+      const resource = await page!.evaluate(utils.getElementLocations, ['input', 'textarea'])
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -168,11 +120,7 @@ export const page = [
       name: 'Input',
       description: 'Call to type text into the input field or textarea',
       schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          ),
+        keywords: z.string().describe('Keywords for searching the relevant element from user input'),
         text: z.string().describe('Text to input')
       })
     }
@@ -181,7 +129,9 @@ export const page = [
   tool(
     async ({ keys }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       ref.recorder?.addAction({ name: 'pressKeys', params: { keys } })
+
       return actions.pressKeys(ref, { keys })
     },
     {
@@ -196,7 +146,9 @@ export const page = [
   tool(
     async ({ direction }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       ref.recorder?.addAction({ name: 'scroll', params: { direction } })
+
       return actions.scroll(ref, { direction })
     },
     {
@@ -211,11 +163,10 @@ export const page = [
   tool(
     async ({ keywords, option }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, ['select'])
+      const resource = await page!.evaluate(utils.getElementLocations, ['select'])
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -233,11 +184,7 @@ export const page = [
       name: 'Select',
       description: 'Call to select an option from a select element',
       schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          ),
+        keywords: z.string().describe('Keywords for searching the relevant element from user input'),
         option: z.string().describe('The option to select')
       })
     }
@@ -246,15 +193,15 @@ export const page = [
   tool(
     async ({ duration }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       ref.recorder?.addAction({ name: 'sleep', params: { duration } })
+
       return actions.sleep(ref, { duration })
     },
     {
       name: 'Sleep',
       description: 'Call to wait for a certain amount of time',
-      schema: z.object({
-        duration: z.number().describe('The duration to wait in milliseconds')
-      })
+      schema: z.object({ duration: z.number().describe('The duration to wait in milliseconds') })
     }
   ),
 
@@ -288,29 +235,28 @@ export const page = [
   tool(
     async ({ pageNumber }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       return actions.switchPage(ref, { pageNumber })
     },
     {
       name: 'SwitchPage',
       description: 'Call to switch to a different page or tab',
-      schema: z.object({
-        pageNumber: z.number().describe('The index of the page to switch to. Starts from 0')
-      })
+      schema: z.object({ pageNumber: z.number().describe('The index of the page to switch to. Starts from 0') })
     }
   ),
 
   tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       ref.recorder?.addAction({ name: 'waitForText', params: { text } })
+
       return actions.waitForText(ref, { text })
     },
     {
       name: 'WaitForText',
       description: 'Call to wait for text to appear on the page',
-      schema: z.object({
-        text: z.string().describe('Text to wait for')
-      })
+      schema: z.object({ text: z.string().describe('Text to wait for') })
     }
   )
 ] as unknown as DynamicStructuredTool[]

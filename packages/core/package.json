@@ -35,19 +35,18 @@
     }
   },
   "dependencies": {
-    "@langchain/core": "^0.3.40",
-    "@langchain/langgraph": "^0.2.46",
+    "@langchain/core": "^0.3.42",
+    "@langchain/langgraph": "^0.2.53",
     "@langchain/openai": "^0.4.4",
-    "jsdom": "^26.0.0",
     "sanitize-html": "^2.14.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.13.4",
+    "@types/node": "^22.13.9",
     "@types/sanitize-html": "^2.13.0",
+    "jsdom": "^26.0.0",
     "playwright-core": "^1.50.1",
-    "tsup": "^8.3.6"
+    "tsup": "^8.4.0"
   },
   "publishConfig": {
     "access": "public",

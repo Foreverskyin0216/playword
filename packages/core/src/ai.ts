@@ -3,12 +3,12 @@ import type { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messa
 import type { DynamicStructuredTool } from '@langchain/core/tools'
 import type { AIOptions } from './types'
 
+import { SystemMessage } from '@langchain/core/messages'
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { z } from 'zod'
 import { MemoryVectorStore } from './memoryStore'
 
-export const CANDIDATE_LIST_REFERENCE = `I will provide you with some HTML elements.
-Your goal is to find the most relevant element that user mentioned in the input and want to interact with.
+export const CANDIDATE_LIST_REFERENCE = `Your goal is to find the most relevant element that user mentioned in the input from the list of elements provided.
 When you find the element you believe to be the best match, return the index of that element.`
 
 export const DETERMINE_ASSERTION_RESULT = `Determine if the AI response is passed on the user's input.
@@ -33,6 +33,8 @@ Your tasks are as follows:
   - Include:
     - Static and meaningful attributes that clearly identify or describe the element (e.g., class, id with meaningful names, data-* attributes relevant to the test).
     - If the element has text content, prioritize including the text content in the description.`
+
+export const TOOL_CALLING = `Choose the appropriate tool to perform the action without responding to the user.`
 
 /**
  * The AI is a class to interact with the OpenAI API. It provides the following functionalities:
@@ -68,7 +70,7 @@ export class AI {
    * @param messages The messages to send to the AI.
    */
   public async useTools(tools: DynamicStructuredTool[], messages: (AIMessage | HumanMessage | ToolMessage)[]) {
-    return this.model.bindTools(tools).invoke(messages)
+    return this.model.bindTools(tools).invoke([new SystemMessage(TOOL_CALLING), ...messages])
   }
 
   /**
@@ -101,9 +103,7 @@ export class AI {
 
     const { result } = await this.model
       .withStructuredOutput(
-        z.object({
-          result: z.boolean().describe('Return true if the AI believes the assertion passes, false otherwise.')
-        })
+        z.object({ result: z.boolean().describe('Return true if the assertion passes, false otherwise.') })
       )
       .invoke([
         { role: 'system', content: DETERMINE_ASSERTION_RESULT },
@@ -121,7 +121,7 @@ export class AI {
    * @param docs The candidate documents.
    */
   public async getBestCandidate(input: string, docs: Document[]) {
-    const schema = z.object({ index: z.enum(docs.map((_, index) => index.toString()) as [string, ...string[]]) })
+    const schema = z.object({ index: z.enum(docs.map((_, index) => index.toString()) as [string]) })
     const { index } = await this.model.withStructuredOutput(schema).invoke([
       {
         role: 'user',

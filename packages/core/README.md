@@ -278,7 +278,6 @@ await context.newPage()
 ### Page Actions
 
 - Click on an element
-- Get text of an element
 - Go to a specific URL
 - Hover over an element
 - Press a key or keys

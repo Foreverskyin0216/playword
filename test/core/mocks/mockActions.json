@@ -126,37 +126,6 @@
     ]
   },
   {
-    "input": "getSnapshot",
-    "actions": [
-      {
-        "name": "getSnapshot",
-        "params": {}
-      }
-    ]
-  },
-  {
-    "input": "getText",
-    "actions": [
-      {
-        "name": "getText",
-        "params": {
-          "xpath": "mock-xpath"
-        }
-      }
-    ]
-  },
-  {
-    "input": "getEmptyText",
-    "actions": [
-      {
-        "name": "getText",
-        "params": {
-          "xpath": "mock-xpath"
-        }
-      }
-    ]
-  },
-  {
     "input": "goto",
     "actions": [
       {

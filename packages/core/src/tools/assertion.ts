@@ -25,11 +25,10 @@ export const assertion = [
   tool(
     async ({ keywords, text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, utils.allowedTags)
+      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -49,11 +48,7 @@ export const assertion = [
       name: 'AssertElementContains',
       description: 'Call to verify that an element contains specific text',
       schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          ),
+        keywords: z.string().describe('Keywords for searching the relevant element from user input'),
         text: z.string().describe('The text to verify on the element')
       })
     }
@@ -62,11 +57,10 @@ export const assertion = [
   tool(
     async ({ keywords, text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, utils.allowedTags)
+      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -86,11 +80,7 @@ export const assertion = [
       name: 'AssertElementNotContain',
       description: 'Call to verify that an element does not contain specific text',
       schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          ),
+        keywords: z.string().describe('Keywords for searching the relevant element from user input'),
         text: z.string().describe('The text to verify on the element')
       })
     }
@@ -99,11 +89,10 @@ export const assertion = [
   tool(
     async ({ keywords, text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, utils.allowedTags)
+      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -123,11 +112,7 @@ export const assertion = [
       name: 'AssertElementContentEquals',
       description: 'Call to verify that an element has specific text',
       schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          ),
+        keywords: z.string().describe('Keywords for searching the relevant element from user input'),
         text: z.string().describe('The text to verify on the element')
       })
     }
@@ -136,11 +121,10 @@ export const assertion = [
   tool(
     async ({ keywords, text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, utils.allowedTags)
+      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -160,11 +144,7 @@ export const assertion = [
       name: 'AssertElementContentNotEqual',
       description: 'Call to verify that an element does not have specific text',
       schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          ),
+        keywords: z.string().describe('Keywords for searching the relevant element from user input'),
         text: z.string().describe('The text to verify on the element')
       })
     }
@@ -173,11 +153,10 @@ export const assertion = [
   tool(
     async ({ keywords }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, utils.allowedTags)
+      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -196,24 +175,17 @@ export const assertion = [
     {
       name: 'AssertElementVisible',
       description: 'Call to verify that an element is visible',
-      schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          )
-      })
+      schema: z.object({ keywords: z.string().describe('Keywords for searching the relevant element from user input') })
     }
   ),
 
   tool(
     async ({ keywords }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, input, recorder } = ref
+      const { ai, input, page, recorder } = ref
 
-      const snapshot = await actions.getSnapshot(ref)
-      const resource = utils.sanitize(snapshot)
-      const elements = utils.getElementLocations(resource, utils.allowedTags)
+      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
 
       utils.info('Embedding the snapshot...')
       await ai.embedTexts(elements.map(({ html }) => html))
@@ -232,20 +204,16 @@ export const assertion = [
     {
       name: 'AssertElementNotVisible',
       description: 'Call to verify that an element is not visible',
-      schema: z.object({
-        keywords: z
-          .string()
-          .describe(
-            'Keywords used to retrieve the location of the element. Should contain the element name and any other relevant information mentioned in the sentence'
-          )
-      })
+      schema: z.object({ keywords: z.string().describe('Keywords for searching the relevant element from user input') })
     }
   ),
 
   tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       ref.recorder?.addAction({ name: 'assertPageContains', params: { text } })
+
       return (await actions.assertPageContains(ref, { text }))
         ? 'PASS: Page contains text: ' + text
         : 'FAIL: Page does not contain text: ' + text
@@ -253,16 +221,16 @@ export const assertion = [
     {
       name: 'AssertPageContains',
       description: 'Call to verify that the page contains specific text',
-      schema: z.object({
-        text: z.string().describe('The text to verify on the page')
-      })
+      schema: z.object({ text: z.string().describe('The text to verify on the page') })
     }
   ),
 
   tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       ref.recorder?.addAction({ name: 'assertPageNotContain', params: { text } })
+
       return (await actions.assertPageNotContain(ref, { text }))
         ? 'PASS: Page does not contain text: ' + text
         : 'FAIL: Page contains text: ' + text
@@ -270,16 +238,16 @@ export const assertion = [
     {
       name: 'AssertPageNotContain',
       description: 'Call to verify that the page does not contain specific text',
-      schema: z.object({
-        text: z.string().describe('The text to verify on the page')
-      })
+      schema: z.object({ text: z.string().describe('The text to verify on the page') })
     }
   ),
 
   tool(
     async ({ text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       ref.recorder?.addAction({ name: 'assertPageTitleContains', params: { text } })
+
       return (await actions.assertPageTitleEquals(ref, { text }))
         ? 'PASS: Page title is equal to: ' + text
         : 'FAIL: Page title is not equal to: ' + text
@@ -287,16 +255,16 @@ export const assertion = [
     {
       name: 'AssertPageTitleEquals',
       description: 'Call to verify that the page title is equal to specific text',
-      schema: z.object({
-        text: z.string().describe('The text to verify on the page title')
-      })
+      schema: z.object({ text: z.string().describe('The text to verify on the page title') })
     }
   ),
 
   tool(
     async ({ pattern }, { configurable }) => {
       const { ref } = configurable as ToolConfig
+
       ref.recorder?.addAction({ name: 'assertPageTitleMatches', params: { pattern } })
+
       return (await actions.assertPageUrlMatches(ref, { pattern }))
         ? 'PASS: Page URL matches the pattern: ' + pattern
         : 'FAIL: Page URL does not match the pattern: ' + pattern
@@ -304,9 +272,7 @@ export const assertion = [
     {
       name: 'AssertPageUrlMatches',
       description: 'Call to verify that the page URL matches a specific pattern',
-      schema: z.object({
-        pattern: z.string().describe('The pattern to verify on the page URL')
-      })
+      schema: z.object({ pattern: z.string().describe('The pattern to verify on the page URL') })
     }
   )
 ] as unknown as DynamicStructuredTool[]

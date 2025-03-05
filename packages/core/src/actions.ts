@@ -270,38 +270,6 @@ export const click = async (ref: PlayWordInterface, params: Partial<ActionParams
 }
 
 /**
- * Get the HTML snapshot of the page or current frame.
- *
- * @param ref The PlayWord instance.
- */
-export const getSnapshot = async (ref: PlayWordInterface) => {
-  try {
-    const handle = await getHandle(ref)
-    return handle.content()
-  } catch {
-    return 'Failed to perform the action'
-  }
-}
-
-/**
- * Get text of an element on the page or within the current frame.
- *
- * @param ref The PlayWord instance.
- * @param params The parameters for the action.
- */
-export const getText = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
-  try {
-    const handle = await getHandle(ref, params)
-    const locator = handle.locator(params.xpath!).first()
-    const text = await locator.evaluate((e) => e.firstChild?.textContent)
-
-    return text || ''
-  } catch {
-    return 'Failed to perform the action'
-  }
-}
-
-/**
  * Go to a specific URL.
  *
  * @param ref The PlayWord instance.

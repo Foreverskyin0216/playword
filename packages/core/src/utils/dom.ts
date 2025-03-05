@@ -8,7 +8,7 @@
  * Note: Attempting to use these functions in a non-browser context (e.g., Node.js)
  * will result in errors, as the required APIs are not available.
  */
-import type { Recording } from '../types'
+import type { ElementLocation, Recording } from '../types'
 
 /**
  * Adds a class to a given element.
@@ -50,6 +50,68 @@ export const clearStorage = () => {
 export const clearServiceWorkers = async () => {
   const registrations = await navigator.serviceWorker.getRegistrations()
   await Promise.all(registrations.map((registration) => registration.unregister()))
+}
+
+/**
+ * Retrieves all the locations of the target elements on the page.
+ *
+ * @param types The types of elements to generate locations for.
+ * @returns The list of element locations. See {@link ElementLocation} for details.
+ */
+export const getElementLocations = (types: string[]) => {
+  const elements = document.querySelectorAll('*:not(head):not(script):not(style)')
+  const locations = [] as ElementLocation[]
+
+  /**
+   * Retrieves the XPath for a given element.
+   *
+   * @param element The target element.
+   */
+  const getElementXPath = (element: Element) => {
+    const nodes: string[] = []
+
+    for (; element && element.nodeType == 1; element = element.parentNode as Element) {
+      let position = 1
+
+      for (let sib = element.previousSibling; sib; sib = sib.previousSibling) {
+        if (sib.nodeType === 1 && sib.nodeName === element.nodeName) position++
+      }
+
+      nodes.unshift(`${element.nodeName.toLowerCase()}[${position}]`)
+    }
+
+    return '//' + nodes.join('/')
+  }
+
+  /**
+   * Check if an element is in the allowed list and visible.
+   *
+   * @param e The target element.
+   */
+  const isAllowed = (e: Element) => {
+    if (!types.includes(e.nodeName.toLowerCase())) {
+      return false
+    }
+
+    return e?.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true, contentVisibilityAuto: true }) ?? true
+  }
+
+  for (const element of elements) {
+    if (!isAllowed(element)) continue
+
+    const clone = element.cloneNode(true) as Element
+    clone.innerHTML = [...clone.childNodes]
+      .filter((n) => n.nodeType === 3)
+      .map((n) => n.nodeValue)
+      .join('')
+      .trim()
+
+    if (clone.outerHTML.length > 1000) continue
+
+    locations.push({ html: clone.outerHTML, xpath: getElementXPath(element) })
+  }
+
+  return locations
 }
 
 /**
@@ -364,10 +426,10 @@ export const setEventListeners = () => {
  * @param css The style sheet to apply to the PlayWord panel.
  */
 export const setPanel = (css: string) => {
-  document.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('load', () => {
     const style = document.createElement('style')
     style.textContent = css
-    document.head.appendChild(style)
+    document.body.appendChild(style)
 
     const banner = document.createElement('div')
     banner.classList.add('plwd-banner')
