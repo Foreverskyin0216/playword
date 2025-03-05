@@ -1,6 +1,4 @@
 import { Document } from '@langchain/core/documents'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import * as tools from '../../../packages/core/src/tools'
 
@@ -15,7 +13,7 @@ const {
   mockAssertPageNotContain,
   mockAssertPageTitleEquals,
   mockAssertPageUrlMatches,
-  mockGetSnapshot,
+  mockPageEvaluate,
   mockSearchDocuments
 } = vi.hoisted(() => ({
   mockAssertElementContains: vi.fn(),
@@ -28,7 +26,7 @@ const {
   mockAssertPageNotContain: vi.fn(),
   mockAssertPageTitleEquals: vi.fn(),
   mockAssertPageUrlMatches: vi.fn(),
-  mockGetSnapshot: vi.fn(),
+  mockPageEvaluate: vi.fn(),
   mockSearchDocuments: vi.fn()
 }))
 
@@ -42,8 +40,7 @@ vi.mock('../../../packages/core/src/actions', () => ({
   assertPageContains: mockAssertPageContains,
   assertPageNotContain: mockAssertPageNotContain,
   assertPageTitleEquals: mockAssertPageTitleEquals,
-  assertPageUrlMatches: mockAssertPageUrlMatches,
-  getSnapshot: mockGetSnapshot
+  assertPageUrlMatches: mockAssertPageUrlMatches
 }))
 
 describe('Spec: Assert Tools', () => {
@@ -56,6 +53,7 @@ describe('Spec: Assert Tools', () => {
           searchDocuments: mockSearchDocuments
         },
         input: 'test',
+        page: { evaluate: mockPageEvaluate },
         recorder: { addAction: vi.fn() }
       }
     }
@@ -65,13 +63,12 @@ describe('Spec: Assert Tools', () => {
     const xpath = '//html[1]/body[1]/div[1]/div[1]'
 
     beforeAll(async () => {
-      const mockHTML = await readFile(join(__dirname, '../mocks/mockPageContent.html'), 'utf-8')
-      mockGetSnapshot.mockResolvedValue(mockHTML)
+      mockPageEvaluate.mockResolvedValue([{ html: '<div id="targetDiv">ID</div>', xpath }])
       mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
     })
 
     afterAll(() => {
-      mockGetSnapshot.mockReset()
+      mockPageEvaluate.mockReset()
       mockSearchDocuments.mockReset()
     })
 

@@ -37,8 +37,8 @@
   },
   "devDependencies": {
     "@types/yargs": "^17.0.33",
-    "openai": "^4.85.2",
-    "tsup": "^8.3.6"
+    "openai": "^4.86.1",
+    "tsup": "^8.4.0"
   },
   "publishConfig": {
     "access": "public",

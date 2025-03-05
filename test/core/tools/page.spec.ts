@@ -1,16 +1,13 @@
 import { Document } from '@langchain/core/documents'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import * as tools from '../../../packages/core/src/tools'
 
 const {
   mockClick,
-  mockGetSnapshot,
-  mockGetText,
   mockGoTo,
   mockHover,
   mockInput,
+  mockPageEvaluate,
   mockPressKeys,
   mockScroll,
   mockSearchDocuments,
@@ -21,11 +18,10 @@ const {
   mockWaitForText
 } = vi.hoisted(() => ({
   mockClick: vi.fn(),
-  mockGetSnapshot: vi.fn(),
-  mockGetText: vi.fn(),
   mockGoTo: vi.fn(),
   mockHover: vi.fn(),
   mockInput: vi.fn(),
+  mockPageEvaluate: vi.fn(),
   mockPressKeys: vi.fn(),
   mockScroll: vi.fn(),
   mockSearchDocuments: vi.fn(),
@@ -39,8 +35,6 @@ const {
 vi.mock('../../../packages/core/src/actions', () => ({
   click: mockClick,
   getFrames: vi.fn().mockResolvedValue([]),
-  getSnapshot: mockGetSnapshot,
-  getText: mockGetText,
   goto: mockGoTo,
   hover: mockHover,
   input: mockInput,
@@ -64,6 +58,7 @@ describe('Spec: Page Tools', () => {
         },
         input: 'test',
         page: {
+          evaluate: mockPageEvaluate,
           frames: vi.fn(() => [
             { name: vi.fn().mockReturnValue('frame'), url: vi.fn().mockReturnValue('https://mock.url') }
           ])
@@ -81,13 +76,12 @@ describe('Spec: Page Tools', () => {
     const xpath = '//html[1]/body[1]/div[1]/div[1]'
 
     beforeAll(async () => {
-      const mockHTML = await readFile(join(__dirname, '../mocks/mockPageContent.html'), 'utf-8')
-      mockGetSnapshot.mockResolvedValue(mockHTML)
+      mockPageEvaluate.mockResolvedValue([{ html: '<div id="targetDiv">ID</div>', xpath }])
       mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<div id="targetDiv">ID</div>' })])
     })
 
     afterAll(() => {
-      mockGetSnapshot.mockReset()
+      mockPageEvaluate.mockReset()
       mockSearchDocuments.mockReset()
     })
 
@@ -108,25 +102,8 @@ describe('Spec: Page Tools', () => {
       })
     })
 
-    describe('When the GetText tool is used', () => {
-      const getTextTool = tools.page[1]
-
-      beforeAll(() => mockGetText.mockResolvedValue('getText-result'))
-
-      afterAll(() => mockGetText.mockReset())
-
-      test('Then the result is as expected', async () => {
-        const result = await getTextTool.invoke({ keywords }, { configurable })
-        expect(result).toBe('getText-result')
-      })
-
-      test('Then the actions are called as expected', () => {
-        expect(mockGetText).toBeCalledWith(configurable.ref, { xpath })
-      })
-    })
-
     describe('When the GoTo tool is used', () => {
-      const gotoTool = tools.page[2]
+      const gotoTool = tools.page[1]
 
       beforeAll(() => mockGoTo.mockResolvedValue('goto-result'))
 
@@ -143,7 +120,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Hover tool is used', () => {
-      const hoverTool = tools.page[3]
+      const hoverTool = tools.page[2]
 
       beforeAll(() => mockHover.mockResolvedValue('hover-result'))
 
@@ -160,15 +137,20 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Input tool is used', () => {
-      const inputTool = tools.page[4]
+      const inputTool = tools.page[3]
+      const xpath = '//html[1]/body[1]/div[1]/input[1]'
 
       beforeAll(() => {
-        mockSearchDocuments.mockReset()
-        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<input type="text">' })])
         mockInput.mockResolvedValue('input-result')
+        mockPageEvaluate.mockResolvedValue([{ html: '<input type="text" />', xpath }])
+        mockSearchDocuments.mockReset()
+        mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<input type="text" />' })])
       })
 
-      afterAll(() => mockInput.mockReset())
+      afterAll(() => {
+        mockInput.mockReset()
+        mockPageEvaluate.mockReset()
+      })
 
       test('Then the result is as expected', async () => {
         const result = await inputTool.invoke({ keywords, text }, { configurable })
@@ -176,12 +158,12 @@ describe('Spec: Page Tools', () => {
       })
 
       test('Then the actions are called as expected', () => {
-        expect(mockInput).toBeCalledWith(configurable.ref, { text, xpath: '//html[1]/body[1]/div[1]/input[1]' })
+        expect(mockInput).toBeCalledWith(configurable.ref, { text, xpath })
       })
     })
 
     describe('When the PressKeys tool is used', () => {
-      const pressKeysTool = tools.page[5]
+      const pressKeysTool = tools.page[4]
 
       beforeAll(() => mockPressKeys.mockResolvedValue('pressKeys-result'))
 
@@ -198,7 +180,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Scroll tool is used', () => {
-      const scrollTool = tools.page[6]
+      const scrollTool = tools.page[5]
 
       beforeAll(() => mockScroll.mockResolvedValue('scroll-result'))
 
@@ -215,16 +197,20 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Select tool is used', () => {
-      const selectTool = tools.page[7]
+      const selectTool = tools.page[6]
       const xpath = '//html[1]/body[1]/div[1]/select[1]'
 
       beforeAll(async () => {
+        mockPageEvaluate.mockResolvedValue([{ html: '<select></select>', xpath }])
         mockSearchDocuments.mockReset()
         mockSearchDocuments.mockResolvedValue([new Document({ pageContent: '<select></select>' })])
         mockSelect.mockResolvedValue('select-result')
       })
 
-      afterAll(() => mockSelect.mockReset())
+      afterAll(() => {
+        mockPageEvaluate.mockReset()
+        mockSelect.mockReset()
+      })
 
       test('Then the result is as expected', async () => {
         const result = await selectTool.invoke({ keywords, option }, { configurable })
@@ -237,7 +223,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the Sleep tool is used', () => {
-      const sleepTool = tools.page[8]
+      const sleepTool = tools.page[7]
 
       beforeAll(() => mockSleep.mockResolvedValue('sleep-result'))
 
@@ -254,7 +240,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the SwitchFrame tool is used', () => {
-      const switchFrameTool = tools.page[9]
+      const switchFrameTool = tools.page[8]
 
       beforeAll(() => mockSwitchFrame.mockResolvedValue('switchFrame-result'))
 
@@ -274,7 +260,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the SwitchPage tool is used', () => {
-      const switchPageTool = tools.page[10]
+      const switchPageTool = tools.page[9]
 
       beforeAll(() => mockSwitchPage.mockResolvedValue('switchPage-result'))
 
@@ -291,7 +277,7 @@ describe('Spec: Page Tools', () => {
     })
 
     describe('When the WaitForText tool is used', () => {
-      const waitForTextTool = tools.page[11]
+      const waitForTextTool = tools.page[10]
 
       beforeAll(() => mockWaitForText.mockResolvedValue('waitForText-result'))
 

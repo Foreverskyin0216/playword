@@ -24,7 +24,7 @@ describe('Spec: DOM Utils', () => {
   const mockStopDryRun = vi.fn()
   const mockUpdateInput = vi.fn()
 
-  const html = readFileSync(join(__dirname, '../mocks/mockObserverUI.html'), 'utf-8')
+  const html = readFileSync(join(__dirname, '../mocks/mockPage.html'), 'utf-8')
   document.documentElement.innerHTML = html
   document.elementFromPoint = mockElementFromPoint
 
@@ -108,6 +108,55 @@ describe('Spec: DOM Utils', () => {
         await utils.clearServiceWorkers()
         expect(mockGetRegistrations).toBeCalled()
         expect(mockUnregister).toBeCalled()
+      })
+    })
+  })
+
+  describe('Given the getElementLocations function', () => {
+    describe('When it is called with allowed tags', () => {
+      const allowedTags = ['a', 'div', 'head', 'p', 'script', 'style']
+      const mockCheckVisibility = vi.fn()
+
+      beforeAll(() => (HTMLElement.prototype.checkVisibility = mockCheckVisibility))
+
+      test('Then it should return an empty array if the target elements are not visible', () => {
+        mockCheckVisibility.mockReturnValue(false)
+        const invisibleElements = utils.getElementLocations(allowedTags)
+        expect(invisibleElements).toEqual([])
+      })
+
+      test('Then it should return the locations if the target elements are visible', () => {
+        mockCheckVisibility.mockReturnValue(true)
+        const visibleElements = utils.getElementLocations(allowedTags)
+        expect(visibleElements).toEqual([
+          { html: '<div id="app"></div>', xpath: '//html[1]/body[1]/div[1]' },
+          { html: '<div class="plwd-panel"></div>', xpath: '//html[1]/body[1]/div[2]' },
+          { html: '<div class="plwd-banner"></div>', xpath: '//html[1]/body[1]/div[2]/div[1]' },
+          { html: '<div class="plwd-input-box"></div>', xpath: '//html[1]/body[1]/div[2]/div[2]' },
+          { html: '<div class="plwd-loader-box"></div>', xpath: '//html[1]/body[1]/div[2]/div[2]/div[1]' },
+          { html: '<div class="plwd-preview"></div>', xpath: '//html[1]/body[1]/div[2]/div[3]' },
+          { html: '<p class="plwd-preview-title"></p>', xpath: '//html[1]/body[1]/div[2]/div[3]/p[1]' },
+          { html: '<div class="plwd-toast"></div>', xpath: '//html[1]/body[1]/div[3]' },
+          { html: '<div class="plwd-toast-icon"></div>', xpath: '//html[1]/body[1]/div[3]/div[1]' },
+          { html: '<div class="plwd-toast-content"></div>', xpath: '//html[1]/body[1]/div[3]/div[2]' }
+        ])
+      })
+
+      test('Then it should return the elements if the browser does not support the checkVisibility method', () => {
+        mockCheckVisibility.mockReturnValue(undefined)
+        const visibleElements = utils.getElementLocations(allowedTags)
+        expect(visibleElements).toEqual([
+          { html: '<div id="app"></div>', xpath: '//html[1]/body[1]/div[1]' },
+          { html: '<div class="plwd-panel"></div>', xpath: '//html[1]/body[1]/div[2]' },
+          { html: '<div class="plwd-banner"></div>', xpath: '//html[1]/body[1]/div[2]/div[1]' },
+          { html: '<div class="plwd-input-box"></div>', xpath: '//html[1]/body[1]/div[2]/div[2]' },
+          { html: '<div class="plwd-loader-box"></div>', xpath: '//html[1]/body[1]/div[2]/div[2]/div[1]' },
+          { html: '<div class="plwd-preview"></div>', xpath: '//html[1]/body[1]/div[2]/div[3]' },
+          { html: '<p class="plwd-preview-title"></p>', xpath: '//html[1]/body[1]/div[2]/div[3]/p[1]' },
+          { html: '<div class="plwd-toast"></div>', xpath: '//html[1]/body[1]/div[3]' },
+          { html: '<div class="plwd-toast-icon"></div>', xpath: '//html[1]/body[1]/div[3]/div[1]' },
+          { html: '<div class="plwd-toast-content"></div>', xpath: '//html[1]/body[1]/div[3]/div[2]' }
+        ])
       })
     })
   })
@@ -739,11 +788,11 @@ describe('Spec: DOM Utils', () => {
 
     afterAll(() => (document.body.innerHTML = originalBody))
 
-    describe('When the DOMContentLoaded event is triggered', () => {
-      const event = new Event('DOMContentLoaded', { bubbles: true, cancelable: true })
+    describe('When the load event is triggered', () => {
+      const event = new Event('load', { bubbles: true, cancelable: true })
 
       test('Then it should set the panel content', async () => {
-        document.dispatchEvent(event)
+        window.dispatchEvent(event)
 
         // Wait for the next tick
         await new Promise(process.nextTick)
