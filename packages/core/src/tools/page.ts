@@ -82,7 +82,7 @@ export const page = [
       const candidate = await ai.getBestCandidate(input, documents)
       const { xpath } = elements.find(({ html }) => html === documents[candidate].pageContent)!
 
-      recorder?.addAction({ name: 'hover', params: { xpath } })
+      recorder?.addAction({ name: 'hover', params: { duration, xpath } })
 
       return actions.hover(ref, { duration, xpath })
     },

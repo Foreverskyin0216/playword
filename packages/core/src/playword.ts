@@ -4,7 +4,7 @@ import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording } from
 import { HumanMessage } from '@langchain/core/messages'
 import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers/promises'
-import { actionGraph } from './actionGraph'
+import { sayGraph } from './graph'
 import * as actions from './actions'
 import { AI } from './ai'
 import { Recorder } from './recorder'
@@ -27,27 +27,21 @@ import * as utils from './utils'
  * ```ts
  * const context = await browser.newContext()
  * const playword = new PlayWord(context, {
+ *   aiOptions: {
+ *     openAIApiKey: '<your-api-key>'
+ *   },
  *   debug: true,
  *   delay: 500,
- *   openAIOptions: {
- *     apiKey: '<api-key>',
- *     endpoint: 'https://custom-ai-endpoint.com'
- *   },
- *   record: true
+ *   record: 'spec/test-login.json'
  * })
  * ```
  */
 export class PlayWord implements PlayWordInterface {
-  /**
-   * Due to the requirement of the LangGraph,
-   * it needs a unique thread id to keep track of the conversation.
-   */
+  /** Use the thread ID to keep track of the conversation for LangGraph. */
   private threadId = randomUUID()
 
-  /**
-   * AI instance to interact with the OpenAI API.
-   */
-  public ai
+  /** AI instance to interact with the OpenAI API. */
+  ai: AI
 
   /**
    * The delay in milliseconds to wait before executing each action during the playback.
@@ -56,7 +50,7 @@ export class PlayWord implements PlayWordInterface {
    *
    * @default 250
    */
-  public delay: number
+  delay: number
 
   /**
    * The frame within the page, if the current context is inside a frame.
@@ -78,14 +72,14 @@ export class PlayWord implements PlayWordInterface {
    * await playword.say('Switch to the frame "https://www.example.com"')
    * ```
    */
-  public frame: Frame | undefined
+  frame?: Frame
 
   /**
    * The most recent input from the user.
    *
    * This stores the last natural language command provided to the `say` method.
    */
-  public input = ''
+  input = ''
 
   /**
    * The Playwright `Page` instance used to perform actions.
@@ -103,27 +97,28 @@ export class PlayWord implements PlayWordInterface {
    * await playword.say('Switch to the second page')
    * ```
    */
-  public page: Page | undefined
+  page?: Page
 
   /**
    * The recorder instance used to save the actions performed.
    *
    * If recording is not enabled or initialized, the value will be `undefined`.
    */
-  public recorder: Recorder | undefined
+  recorder?: Recorder
+
   /**
    * Step count to keep track of the actions performed.
    * This is used to locate the recording in the record file.
    */
-  public stepCount = 0
+  stepCount = 0
 
   constructor(
     public context: BrowserContext,
-    { debug = false, delay = 250, openAIOptions = {}, record = false }: PlayWordOptions = {}
+    { debug = false, delay = 250, aiOptions = {}, record = false }: PlayWordOptions = {}
   ) {
     process.env.PLWD_DEBUG = debug.toString()
 
-    this.ai = new AI(openAIOptions)
+    this.ai = new AI(aiOptions)
 
     this.context.on('page', (page) => {
       this.page = page
@@ -155,32 +150,30 @@ export class PlayWord implements PlayWordInterface {
 
     descriptor.value = async function (message: string) {
       const playword = this as PlayWord
-      // Setup
+      /** Setup */
       if (playword.stepCount === 0) {
         await Promise.all([playword.context.newPage(), playword.recorder?.load()])
       }
 
       playword.input = message.replace(utils.aiPattern, '').trim()
 
-      // Action
+      /** Action */
       const result = await method.apply(playword, [message])
 
-      // Teardown
+      /** Teardown */
       playword.stepCount++
 
       return result
     }
   }
 
-  /**
-   * Invoke the action graph to perform actions.
-   */
-  private async useActionGraph() {
+  /** Invoke the say method graph to perform actions. */
+  private async useSayGraph() {
     utils.info('[AI] ' + this.input, 'green', true)
 
     this.recorder?.initStep(this.stepCount, this.input)
 
-    const { messages } = await actionGraph.invoke(
+    const { messages } = await sayGraph.invoke(
       {
         messages: [new HumanMessage(this.input)]
       },
@@ -190,12 +183,17 @@ export class PlayWord implements PlayWordInterface {
     )
 
     const response = messages[messages.length - 1].content.toString()
-    const result = ['true', 'false'].includes(response) ? response === 'true' : response
-    utils.info('Result: ' + response, result ? 'green' : 'red')
+    let result: ActionResult = response
+
+    if (['true', 'false'].includes(response)) {
+      result = response === 'true'
+    } else {
+      utils.info('Result: ' + response, 'green')
+    }
 
     this.recorder?.save()
 
-    return result as ActionResult
+    return result
   }
 
   /**
@@ -216,7 +214,7 @@ export class PlayWord implements PlayWordInterface {
 
       if (result.toString().startsWith('Failed')) {
         utils.info('Retrying with AI...', 'magenta')
-        return this.useActionGraph()
+        return this.useSayGraph()
       }
 
       this.recorder?.addAction({ name, params })
@@ -251,7 +249,7 @@ export class PlayWord implements PlayWordInterface {
    * **Check for page content**
    * ```ts
    * const result = await playword.say('Check if the page contains "Sign in"')
-   * console.log(result) // Output: true
+   * // Output: true
    * ```
    */
   @PlayWord.fixture
@@ -259,7 +257,7 @@ export class PlayWord implements PlayWordInterface {
     const recording = this.recorder?.list().find((r, i) => r.input === this.input && i === this.stepCount)
 
     if (utils.aiPattern.test(message) || !recording) {
-      return this.useActionGraph()
+      return this.useSayGraph()
     }
 
     return this.useRecording(recording)

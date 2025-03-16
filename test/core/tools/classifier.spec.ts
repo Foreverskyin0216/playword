@@ -15,7 +15,8 @@ describe('Spec: Classifier', () => {
       const assertElementContainsTool = classifier[0]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertElementContainsTool.invoke({ text }, { configurable })
+        const response = await assertElementContainsTool.invoke({ text }, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertElementContains', params: { attribute: 'mock-attribute', text } })
       })
     })
@@ -24,7 +25,8 @@ describe('Spec: Classifier', () => {
       const assertElementNotContainTool = classifier[1]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertElementNotContainTool.invoke({ text }, { configurable })
+        const response = await assertElementNotContainTool.invoke({ text }, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertElementNotContain', params: { attribute: 'mock-attribute', text } })
       })
     })
@@ -33,7 +35,8 @@ describe('Spec: Classifier', () => {
       const assertElementContentEqualsTool = classifier[2]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertElementContentEqualsTool.invoke({ text }, { configurable })
+        const response = await assertElementContentEqualsTool.invoke({ text }, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertElementContentEquals', params: { attribute: 'mock-attribute', text } })
       })
     })
@@ -42,7 +45,8 @@ describe('Spec: Classifier', () => {
       const assertElementContentNotEqualTool = classifier[3]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertElementContentNotEqualTool.invoke({ text }, { configurable })
+        const response = await assertElementContentNotEqualTool.invoke({ text }, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertElementContentNotEqual', params: { attribute: 'mock-attribute', text } })
       })
     })
@@ -51,7 +55,8 @@ describe('Spec: Classifier', () => {
       const assertElementVisibleTool = classifier[4]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertElementVisibleTool.invoke({}, { configurable })
+        const response = await assertElementVisibleTool.invoke({}, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertElementVisible', params: { attribute: 'mock-attribute' } })
       })
     })
@@ -60,7 +65,8 @@ describe('Spec: Classifier', () => {
       const assertElementNotVisibleTool = classifier[5]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertElementNotVisibleTool.invoke({}, { configurable })
+        const response = await assertElementNotVisibleTool.invoke({}, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertElementNotVisible', params: { attribute: 'mock-attribute' } })
       })
     })
@@ -69,7 +75,8 @@ describe('Spec: Classifier', () => {
       const assertPageContainsTool = classifier[6]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertPageContainsTool.invoke({ text })
+        const response = await assertPageContainsTool.invoke({ text })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertPageContains', params: { text } })
       })
     })
@@ -78,7 +85,8 @@ describe('Spec: Classifier', () => {
       const assertPageNotContainTool = classifier[7]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertPageNotContainTool.invoke({ text })
+        const response = await assertPageNotContainTool.invoke({ text })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertPageNotContain', params: { text } })
       })
     })
@@ -87,7 +95,8 @@ describe('Spec: Classifier', () => {
       const assertPageTitleEqualsTool = classifier[8]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertPageTitleEqualsTool.invoke({ text })
+        const response = await assertPageTitleEqualsTool.invoke({ text })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertPageTitleEquals', params: { text } })
       })
     })
@@ -96,7 +105,8 @@ describe('Spec: Classifier', () => {
       const assertPageUrlMatchesTool = classifier[9]
 
       test('Then the result should be the expected', async () => {
-        const result = await assertPageUrlMatchesTool.invoke({ pattern })
+        const response = await assertPageUrlMatchesTool.invoke({ pattern })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'assertPageUrlMatches', params: { pattern } })
       })
     })
@@ -105,7 +115,8 @@ describe('Spec: Classifier', () => {
       const clickTool = classifier[10]
 
       test('Then the result should be the expected', async () => {
-        const result = await clickTool.invoke({}, { configurable })
+        const response = await clickTool.invoke({}, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'click', params: { attribute: 'mock-attribute' } })
       })
     })
@@ -114,7 +125,8 @@ describe('Spec: Classifier', () => {
       const goToTool = classifier[11]
 
       test('Then the result should be the expected', async () => {
-        const result = await goToTool.invoke({ url })
+        const response = await goToTool.invoke({ url })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'goto', params: { url } })
       })
     })
@@ -123,7 +135,8 @@ describe('Spec: Classifier', () => {
       const hoverTool = classifier[12]
 
       test('Then the result should be the expected', async () => {
-        const result = await hoverTool.invoke({ duration }, { configurable })
+        const response = await hoverTool.invoke({ duration }, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'hover', params: { attribute: 'mock-attribute', duration } })
       })
     })
@@ -132,7 +145,8 @@ describe('Spec: Classifier', () => {
       const inputTool = classifier[13]
 
       test('Then the result should be the expected', async () => {
-        const result = await inputTool.invoke({ text }, { configurable })
+        const response = await inputTool.invoke({ text }, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'input', params: { attribute: 'mock-attribute', text } })
       })
     })
@@ -141,7 +155,8 @@ describe('Spec: Classifier', () => {
       const scrollTool = classifier[14]
 
       test('Then the result should be the expected', async () => {
-        const result = await scrollTool.invoke({ direction }, { configurable })
+        const response = await scrollTool.invoke({ direction }, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'scroll', params: { attribute: 'mock-attribute', direction } })
       })
     })
@@ -150,7 +165,8 @@ describe('Spec: Classifier', () => {
       const selectTool = classifier[15]
 
       test('Then the result should be the expected', async () => {
-        const result = await selectTool.invoke({ option }, { configurable })
+        const response = await selectTool.invoke({ option }, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'select', params: { attribute: 'mock-attribute', option } })
       })
     })
@@ -159,7 +175,8 @@ describe('Spec: Classifier', () => {
       const sleepTool = classifier[16]
 
       test('Then the result should be the expected', async () => {
-        const result = await sleepTool.invoke({ duration })
+        const response = await sleepTool.invoke({ duration })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'sleep', params: { duration } })
       })
     })
@@ -168,7 +185,8 @@ describe('Spec: Classifier', () => {
       const waitForTextTool = classifier[17]
 
       test('Then the result should be the expected', async () => {
-        const result = await waitForTextTool.invoke({ text }, { configurable })
+        const response = await waitForTextTool.invoke({ text }, { configurable })
+        const result = JSON.parse(response)
         expect(result).toEqual({ name: 'waitForText', params: { text } })
       })
     })

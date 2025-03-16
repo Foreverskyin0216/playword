@@ -1,12 +1,15 @@
 import type { Document } from '@langchain/core/documents'
 import type { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages'
 import type { DynamicStructuredTool } from '@langchain/core/tools'
-import type { AIOptions } from './types'
+import type { AIOptions, GoogleOptions, VoyageOptions } from './types'
 
+import { ChatAnthropic } from '@langchain/anthropic'
 import { SystemMessage } from '@langchain/core/messages'
+import { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } from '@langchain/google-genai'
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { z } from 'zod'
-import { MemoryVectorStore } from './memoryStore'
+import { VoyageEmbeddings } from './embeddings'
+import { MemoryVectorStore } from './vectorStore'
 
 export const CANDIDATE_LIST_REFERENCE = `Your goal is to find the most relevant element that user mentioned in the input from the list of elements provided.
 When you find the element you believe to be the best match, return the index of that element.`
@@ -23,6 +26,7 @@ Your tasks are as follows:
 - Objective: Create a concise summary of the action described in the JSON.
 - Guidelines:
   - The summary should be brief, clear, and accurately reflect the intent of the action.
+  - The action in the summary should not be changed to a different action.
   - If the action is performed on a password field, avoid including the actual password in the summary.
   - If the action is a navigation step, the summary should be "Navigate to [URL]."
 
@@ -34,10 +38,14 @@ Your tasks are as follows:
     - Static and meaningful attributes that clearly identify or describe the element (e.g., class, id with meaningful names, data-* attributes relevant to the test).
     - If the element has text content, prioritize including the text content in the description.`
 
-export const TOOL_CALLING = `Choose the appropriate tool to perform the action without responding to the user.`
+export const TOOL_CALLING = `Choose ONE appropriate tool to perform the action without asking the users any questions.
+You should not call multiple tools.
+If any unexpected error occurs, you should retry the call with different parameters from the previous attempt as much as possible, with a maximum of five retries.
+If any failure occurs, you should return the error message without retrying.`
 
 /**
- * The AI is a class to interact with the OpenAI API. It provides the following functionalities:
+ * AI is a module that uses AI services to execute the PlayWord functions.
+ * It provides the following functionalities:
  * - Use the chat model binding with custom tools to perform actions.
  * - Embed documents into a new vector store.
  * - Search for the most similar documents from the vector store.
@@ -45,22 +53,49 @@ export const TOOL_CALLING = `Choose the appropriate tool to perform the action w
  * - Get the best candidate from the embedded documents based on the user's input.
  * - Summarize the Observer action.
  *
- * @param options The options for the OpenAI API. See {@link ModelOptions} and {@link ClientOptions} for details.
+ * @param opts The options for AI configuration. See {@link AIOptions} for details.
  */
 export class AI {
-  /**
-   * The chat model to use for the general tasks.
-   */
-  private model: ChatOpenAI
+  /** The chat model to use for the general tasks. */
+  private llm: ChatGoogleGenerativeAI | ChatOpenAI | ChatAnthropic
 
-  /**
-   * The vector store to store the embedded documents.
-   */
+  /** The vector store to store the embedded documents. */
   private store: MemoryVectorStore
 
-  constructor({ chat = 'gpt-4o-mini', embeddings = 'text-embedding-3-small', ...opts }: AIOptions = {}) {
-    this.model = new ChatOpenAI({ ...opts, configuration: opts, model: chat })
-    this.store = new MemoryVectorStore(new OpenAIEmbeddings({ ...opts, configuration: opts, model: embeddings }))
+  constructor(opts: AIOptions = {}) {
+    let embeddings: GoogleGenerativeAIEmbeddings | OpenAIEmbeddings | VoyageEmbeddings | undefined
+    let llm: ChatGoogleGenerativeAI | ChatOpenAI | ChatAnthropic | undefined
+
+    if ('googleApiKey' in opts || process.env.GOOGLE_API_KEY) {
+      const apiKey = (opts as GoogleOptions).googleApiKey ?? process.env.GOOGLE_API_KEY
+      embeddings = new GoogleGenerativeAIEmbeddings({ apiKey, model: 'text-embedding-004' })
+      llm = new ChatGoogleGenerativeAI({ ...opts, apiKey, model: opts.model ?? 'gemini-2.0-flash-lite' })
+    }
+
+    if ('openAIApiKey' in opts || process.env.OPENAI_API_KEY) {
+      embeddings = new OpenAIEmbeddings({ ...opts, configuration: opts, model: 'text-embedding-3-small' })
+      llm = new ChatOpenAI({ ...opts, configuration: opts, model: opts.model ?? 'gpt-4o-mini' })
+    }
+
+    if ('anthropicApiKey' in opts || process.env.ANTHROPIC_API_KEY) {
+      llm = new ChatAnthropic({ ...opts, clientOptions: opts, model: opts.model ?? 'claude-3-5-haiku-latest' })
+    }
+
+    if ('voyageAIApiKey' in opts || process.env.VOYAGEAI_API_KEY) {
+      const apiKey = (opts as VoyageOptions).voyageAIApiKey || process.env.VOYAGEAI_API_KEY
+      embeddings = new VoyageEmbeddings({ apiKey })
+    }
+
+    if (!embeddings) {
+      throw new Error('Embeddings model setup failed. An API key for Google, OpenAI, or VoyageAI is required.')
+    }
+
+    if (!llm) {
+      throw new Error('LLM setup failed. An API key for Google, OpenAI, or Anthropic is required.')
+    }
+
+    this.llm = llm
+    this.store = new MemoryVectorStore(embeddings)
   }
 
   /**
@@ -70,7 +105,7 @@ export class AI {
    * @param messages The messages to send to the AI.
    */
   public async useTools(tools: DynamicStructuredTool[], messages: (AIMessage | HumanMessage | ToolMessage)[]) {
-    return this.model.bindTools(tools).invoke([new SystemMessage(TOOL_CALLING), ...messages])
+    return this.llm.bindTools(tools).invoke([new SystemMessage(TOOL_CALLING), ...messages])
   }
 
   /**
@@ -101,7 +136,7 @@ export class AI {
     const question = messages.findLast((message) => message.getType() === 'human')!
     const response = messages[messages.length - 1]
 
-    const { result } = await this.model
+    const { result } = await this.llm
       .withStructuredOutput(
         z.object({ result: z.boolean().describe('Return true if the assertion passes, false otherwise.') })
       )
@@ -121,20 +156,21 @@ export class AI {
    * @param docs The candidate documents.
    */
   public async getBestCandidate(input: string, docs: Document[]) {
-    const schema = z.object({ index: z.enum(docs.map((_, index) => index.toString()) as [string]) })
-    const { index } = await this.model.withStructuredOutput(schema).invoke([
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: CANDIDATE_LIST_REFERENCE },
-          { type: 'text', text: 'User input: ' + input },
-          {
-            type: 'text',
-            text: 'Elements: ' + docs.map((doc, index) => `Index ${index}: ${doc.pageContent}`).join('\n')
-          }
-        ]
-      }
-    ])
+    const { index } = await this.llm
+      .withStructuredOutput(z.object({ index: z.enum(docs.map((_, index) => index.toString()) as [string]) }))
+      .invoke([
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: CANDIDATE_LIST_REFERENCE },
+            { type: 'text', text: 'User input: ' + input },
+            {
+              type: 'text',
+              text: 'Elements: ' + docs.map((doc, index) => `Index ${index}: ${doc.pageContent}`).join('\n')
+            }
+          ]
+        }
+      ])
 
     return parseInt(index)
   }
@@ -145,11 +181,9 @@ export class AI {
    * @param action The action to summarize.
    */
   public async summarizeAction(action: string) {
-    const { summary } = await this.model
+    const { summary } = await this.llm
       .withStructuredOutput(
-        z.object({
-          summary: z.string().describe('A concise summary of the action described in the JSON.')
-        })
+        z.object({ summary: z.string().describe('A concise summary of the action described in the JSON.') })
       )
       .invoke([
         {
@@ -160,6 +194,7 @@ export class AI {
           ]
         }
       ])
+
     return summary
   }
 }

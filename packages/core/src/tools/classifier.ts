@@ -29,10 +29,11 @@ import { z } from 'zod'
  */
 export const classifier = [
   tool(
-    async ({ text }, { configurable }) => ({
-      name: 'assertElementContains',
-      params: { ...configurable.action.params, text }
-    }),
+    async ({ text }, { configurable }) =>
+      JSON.stringify({
+        name: 'assertElementContains',
+        params: { ...configurable.action.params, text }
+      }),
     {
       name: 'AssertElementContains',
       description: 'Call to verify that an element contains specific text',
@@ -41,10 +42,11 @@ export const classifier = [
   ),
 
   tool(
-    async ({ text }, { configurable }) => ({
-      name: 'assertElementNotContain',
-      params: { ...configurable.action.params, text }
-    }),
+    async ({ text }, { configurable }) =>
+      JSON.stringify({
+        name: 'assertElementNotContain',
+        params: { ...configurable.action.params, text }
+      }),
     {
       name: 'AssertElementNotContain',
       description: 'Call to verify that an element does not contain specific text',
@@ -53,10 +55,11 @@ export const classifier = [
   ),
 
   tool(
-    async ({ text }, { configurable }) => ({
-      name: 'assertElementContentEquals',
-      params: { ...configurable.action.params, text }
-    }),
+    async ({ text }, { configurable }) =>
+      JSON.stringify({
+        name: 'assertElementContentEquals',
+        params: { ...configurable.action.params, text }
+      }),
     {
       name: 'AssertElementContentEquals',
       description: 'Call to verify that an element has specific text',
@@ -65,10 +68,11 @@ export const classifier = [
   ),
 
   tool(
-    async ({ text }, { configurable }) => ({
-      name: 'assertElementContentNotEqual',
-      params: { ...configurable.action.params, text }
-    }),
+    async ({ text }, { configurable }) =>
+      JSON.stringify({
+        name: 'assertElementContentNotEqual',
+        params: { ...configurable.action.params, text }
+      }),
     {
       name: 'AssertElementContentNotEqual',
       description: 'Call to verify that an element does not have specific text',
@@ -76,56 +80,61 @@ export const classifier = [
     }
   ),
 
-  tool(async (_, { configurable }) => ({ name: 'assertElementVisible', params: configurable.action.params }), {
-    name: 'AssertElementVisible',
-    description: 'Call to verify that an element is visible',
-    schema: z.object({})
-  }),
+  tool(
+    async (_, { configurable }) => JSON.stringify({ name: 'assertElementVisible', params: configurable.action.params }),
+    {
+      name: 'AssertElementVisible',
+      description: 'Call to verify that an element is visible'
+    }
+  ),
 
-  tool(async (_, { configurable }) => ({ name: 'assertElementNotVisible', params: configurable.action.params }), {
-    name: 'AssertElementNotVisible',
-    description: 'Call to verify that an element is not visible',
-    schema: z.object({})
-  }),
+  tool(
+    async (_, { configurable }) =>
+      JSON.stringify({ name: 'assertElementNotVisible', params: configurable.action.params }),
+    {
+      name: 'AssertElementNotVisible',
+      description: 'Call to verify that an element is not visible'
+    }
+  ),
 
-  tool(async ({ text }) => ({ name: 'assertPageContains', params: { text } }), {
+  tool(async ({ text }) => JSON.stringify({ name: 'assertPageContains', params: { text } }), {
     name: 'AssertPageContains',
     description: 'Call to verify that the page contains specific text',
     schema: z.object({ text: z.string().describe('The text to verify') })
   }),
 
-  tool(async ({ text }) => ({ name: 'assertPageNotContain', params: { text } }), {
+  tool(async ({ text }) => JSON.stringify({ name: 'assertPageNotContain', params: { text } }), {
     name: 'AssertPageNotContain',
     description: 'Call to verify that the page does not contain specific text',
     schema: z.object({ text: z.string().describe('The text to verify') })
   }),
 
-  tool(async ({ text }) => ({ name: 'assertPageTitleEquals', params: { text } }), {
+  tool(async ({ text }) => JSON.stringify({ name: 'assertPageTitleEquals', params: { text } }), {
     name: 'AssertPageTitleEquals',
     description: 'Call to verify that the page title equals specific text',
     schema: z.object({ text: z.string().describe('The text to verify') })
   }),
 
-  tool(async ({ pattern }) => ({ name: 'assertPageUrlMatches', params: { pattern } }), {
+  tool(async ({ pattern }) => JSON.stringify({ name: 'assertPageUrlMatches', params: { pattern } }), {
     name: 'AssertPageUrlMatches',
     description: 'Call to verify that the page URL matches a specific pattern',
     schema: z.object({ pattern: z.string().describe('The pattern to match') })
   }),
 
-  tool(async (_, { configurable }) => ({ name: 'click', params: configurable.action.params }), {
+  tool(async (_, { configurable }) => JSON.stringify({ name: 'click', params: configurable.action.params }), {
     name: 'Click',
-    description: 'Call to handle the click event',
-    schema: z.object({})
+    description: 'Call to handle the click event'
   }),
 
-  tool(async ({ url }) => ({ name: 'goto', params: { url } }), {
+  tool(async ({ url }) => JSON.stringify({ name: 'goto', params: { url } }), {
     name: 'GoTo',
     description: 'Call to handle the navigation event',
     schema: z.object({ url: z.string().describe('The URL to navigate to') })
   }),
 
   tool(
-    async ({ duration }, { configurable }) => ({ name: 'hover', params: { ...configurable.action.params, duration } }),
+    async ({ duration }, { configurable }) =>
+      JSON.stringify({ name: 'hover', params: { ...configurable.action.params, duration } }),
     {
       name: 'Hover',
       description: 'Call to handle the hover event',
@@ -133,17 +142,22 @@ export const classifier = [
     }
   ),
 
-  tool(async ({ text }, { configurable }) => ({ name: 'input', params: { text, ...configurable.action.params } }), {
-    name: 'Input',
-    description: 'Call to handle the input event',
-    schema: z.object({ text: z.string().describe('The text to input') })
-  }),
+  tool(
+    async ({ text }, { configurable }) =>
+      JSON.stringify({ name: 'input', params: { text, ...configurable.action.params } }),
+    {
+      name: 'Input',
+      description: 'Call to handle the input event',
+      schema: z.object({ text: z.string().describe('The text to input') })
+    }
+  ),
 
   tool(
-    async ({ direction }, { configurable }) => ({
-      name: 'scroll',
-      params: { ...configurable.action.params, direction }
-    }),
+    async ({ direction }, { configurable }) =>
+      JSON.stringify({
+        name: 'scroll',
+        params: { ...configurable.action.params, direction }
+      }),
     {
       name: 'Scroll',
       description: 'Call to handle the scroll event',
@@ -152,7 +166,8 @@ export const classifier = [
   ),
 
   tool(
-    async ({ option }, { configurable }) => ({ name: 'select', params: { option, ...configurable.action.params } }),
+    async ({ option }, { configurable }) =>
+      JSON.stringify({ name: 'select', params: { option, ...configurable.action.params } }),
     {
       name: 'Select',
       description: 'Call to handle the select event',
@@ -160,13 +175,13 @@ export const classifier = [
     }
   ),
 
-  tool(async ({ duration }) => ({ name: 'sleep', params: { duration } }), {
+  tool(async ({ duration }) => JSON.stringify({ name: 'sleep', params: { duration } }), {
     name: 'Sleep',
     description: 'Call to handle the sleep event',
     schema: z.object({ duration: z.number().describe('The duration to sleep in milliseconds') })
   }),
 
-  tool(async ({ text }) => ({ name: 'waitForText', params: { text } }), {
+  tool(async ({ text }) => JSON.stringify({ name: 'waitForText', params: { text } }), {
     name: 'WaitForText',
     description: 'Call to handle the wait for text event',
     schema: z.object({ text: z.string().describe('The text to wait for') })

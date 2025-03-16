@@ -39,16 +39,16 @@ export default {
       .option('browser', {
         alias: 'b',
         describe: 'Which browser to use',
-        choices: ['chromium', 'chrome', 'msedge', 'firefox', 'webkit'],
+        choices: ['chrome', 'chromium', 'firefox', 'msedge', 'webkit'],
         default: 'chrome'
       })
       .option('verbose', {
         alias: 'v',
         describe: 'Whether to enable verbose mode'
       })
-      .option('openai-options', {
+      .option('ai-options', {
         alias: 'o',
-        describe: 'Additional OpenAI API options',
+        describe: 'Additional AI options',
         type: 'array',
         coerce: (options: string[]) =>
           options.reduce(
@@ -74,17 +74,19 @@ export default {
       .example('$0 test -r', 'Save the recordings to .playword/recordings.json as default')
       .example('$0 test -r path/to/rec.json', 'Save the recordings to path/to/rec.json')
       .example('$0 test -r -p', 'Replay the recordings')
-      .example('$0 test -o apiKey=sk-... baseURL=https://...', 'Pass the OpenAI options')
+      .example('$0 test -o googleApiKey=sk...', 'Set options for Google AI')
+      .example('$0 test -o openAIApiKey=sk... baseURL=https://...', 'Set options for self-hosted OpenAI')
+      .example('$0 test -o anthropicApiKey=sk... voyageAIApiKey=pa...', 'Set options for Anthropic and VoyageAI')
       .version(false)
       .help()
   },
 
   handler: async ({
+    aiOptions = {},
     browser = 'chrome',
     delay = 250,
     envFile = '.env',
     headed = false,
-    openaiOptions = {},
     playback = false,
     record = false,
     verbose = false
@@ -96,16 +98,18 @@ export default {
       const recordings: Recording[] = record ? getRecordings(recordPath) : []
 
       info('Creating a new context for the browser: ' + browser)
-      const br = await getBrowser(browser, !headed)
+      const br = await getBrowser(browser, headed)
       const context = await br.newContext()
-      const playword = new PlayWord(context, { debug: verbose, delay, openAIOptions: openaiOptions, record })
+      const playword = new PlayWord(context, { aiOptions, debug: verbose, delay, record })
 
-      if (recordings.length && playback) for (const rec of recordings) await runPlayWord(playword, rec.input)
+      if (playback && recordings.length) for (const { input } of recordings) await runPlayWord(playword, input)
       else
         do await runPlayWord(playword, await input({ message: 'What do you want to do?' }))
         while (await confirm({ message: 'Continue to next step?' }))
 
-      if (record) info('Saved recordings to ' + recordPath)
+      if (record) {
+        info('Saved recordings to ' + recordPath)
+      }
       info('Test completed', 'green')
 
       await br.close()

@@ -1,13 +1,14 @@
+import type { AnthropicInput } from '@langchain/anthropic'
+import type { EmbeddingsParams } from '@langchain/core/embeddings'
 import type { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages'
-import type { ClientOptions } from '@langchain/openai'
+import type { GoogleGenerativeAIChatInput } from '@langchain/google-genai'
+import type { ChatOpenAIFields, ClientOptions } from '@langchain/openai'
 import type { BrowserContext, Frame, Page } from 'playwright-core'
 import type { AI } from './ai'
 import type { Recorder } from './recorder'
 
 declare global {
-  /**
-   * The custom window object to interact with the browser page.
-   */
+  /** The custom window object to interact with the browser page. */
   interface Window {
     /**
      * When assigning named functions in **page.evaluate** and run the programe with `tsx`,
@@ -23,44 +24,28 @@ declare global {
      */
     __name: (fn: unknown) => unknown
 
-    /**
-     * Accepts the current action and saves it to the recorder.
-     */
+    /** Accepts the current action and saves it to the recorder. */
     accept: () => void
 
-    /**
-     * Cancels the current action.
-     */
+    /** Cancels the current action. */
     cancel: () => void
 
-    /**
-     * Clears all recorded actions in the recorder.
-     */
+    /** Clears all recorded actions in the recorder. */
     clearAll: () => void
 
-    /**
-     * Deletes the specified step on the timeline.
-     */
+    /** Deletes the specified step on the timeline. */
     deleteStep: (index: number) => void
 
-    /**
-     * Starts the dry run process.
-     */
+    /** Starts the dry run process. */
     dryRun: () => void
 
-    /**
-     * Emits an action to the observer for processing.
-     */
+    /** Emits an action to the observer for processing. */
     emit: (action: ObserverAction) => void
 
-    /**
-     * Stop the dry run process.
-     */
+    /** Stop the dry run process. */
     stopDryRun: () => void
 
-    /**
-     * Updates the step description recorded in the observer.
-     */
+    /** Updates the step description recorded in the observer. */
     updateInput: (input: string) => void
   }
 }
@@ -80,9 +65,7 @@ export interface Action {
    */
   name: string
 
-  /**
-   * Parameters to pass to the action during execution.
-   */
+  /** Parameters to pass to the action during execution. */
   params: Partial<ActionParams>
 
   /**
@@ -112,9 +95,7 @@ export interface ActionParams {
    */
   direction: 'up' | 'down' | 'top' | 'bottom'
 
-  /**
-   * Specifies the duration to wait before performing the action, in milliseconds.
-   */
+  /** Specifies the duration to wait before performing the action, in milliseconds. */
   duration: number
 
   /**
@@ -124,9 +105,7 @@ export interface ActionParams {
    */
   frameNumber: number
 
-  /**
-   * The source of the frame in which to perform the action.
-   */
+  /** The source of the frame in which to perform the action. */
   frameSrc: string
 
   /**
@@ -136,9 +115,7 @@ export interface ActionParams {
    */
   keys: string
 
-  /**
-   * The option to select from a dropdown menu.
-   */
+  /** The option to select from a dropdown menu. */
   option: string
 
   /**
@@ -155,9 +132,7 @@ export interface ActionParams {
    */
   pattern: string
 
-  /**
-   * The text to input into an element.
-   */
+  /** The text to input into an element. */
   text: string
 
   /**
@@ -167,9 +142,7 @@ export interface ActionParams {
    */
   url: string
 
-  /**
-   * The XPath location of the element to interact with.
-   */
+  /** The XPath location of the element to interact with. */
   xpath: string
 }
 
@@ -204,20 +177,14 @@ export interface ElementLocation {
    */
   frameSrc?: string
 
-  /**
-   * The full HTML content of the element, including tags, attributes, and text.
-   */
+  /** The full HTML content of the element, including tags, attributes, and text. */
   html: string
 
-  /**
-   * The XPath location of the element to interact with.
-   */
+  /** The XPath location of the element to interact with. */
   xpath: string
 }
 
-/**
- * Represents a memory vector used for storing content and its corresponding embedding.
- */
+/** Represents a memory vector used for storing content and its corresponding embedding. */
 export interface MemoryVector {
   /**
    * The content associated with the vector.
@@ -234,9 +201,7 @@ export interface MemoryVector {
   embedding: number[]
 }
 
-/**
- * Configuration options for the Observer class.
- */
+/** Configuration options for the Observer class. */
 export interface ObserverOptions {
   /**
    * The delay in milliseconds to wait before executing each action during a dry run.
@@ -259,14 +224,51 @@ export interface ObserverOptions {
   recordPath?: string
 }
 
-/**
- * Configuration options for the PlayWord class.
- */
+/** Configuration options for the PlayWord class. */
 export interface PlayWordOptions {
   /**
-   * Enables or disables debug mode.
+   * Configuration options for the AI instance.
    *
-   * When enabled, additional debug information will be logged during execution.
+   * These options allow customization of the API client, such as specifying
+   * an API key or custom endpoint.
+   *
+   * @example
+   * **Initialize with Google and change the default model**
+   * ```ts
+   * const playword = new PlayWord(context, {
+   *   aiOptions: {
+   *     googleApiKey: '<your-google-api-key>',
+   *     model: 'gemini-2.0-flash'
+   *   }
+   * })
+   * ```
+   *
+   * **Initialize with Anthropic and Voyage AI**
+   * ```ts
+   * const playword = new PlayWord(context, {
+   *   aiOptions: {
+   *     anthropicApiKey: 'sk-...',
+   *     voyageAIApiKey: 'pa-...'
+   *   }
+   * })
+   * ```
+   *
+   * **Use a custom OpenAI endpoint**
+   * ```ts
+   * const playword = new PlayWord(context, {
+   *   aiOptions: {
+   *     baseURL: 'https://api.my-openai-clone.com/v1',
+   *     openAIApiKey: '<your-api-key>'
+   *   }
+   * })
+   * ```
+   *
+   * @default {}
+   */
+  aiOptions?: AIOptions
+
+  /**
+   * Whether to enable debug mode.
    *
    * @default false
    */
@@ -282,28 +284,7 @@ export interface PlayWordOptions {
   delay?: number
 
   /**
-   * Configuration options for the AI instance.
-   *
-   * These options allow customization of the OpenAI API client, such as specifying
-   * an API key or custom endpoint.
-   *
-   * @example
-   * **Use a custom endpoint**
-   * ```ts
-   * const playword = new PlayWord(context, {
-   *   openAIOptions: {
-   *     apiKey: '<your-api-key>',
-   *     baseURL: 'https://api.my-openai-clone.com/v1'
-   *   }
-   * })
-   * ```
-   *
-   * @default {}
-   */
-  openAIOptions?: AIOptions
-
-  /**
-   * Configures whether to record actions performed and where to save the recordings.
+   * Whether to record actions performed and where to save the recordings.
    *
    * - `true`: Records actions and saves them to `.playword/recordings.json` by default.
    * - `string`: Specifies a custom file path for saving the recordings. The path must end with `.json`.
@@ -337,14 +318,10 @@ export interface PlayWordOptions {
  * perform actions, and interact with the OpenAI API using natural language.
  */
 export interface PlayWordInterface {
-  /**
-   * AI instance to interact with the OpenAI API.
-   */
+  /** AI instance to interact with the OpenAI API. */
   ai: AI
 
-  /**
-   * The Playwright `Context` instance used to control the browser.
-   */
+  /** Playwright `Context` instance used to control the browser. */
   context: BrowserContext
 
   /**
@@ -376,7 +353,7 @@ export interface PlayWordInterface {
    * await playword.say('Switch to the frame "https://www.example.com"')
    * ```
    */
-  frame: Frame | undefined
+  frame?: Frame
 
   /**
    * The most recent input from the user.
@@ -401,14 +378,14 @@ export interface PlayWordInterface {
    * await playword.say('Switch to the second page')
    * ```
    */
-  page: Page | undefined
+  page?: Page
 
   /**
    * The recorder instance used to save the actions performed.
    *
    * If recording is not enabled or initialized, the value will be `undefined`.
    */
-  recorder: Recorder | undefined
+  recorder?: Recorder
 
   /**
    * Step count to keep track of the actions performed.
@@ -439,7 +416,7 @@ export interface PlayWordInterface {
    * **Check for page content**
    * ```ts
    * const result = await playword.say('Check if the page contains "Sign in"')
-   * console.log(result) // Output: true
+   * // Output: true
    * ```
    */
   say(message: string): Promise<ActionResult>
@@ -451,19 +428,14 @@ export interface PlayWordInterface {
  * This interface includes the input message and the actions performed in one step.
  */
 export interface Recording {
-  /**
-   * Input message to map actions performed.
-   */
+  /** Input message to map actions performed. */
   input: string
-  /**
-   * Actions performed in one step.
-   */
+
+  /** Actions performed in one step. */
   actions: Action[]
 }
 
-/**
- * Custom configuration for tool calls.
- */
+/** Custom configuration for tool calls. */
 export interface ToolConfig {
   /**
    * Reference to the PlayWord interface instance.
@@ -479,20 +451,135 @@ export interface ToolConfig {
  * The `ObserverState` interface tracks various states during the execution of the observer.
  */
 export interface ObserverState {
-  /**
-   * Indicates whether the observer is currently performing a dry run.
-   */
+  /** Indicates whether the observer is currently performing a dry run. */
   dryRunning?: boolean
+
   /**
    * Indicates whether the Observer is waiting for AI to generate
    * a step description or adjust the current action.
    */
   waitingForAI?: boolean
+
   /**
    * Indicates whether the Observer is waiting for user input
    * to accept, modify, or drop the action.
    */
   waitingForUserAction?: boolean
+}
+
+/**
+ * Interface that extends EmbeddingsParams and defines additional
+ * parameters specific to the VoyageEmbeddings class.
+ */
+export interface VoyageEmbeddingsParams extends EmbeddingsParams {
+  /** The Voyage AI API key. */
+  apiKey?: string
+
+  /**
+   * The maximum number of documents to embed in a single request.
+   *
+   * This is limited by the Voyage AI API to a maximum of 8.
+   *
+   * @default 8
+   */
+  batchSize?: number
+
+  /**
+   * The endpoint URL for the Voyage AI API.
+   *
+   * @default 'https://api.voyageai.com/v1/embeddings'
+   */
+  endpoint?: string
+
+  /**
+   * Input type for the embeddings request. Can be "query", or "document".
+   *
+   * @default undefined
+   */
+  inputType?: 'query' | 'document'
+
+  /**
+   * The embeddings model to use.
+   *
+   * @default 'voyage-3'
+   */
+  model?: string
+
+  /**
+   * The desired dimension of the output embeddings.
+   *
+   * @default undefined
+   */
+  outputDimension?: number
+
+  /**
+   * The data type of the output embeddings. Can be "float" or "int8".
+   *
+   * @default 'float'
+   */
+  outputDtype?: 'float' | 'int8'
+
+  /**
+   * Whether to truncate the input texts to the maximum length allowed by the model.
+   *
+   * @default true
+   */
+  truncation?: boolean
+}
+
+/** Interface for the request body to generate embeddings. */
+export interface VoyageRequest {
+  /** The format of the output embeddings. */
+  encoding_format?: string
+
+  /** Texts to generate vector expectation */
+  input: string | string[]
+
+  /** Input type for the embeddings request. */
+  input_type?: string
+
+  /** The embeddings model to use. */
+  model: string
+
+  /** The desired dimension of the output embeddings. */
+  output_dimension?: number
+
+  /** The data type of the output embeddings. */
+  output_dtype?: string
+
+  /** Whether to truncate the input texts. */
+  truncation?: boolean
+}
+
+/** Interface for the response body of the Voyage AI API. */
+export interface VoyageResponse {
+  /** An array of embedding objects. */
+  data: {
+    /**
+     * Each embedding is a vector represented as an array of float numbers when
+     * output_dtype is set to float and as an array of integers for other values (int8, uint8, binary, and ubinary).
+     * The length of this vector varies depending on the specific model, output_dimension, and output_dtype.
+     */
+    embedding: number[]
+
+    /** An integer representing the index of the embedding within the list of embeddings. */
+    index: number
+
+    /** The object type, which is always "embedding". */
+    object: 'embedding'
+  }[]
+
+  /** Name of the model. */
+  model: string
+
+  /** The object type, which is always "list". */
+  object: 'list'
+
+  /** The usage statistics for the API request. */
+  usage: {
+    /** The total number of tokens used for computing the embeddings. */
+    total_tokens: number
+  }
 }
 
 /**
@@ -503,22 +590,25 @@ export interface ObserverState {
  */
 export type ActionResult = boolean | string
 
-/**
- * Configuration options for the AI class.
- */
-export type AIOptions = ClientOptions & {
-  /**
-   * The chat model to use for general tasks.
-   *
-   * @default 'gpt-4o-mini'
-   */
-  chat?: string
-  /**
-   * The embeddings model to use for generating embeddings.
-   *
-   * @default 'text-embedding-3-small'
-   */
-  embeddings?: string
+/** Configuration for the AI class. */
+export type AIOptions = GoogleOptions | OpenAIOptions | AnthropicOptions | VoyageOptions
+
+/** Anthropic configuration options. */
+export type AnthropicOptions = AnthropicInput & ClientOptions
+
+/** Google configuration options. */
+export type GoogleOptions = GoogleGenerativeAIChatInput & {
+  /** The API key for the Google API. */
+  googleApiKey?: string
+}
+
+/** OpenAI configuration options. */
+export type OpenAIOptions = ChatOpenAIFields & ClientOptions
+
+/** Voyage AI configuration options. */
+export type VoyageOptions = VoyageEmbeddingsParams & {
+  /** The Voyage AI API key. */
+  voyageAIApiKey?: string
 }
 
 /**
@@ -530,6 +620,7 @@ export type ObserverAction =
   | {
       /** The name of the action. */
       name: 'click'
+
       /**
        * The parameters for the `click` action.
        *
@@ -540,6 +631,7 @@ export type ObserverAction =
   | {
       /** The name of the action. */
       name: 'hover'
+
       /**
        * The parameters for the `hover` action.
        *
@@ -550,6 +642,7 @@ export type ObserverAction =
   | {
       /** The name of the action. */
       name: 'input'
+
       /**
        * The parameters for the `input` action.
        *
@@ -560,6 +653,7 @@ export type ObserverAction =
   | {
       /** The name of the action. */
       name: 'select'
+
       /**
        * The parameters for the `select` action.
        *
@@ -570,6 +664,7 @@ export type ObserverAction =
   | {
       /** The name of the action. */
       name: 'goto'
+
       /**
        * The parameters for the `goto` action.
        *

@@ -1,3 +1,5 @@
+import type { ObserveOptions } from '../../packages/cli/src/types'
+
 import { join } from 'path'
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import yargs from 'yargs'
@@ -26,15 +28,15 @@ vi.mock('playwright-core', () => ({
 
 describe('Spec: Test Command', () => {
   describe('Given the test command is executed', () => {
-    const originalProcess = process
     const defaultOptions = {
+      aiOptions: {},
       browser: 'chrome',
       delay: 250,
       envFile: '.env',
-      openaiOptions: {},
       recordPath: '.playword/recordings.json',
       verbose: false
-    }
+    } as ObserveOptions
+    const originalProcess = process
     let workdir: string
 
     afterEach(() => mockObserve.mockReset())
@@ -42,7 +44,7 @@ describe('Spec: Test Command', () => {
     describe('When the builder is called', () => {
       test('Then the builder should work as expected', async () => {
         const builder = await ObserveCommand.builder(yargs())
-        expect(builder.parse('--openai-options apiKey=sk-...')).toHaveProperty('openaiOptions', { apiKey: 'sk-...' })
+        expect(builder.parse('-o openAIApiKey=sk-...')).toHaveProperty('aiOptions', { openAIApiKey: 'sk-...' })
         expect(() => builder.parse('--recordPath invalid-record-file')).toThrowError()
       })
     })
@@ -71,7 +73,9 @@ describe('Spec: Test Command', () => {
 
       test('Then the command should work as expected', async () => {
         await ObserveCommand.handler(defaultOptions)
-        await expect(ObserveCommand.handler({ ...defaultOptions, browser: 'invalid' })).rejects.toThrow('exit with 1')
+        await expect(
+          ObserveCommand.handler({ ...defaultOptions, browser: 'invalid' } as unknown as ObserveOptions)
+        ).rejects.toThrow('exit with 1')
       })
     })
   })

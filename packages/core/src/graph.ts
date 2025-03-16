@@ -7,9 +7,7 @@ import { ToolNode } from '@langchain/langgraph/prebuilt'
 import * as tools from './tools'
 import * as utils from './utils'
 
-/**
- * The action graph annotation.
- */
+/** The action graph annotation. */
 const annotation = Annotation.Root({ messages: Annotation({ reducer: messagesStateReducer }) })
 
 /**
@@ -34,49 +32,45 @@ const invokePageAgent = async ({ messages }: ActionState, { configurable }: Lang
   return { messages: [response] }
 }
 
-/**
- * This agent is used to parse the result from the assertion agent.
- */
+/** This agent is used to parse the result from the assertion agent. */
 const invokeResultAgent = async ({ messages }: ActionState, { configurable }: LangGraphRunnableConfig) => {
   const { ai } = configurable?.ref as PlayWordInterface
+  const thought = messages[messages.length - 1].content.toString()
+
   const response = await ai.parseResult(messages)
+  utils.info(`${thought} => ${response}`)
+
   return { messages: [new AIMessage(response.toString())] }
 }
 
-/**
- * Determine if the assertion agent should be invoked.
- */
+/** Determine if the assertion agent should be invoked. */
 const shouldInvoke = async ({ messages }: ActionState) => {
   const message = messages[messages.length - 1] as AIMessage
   const shouldInvoke = utils.assertionPattern.test(message.content.toString())
   return shouldInvoke ? 'assert' : 'page'
 }
 
-/**
- * Determine if the assertion tools should be invoked.
- */
+/** Determine if the assertion tools should be invoked. */
 const shouldInvokeAssertTools = ({ messages }: ActionState) => {
   const { tool_calls } = messages[messages.length - 1] as AIMessage
   return tool_calls && tool_calls.length > 0 ? 'assertionTools' : 'result'
 }
 
-/**
- * Determine if the page tools should be invoked.
- */
+/** Determine if the page tools should be invoked. */
 const shouldInvokePageTools = ({ messages }: ActionState) => {
   const { tool_calls } = messages[messages.length - 1] as AIMessage
   return tool_calls && tool_calls.length > 0 ? 'pageTools' : '__end__'
 }
 
 /**
- * The action graph includes the following nodes:
+ * The graph of the say method includes the following nodes:
  * - assert: The agent node for assertions.
  * - assertionTools: The tool node for assertion tools.
  * - page: The agent node for page actions.
  * - pageTools: The tool node for page tools.
  * - result: The agent node for confirming the response from the assertion agent.
  */
-export const actionGraph = new StateGraph(annotation)
+export const sayGraph = new StateGraph(annotation)
   .addNode('assert', invokeAssertAgent)
   .addNode('page', invokePageAgent)
   .addNode('result', invokeResultAgent)

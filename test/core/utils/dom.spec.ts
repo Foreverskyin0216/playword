@@ -393,11 +393,18 @@ describe('Spec: DOM Utils', () => {
 
     describe('And a mouseleave event is triggered', () => {
       const event = new MouseEvent('mouseleave', { bubbles: true, cancelable: true })
+      const panel = document.querySelector('.plwd-panel') as HTMLDivElement
       let clearTimeoutSpy: MockInstance<typeof clearTimeout>
 
-      beforeAll(() => (clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')))
+      beforeAll(() => {
+        clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')
+        utils.addClass(panel, 'open')
+      })
 
-      afterAll(() => clearTimeoutSpy.mockRestore())
+      afterAll(() => {
+        clearTimeoutSpy.mockRestore()
+        utils.removeClass(panel, 'open')
+      })
 
       test('Then it should call the clearTimeout()', async () => {
         document.dispatchEvent(event)
@@ -411,11 +418,18 @@ describe('Spec: DOM Utils', () => {
 
     describe('And a mouseout event is triggered', () => {
       const event = new MouseEvent('mouseout', { bubbles: true, cancelable: true })
+      const panel = document.querySelector('.plwd-panel') as HTMLDivElement
       let clearTimeoutSpy: MockInstance<typeof clearTimeout>
 
-      beforeAll(() => (clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')))
+      beforeAll(() => {
+        clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')
+        utils.addClass(panel, 'open')
+      })
 
-      afterAll(() => clearTimeoutSpy.mockRestore())
+      afterAll(() => {
+        clearTimeoutSpy.mockRestore()
+        utils.removeClass(panel, 'open')
+      })
 
       test('Then it should call the clearTimeout()', async () => {
         document.dispatchEvent(event)
@@ -431,13 +445,14 @@ describe('Spec: DOM Utils', () => {
       const event = new MouseEvent('mouseover', { bubbles: true, cancelable: true })
       const heading = document.createElement('h1')
       const iframe = document.createElement('iframe')
-
+      const panel = document.querySelector('.plwd-panel') as HTMLDivElement
       let setTimeoutSpy: MockInstance<typeof setTimeout>
 
       beforeAll(() => {
         document.body.appendChild(heading)
         document.body.appendChild(iframe)
         setTimeoutSpy = vi.spyOn(window, 'setTimeout')
+        utils.addClass(panel, 'open')
         vi.useFakeTimers()
       })
 
@@ -445,6 +460,7 @@ describe('Spec: DOM Utils', () => {
         heading.remove()
         iframe.remove()
         setTimeoutSpy.mockReset()
+        utils.removeClass(panel, 'open')
         vi.useRealTimers()
       })
 

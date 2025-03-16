@@ -5,11 +5,13 @@ import { AI, CANDIDATE_LIST_REFERENCE, DETERMINE_ASSERTION_RESULT, SUMMARIZE_ACT
 
 const { mockFromTexts, mockMemoryVectorStore, mockOpenAIEmbeddings, mockInvoke } = vi.hoisted(() => ({
   mockFromTexts: vi.fn(),
+  mockGoogleGenerativeAIEmbeddings: { embedDocuments: vi.fn().mockResolvedValue([[0]]) },
   mockMemoryVectorStore: vi.fn(() => ({
-    embeddings: mockOpenAIEmbeddings,
-    asRetriever: vi.fn(() => ({ invoke: mockInvoke }))
+    asRetriever: vi.fn(() => ({ invoke: mockInvoke })),
+    embeddings: mockOpenAIEmbeddings
   })),
   mockOpenAIEmbeddings: { embedDocuments: vi.fn().mockResolvedValue([[0]]) },
+  mockVoyageEmbeddings: { embedDocuments: vi.fn().mockResolvedValue([[0]]) },
   mockInvoke: vi.fn()
 }))
 mockMemoryVectorStore['fromTexts'] = mockFromTexts
@@ -22,14 +24,17 @@ vi.mock('@langchain/openai', () => ({
   OpenAIEmbeddings: vi.fn()
 }))
 
-vi.mock('../../packages/core/src/memoryStore', () => ({ MemoryVectorStore: mockMemoryVectorStore }))
+vi.mock('../../packages/core/src/vectorStore', () => ({ MemoryVectorStore: mockMemoryVectorStore }))
 
 describe('Spec: AI', () => {
-  describe('Given the AI class', () => {
-    const ai = new AI()
+  let ai: AI
 
+  describe('Given the AI class with OpenAI configuration', () => {
     describe('When the useTools method is called', () => {
-      beforeAll(() => mockInvoke.mockResolvedValue(new AIMessage('response')))
+      beforeAll(() => {
+        ai = new AI({ openAIApiKey: 'mock-openai-api-key' })
+        mockInvoke.mockResolvedValue(new AIMessage('response'))
+      })
 
       afterAll(() => mockInvoke.mockReset())
 
@@ -40,9 +45,16 @@ describe('Spec: AI', () => {
     })
 
     describe('When the searchDocuments method is called', () => {
-      beforeAll(() => mockInvoke.mockResolvedValue([new Document({ pageContent: 'Document 1' })]))
+      beforeAll(() => {
+        process.env.OPENAI_API_KEY = 'mock-openai-api-key'
+        ai = new AI()
+        mockInvoke.mockResolvedValue([new Document({ pageContent: 'Document 1' })])
+      })
 
-      afterAll(() => mockInvoke.mockReset())
+      afterAll(() => {
+        delete process.env.OPENAI_API_KEY
+        mockInvoke.mockReset()
+      })
 
       test('Then the result is returned', async () => {
         const docs = await ai.searchDocuments('query')
@@ -128,6 +140,90 @@ describe('Spec: AI', () => {
             ]
           }
         ])
+      })
+    })
+  })
+
+  describe('Given the AI class with Google configuration', () => {
+    describe('When the searchDocuments method is called', () => {
+      beforeAll(() => {
+        ai = new AI({ googleApiKey: 'mock-google-api-key' })
+        mockInvoke.mockResolvedValue([new Document({ pageContent: 'Document 1' })])
+      })
+
+      afterAll(() => mockInvoke.mockReset())
+
+      test('Then the result is returned', async () => {
+        const docs = await ai.searchDocuments('query')
+        expect(docs).toEqual([new Document({ pageContent: 'Document 1' })])
+      })
+    })
+
+    describe('When the embedDocuments method is called', () => {
+      beforeAll(() => {
+        process.env.GOOGLE_API_KEY = 'mock-google-api-key'
+        ai = new AI()
+      })
+
+      afterAll(() => delete process.env.GOOGLE_API_KEY)
+
+      test('Then the mockFromTexts method is called', async () => {
+        const texts = ['Document 1', 'Document 2']
+        await ai.embedTexts(texts)
+        expect(mockFromTexts).toBeCalledWith(texts, mockOpenAIEmbeddings)
+      })
+    })
+  })
+
+  describe('Given the AI class with Anthropic and Voyage configuration', () => {
+    describe('When the searchDocuments method is called', () => {
+      beforeAll(() => {
+        ai = new AI({ anthropicApiKey: 'mock-anthropic-api-key', voyageAIApiKey: 'mock-voyageai-api-key' })
+        mockInvoke.mockResolvedValue([new Document({ pageContent: 'Document 1' })])
+      })
+
+      afterAll(() => mockInvoke.mockReset())
+
+      test('Then the result is returned', async () => {
+        const docs = await ai.searchDocuments('query')
+        expect(docs).toEqual([new Document({ pageContent: 'Document 1' })])
+      })
+    })
+
+    describe('When the embedDocuments method is called', () => {
+      beforeAll(() => {
+        process.env.ANTHROPIC_API_KEY = 'mock-anthropic-api-key'
+        process.env.VOYAGEAI_API_KEY = 'mock-voyageai-api-key'
+        ai = new AI()
+      })
+
+      afterAll(() => {
+        delete process.env.ANTHROPIC_API_KEY
+        delete process.env.VOYAGEAI_API_KEY
+      })
+
+      test('Then the mockFromTexts method is called', async () => {
+        const texts = ['Document 1', 'Document 2']
+        await ai.embedTexts(texts)
+        expect(mockFromTexts).toBeCalledWith(texts, mockOpenAIEmbeddings)
+      })
+    })
+  })
+
+  describe('Given the AI class with invalid configuration', () => {
+    describe('When the embeddings model is not set', () => {
+      test('Then an error is thrown', () => {
+        expect(() => new AI({ anthropicApiKey: 'mock-anthropic-api-key' })).toThrowError(
+          'Embeddings model setup failed. An API key for Google, OpenAI, or VoyageAI is required.'
+        )
+      })
+    })
+
+    describe('When the LLM model is not set', () => {
+      test('Then an error is thrown', () => {
+        expect(() => new AI({ voyageAIApiKey: 'mock-voyageai-api-key' })).toThrowError(
+          'LLM setup failed. An API key for Google, OpenAI, or Anthropic is required.'
+        )
       })
     })
   })

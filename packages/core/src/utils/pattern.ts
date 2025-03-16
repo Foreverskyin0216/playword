@@ -23,9 +23,7 @@ export const assertionPattern = new RegExp(
  */
 export const variablePattern = new RegExp(/(?<={)[^{}]+(?=})/g)
 
-/**
- * The generic tags that are allowed to fetch locations from.
- */
+/** The generic tags that are allowed to fetch locations from. */
 export const allowedTags = [
   'a',
   'button',

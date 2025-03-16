@@ -29,7 +29,7 @@ export default {
       .option('browser', {
         alias: 'b',
         describe: 'Which browser to use',
-        choices: ['chromium', 'chrome', 'msedge', 'firefox', 'webkit'],
+        choices: ['chrome', 'chromium', 'firefox', 'msedge', 'webkit'],
         default: 'chrome'
       })
       .option('record-path', {
@@ -37,9 +37,9 @@ export default {
         describe: 'Where to save the recordings',
         default: '.playword/recordings.json'
       })
-      .option('openai-options', {
+      .option('ai-options', {
         alias: 'o',
-        describe: 'Additional OpenAI API options',
+        describe: 'Additional AI options',
         type: 'array',
         coerce: (options: string[]) =>
           options.reduce(
@@ -62,16 +62,18 @@ export default {
       .example('$0 observe -e .env.test', 'Use .env.test file')
       .example('$0 observe -v', 'Enable verbose mode')
       .example('$0 observe -r path/to/rec.json', 'Save the recordings to path/to/rec.json')
-      .example('$0 observe -o apiKey=sk-... baseURL=https://...', 'Pass the OpenAI options')
+      .example('$0 observe -o googleApiKey=sk...', 'Set options for Google AI')
+      .example('$0 observe -o openAIApiKey=sk... baseURL=https://...', 'Set options for self-hosted OpenAI')
+      .example('$0 observe -o anthropicApiKey=sk... voyageAIApiKey=pa...', 'Set options for Anthropic and VoyageAI')
       .version(false)
       .help()
   },
 
   handler: async ({
+    aiOptions = {},
     browser = 'chrome',
     delay = 250,
     envFile = '.env',
-    openaiOptions = {},
     recordPath = '.playword/recordings.json',
     verbose = false
   }: ObserveOptions) => {
@@ -79,9 +81,11 @@ export default {
       config({ path: envFile })
 
       info('Creating a new context for the browser: ' + browser)
-      const br = await getBrowser(browser, false)
+
+      const br = await getBrowser(browser, /** Enable headed mode */ true)
       const context = await br.newContext()
-      const playword = new PlayWord(context, { debug: verbose, delay, openAIOptions: openaiOptions })
+
+      const playword = new PlayWord(context, { aiOptions, debug: verbose, delay })
       const observer = new Observer(playword, { delay, recordPath })
       await observer.observe()
       await context.newPage()

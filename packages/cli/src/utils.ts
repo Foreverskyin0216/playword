@@ -8,24 +8,24 @@ import { chromium, firefox, webkit } from 'playwright-core'
  * Get the browser instance based on the browser type.
  *
  * @param browserType The type of browser to use.
- * @param headless Whether to run the browser in headless mode.
+ * @param headed Whether to run the browser in headed mode.
  */
-export const getBrowser = (browserType = 'chrome', headless = true) => {
+export const getBrowser = (browserType = 'chrome', headed = false) => {
   switch (browserType) {
-    case 'chromium':
-      return chromium.launch({ headless })
-
     case 'chrome':
-      return chromium.launch({ channel: 'chrome', headless })
+      return chromium.launch({ channel: 'chrome', headless: !headed })
 
-    case 'msedge':
-      return chromium.launch({ channel: 'msedge', headless })
+    case 'chromium':
+      return chromium.launch({ headless: !headed })
 
     case 'firefox':
-      return firefox.launch({ headless })
+      return firefox.launch({ headless: !headed })
+
+    case 'msedge':
+      return chromium.launch({ channel: 'msedge', headless: !headed })
 
     case 'webkit':
-      return webkit.launch({ headless })
+      return webkit.launch({ headless: !headed })
 
     default:
       throw new Error(`Invalid browser type: ${browserType}`)
@@ -50,8 +50,11 @@ export const getRecordings = (path: string): Recording[] => {
 export const info = (message: string, color: 'green' | 'magenta' | 'red' | 'none' = 'none') => {
   const colorMap = { green: 32, magenta: 35, red: 31 }
 
-  if (color === 'none') console.log(message)
-  else console.log(`\x1b[${colorMap[color]}m${message}\x1b[0m`)
+  if (color === 'none') {
+    return console.log(message)
+  }
+
+  return console.log(`\x1b[${colorMap[color]}m${message}\x1b[0m`)
 }
 
 /**
