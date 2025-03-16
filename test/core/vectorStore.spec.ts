@@ -1,8 +1,8 @@
 import { SyntheticEmbeddings } from '@langchain/core/utils/testing'
 import { describe, expect, test } from 'vitest'
-import { MemoryVectorStore } from '../../packages/core/src/memoryStore'
+import { MemoryVectorStore } from '../../packages/core/src/vectorStore'
 
-describe('Spec: MemoryVectorStore', () => {
+describe('Spec: VectorStore', () => {
   describe('When the MemoryVectorStore is queried', () => {
     test('Then it should have the correct vectors', async () => {
       const texts = [

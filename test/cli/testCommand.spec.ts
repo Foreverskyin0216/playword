@@ -1,3 +1,5 @@
+import type { TestOptions } from '../../packages/cli/src/types'
+
 import { join } from 'path'
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import yargs from 'yargs'
@@ -25,17 +27,17 @@ vi.mock('@inquirer/confirm', () => ({ default: mockConfirm }))
 
 describe('Spec: Test Command', () => {
   describe('Given the test command is executed', () => {
-    const originalProcess = process
     const defaultOptions = {
+      aiOptions: {},
       browser: 'chrome',
       delay: 250,
       envFile: '.env',
       headed: false,
-      openaiOptions: {},
       playback: false,
       record: false,
       verbose: false
-    }
+    } as TestOptions
+    const originalProcess = process
     let workdir: string
 
     afterEach(() => mockSay.mockReset())
@@ -43,7 +45,7 @@ describe('Spec: Test Command', () => {
     describe('When the builder is called', () => {
       test('Then the builder should work as expected', async () => {
         const builder = await TestCommand.builder(yargs())
-        expect(builder.parse('--openai-options apiKey=sk-...')).toHaveProperty('openaiOptions', { apiKey: 'sk-...' })
+        expect(builder.parse('-o googleApiKey=sk-...')).toHaveProperty('aiOptions', { googleApiKey: 'sk-...' })
         expect(() => builder.parse('--record invalid-record-file')).toThrowError()
       })
     })
@@ -76,7 +78,9 @@ describe('Spec: Test Command', () => {
         await TestCommand.handler({ ...defaultOptions, browser: 'msedge' })
         await TestCommand.handler({ ...defaultOptions, browser: 'firefox' })
         await TestCommand.handler({ ...defaultOptions, browser: 'webkit' })
-        await expect(TestCommand.handler({ ...defaultOptions, browser: 'invalid' })).rejects.toThrow('exit with 1')
+        await expect(
+          TestCommand.handler({ ...defaultOptions, browser: 'invalid' } as unknown as TestOptions)
+        ).rejects.toThrow('exit with 1')
       })
 
       test('Then the command should work as expected with the env-file option', async () => {

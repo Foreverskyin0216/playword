@@ -42,7 +42,7 @@ vi.mock('fs/promises', async () => ({
 
 vi.mock('timers/promises', () => ({ setTimeout: vi.fn() }))
 
-vi.mock('../../packages/core/src/actionGraph', () => ({ actionGraph: { invoke: mockInvoke } }))
+vi.mock('../../packages/core/src/graph', () => ({ sayGraph: { invoke: mockInvoke } }))
 
 vi.mock('../../packages/core/src/utils', async () => {
   const { aiPattern, variablePattern } = await vi.importActual('../../packages/core/src/utils')

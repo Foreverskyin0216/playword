@@ -39,7 +39,8 @@ import * as utils from './utils'
  */
 export class Observer {
   /**
-   * Represents the current page action being performed. See {@link Action} for details.
+   * Represents the current page action being performed.
+   * See {@link Action} for details.
    */
   private action: Action = { name: '', params: {} }
 
@@ -53,18 +54,15 @@ export class Observer {
    */
   private delay: number
 
-  /**
-   * The step description for the current action.
-   */
+  /** The step description for the current action. */
   private input = ''
 
-  /**
-   * The recorder instance used to save the actions performed.
-   */
+  /** The recorder instance used to save the actions performed. */
   private recorder: Recorder
 
   /**
-   * The current state of the Observer. See {@link ObserverState} for details.
+   * The current state of the Observer.
+   * See {@link ObserverState} for details.
    */
   public state: ObserverState = { dryRunning: false, waitingForAI: false, waitingForUserAction: false }
 
@@ -80,34 +78,24 @@ export class Observer {
     this.observe = this.observe.bind(this)
   }
 
-  /**
-   * Retrieves the AI instance from the PlayWord instance.
-   */
+  /** Retrieves the AI instance from the PlayWord instance. */
   private ai() {
     return this.playword.ai
   }
 
-  /**
-   * Retrieves the current context from the PlayWord instance.
-   */
+  /** Retrieves the current context from the PlayWord instance. */
   private context() {
     return this.playword.context
   }
 
-  /**
-   * Retrieves the current page from the PlayWord instance.
-   */
+  /** Retrieves the current page from the PlayWord instance. */
   private page() {
     return this.playword.page!
   }
 
-  /**
-   * Set up the Observer scripts and listeners on the page.
-   */
+  /** Set up the Observer scripts and listeners on the page. */
   private async setPageListeners() {
-    /**
-     * Accepts the generated action and saves it to the recorder.
-     */
+    /** Accepts the generated action and saves it to the recorder. */
     const accept = async () => {
       if (this.state.waitingForAI) return
 
@@ -120,9 +108,7 @@ export class Observer {
       this.state.waitingForUserAction = false
     }
 
-    /**
-     * Cancels the current action.
-     */
+    /** Cancels the current action. */
     const cancel = async () => {
       if (this.state.waitingForAI) {
         return
@@ -130,17 +116,13 @@ export class Observer {
       this.state.waitingForUserAction = false
     }
 
-    /**
-     * Clears all the recorded actions and resets the UI.
-     */
+    /** Clears all the recorded actions and resets the UI. */
     const clearAll = async () => {
       this.recorder.clear()
       await Promise.all([this.recorder.save(), preview()])
     }
 
-    /**
-     * Closes the Observer UI.
-     */
+    /** Closes the Observer UI. */
     const closePanel = async () => {
       await Promise.all([
         locate('.plwd-preview-title').evaluate(utils.removeClass, 'open'),
@@ -204,9 +186,7 @@ export class Observer {
       utils.info('Dry Run Completed')
     }
 
-    /**
-     * Before accepting the action, leverage AI to adjust the action to match the user's intent.
-     */
+    /** Before accepting the action, leverage AI to adjust the action to match the user's intent. */
     const generateAction = async () => {
       await waitForAI(true)
 
@@ -260,9 +240,7 @@ export class Observer {
       await closePanel()
     }
 
-    /**
-     * Checks if the Observer UI is opened.
-     */
+    /** Checks if the Observer UI is opened. */
     const isPanelOpened = async () => {
       return locate('.plwd-panel').evaluate(utils.hasClass, 'open')
     }
@@ -287,16 +265,12 @@ export class Observer {
       await this.page().evaluate(utils.showMessage, { content, icon, color })
     }
 
-    /**
-     * Opens the Observer UI panel.
-     */
+    /** Opens the Observer UI panel. */
     const openPanel = async () => {
       await locate('.plwd-panel').evaluate(utils.addClass, 'open')
     }
 
-    /**
-     * Preview the recorded test steps in the PlayWord panel.
-     */
+    /** Preview the recorded test steps in the PlayWord panel. */
     const preview = async () => {
       if (this.recorder.count() > 0) {
         await Promise.all([
@@ -314,29 +288,19 @@ export class Observer {
      * After cleaning up, it closes all the pages and opens a new one.
      */
     const resetPageState = async () => {
-      /**
-       * Clears all the caches.
-       */
+      /** Clears all the caches. */
       const clearCaches = () => this.page().evaluate(utils.clearCaches)
 
-      /**
-       * Clears all the cookies.
-       */
+      /** Clears all the cookies. */
       const clearCookies = () => this.context().clearCookies()
 
-      /**
-       * Clears all the IndexedDB databases.
-       */
+      /** Clears all the IndexedDB databases. */
       const clearIndexedDB = () => this.page().evaluate(utils.clearIndexedDB)
 
-      /**
-       * Clears the local and session storages.
-       */
+      /** Clears the local and session storages. */
       const clearStorage = () => this.page().evaluate(utils.clearStorage)
 
-      /**
-       * Clears all the service workers.
-       */
+      /** Clears all the service workers. */
       const clearServiceWorkers = () => this.page().evaluate(utils.clearServiceWorkers)
 
       await Promise.all([clearCaches(), clearCookies(), clearIndexedDB(), clearServiceWorkers(), clearStorage()])
@@ -348,9 +312,7 @@ export class Observer {
       await this.context().newPage()
     }
 
-    /**
-     * Sets the value of the input element in the Observer UI.
-     */
+    /** Sets the value of the input element in the Observer UI. */
     const setInputValue = async () => {
       await locate('.plwd-input').evaluate(utils.setAttribute, { name: 'value', value: this.input })
     }
@@ -381,9 +343,7 @@ export class Observer {
       this.state.waitingForAI = on
     }
 
-    /**
-     * Set up the page listeners to observe the navigation actions.
-     */
+    /** Set up the page listeners to observe the navigation actions. */
     this.page().on('framenavigated', (frame) => {
       const frameUrl = frame.url()
 
@@ -412,9 +372,7 @@ export class Observer {
     ])
   }
 
-  /**
-   * Starts observing the user interactions on the page.
-   */
+  /** Starts observing the user interactions on the page. */
   public async observe() {
     this.context().on('page', async () => {
       await this.setPageListeners()

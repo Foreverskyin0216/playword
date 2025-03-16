@@ -45,33 +45,93 @@ See [documentation](https://github.com/Foreverskyin0216/playword/tree/main/packa
 
 ## 📘 Getting Started
 
-PlayWord uses the [OpenAI API](https://platform.openai.com/docs/overview) to understand the user's intent
-and perform corresponding actions.
+PlayWord supports multiple AI services, including 
+[Anthropic](https://console.anthropic.com/), 
+[Google](https://ai.google.dev/), and [OpenAI](https://platform.openai.com).
+You can select the appropriate provider based on your requirements.
 
-To get started, export your OpenAI API key as an environment variable or pass it directly through `openAIOptions`.
+### OpenAI
+
+There are two ways to provide the required API key to PlayWord:
+
+<span>1.</span> Export the API key as an environment variable:
 
 ```bash
 export OPENAI_API_KEY="sk-..."
 ```
 
-```typescript
+<span>2.</span> Pass the API key as a parameter during initialization:
+
+```ts
 import { chromium } from 'playwright'
 
 const browser = await chromium.launch()
 const context = await browser.newContext()
 
 const playword = new PlayWord(context, {
-  debug: true, // Debug mode
-  delay: 500, // Delay between each step in milliseconds
-  openAIOptions: {
-    apiKey: 'sk-...', // Your OpenAI API Key
-    baseURL: 'https://...', // Custom endpoint (if applicable)
-    chat: 'gpt-4o', // Chat model to use
-    embeddings: 'text-embedding-3-large', // Text embedding model to use
-    // Additional OpenAI API options can also be configured here
+  aiOptions: {
+    baseURL: 'https://...', // Custom API endpoint (If applicable)
+    openAIApiKey: 'sk-...',
+    model: 'gpt-4o' // If not specified, the default model is gpt-4o-mini.
   }
 })
 ```
+
+### Google
+
+<span>1.</span> Export the API key as an environment variable:
+
+```bash
+export GOOGLE_API_KEY="AI..."
+```
+
+<span>2.</span> Pass the API key as a parameter during initialization:
+
+```ts
+const playword = new PlayWord(context, {
+  aiOptions: {
+    googleApiKey: 'AI...',
+    model: 'gemini-2.0-flash' // If not specified, the default model is gemini-2.0-flash-lite.
+  }
+})
+```
+
+### Anthropic
+
+Since Anthropic does not offer its own embeddings model, integrating Anthropic requires an additional API key for embeddings.
+
+Currently, PlayWord supports the following providers for embeddings:
+- [VoyageAI (officially recommended by Anthropic)](https://www.voyageai.com/)
+- OpenAI
+- Google
+
+<span>1.</span> Export API keys as environment variables:
+
+```bash
+export ANTHROPIC_API_KEY="sk-..."
+export VOYAGEAI_API_KEY="pa-..."
+```
+
+<span>2.</span> Pass the API keys as parameters during initialization:
+
+```ts
+const playword = new PlayWord(context, {
+  aiOptions: {
+    anthropicApiKey: 'sk-...',
+    voyageAIApiKey: 'pa-...',
+    model: 'claude-3-7-sonnet-latest' // If not specified, the default model is claude-3-5-haiku-latest.
+  }
+})
+```
+
+### 📜 PlayWord Options
+
+| Name      | Type              | Default | Description                                                           |
+| --------- | ----------------- | ------- | --------------------------------------------------------------------- |
+| aiOptions | object            | {}      | Configuration options for the AI instance.                            |
+| debug     | boolean           | false   | Whether to enable debug mode.                                         |
+| delay     | number            | 250     | Delay between each step in milliseconds.                              |
+| record    | boolean \| string | false   | Whether to record actions performed and where to save the recordings. |
 
 ## 💬 Communicate with Browser
 
@@ -79,7 +139,7 @@ In its basic usage, you can use the `say` method to interact with the page.
 
 No need to worry about locating elements or performing interactions—**PlayWord handles all of that for you**.
 
-```typescript
+```ts
 await playword.say('Navigate to https://www.google.com')
 
 await playword.say('Type "Hello, World!" in the search bar')
@@ -92,29 +152,19 @@ await playword.say('Press enter')
 PlayWord uses keywords to identify whether a step is an assertion.
 This approach ensures more stable results compared to relying solely on AI judgment.
 
-```typescript
+**Using PlayWord within Playwright Test**
+
+```ts
 import { PlayWord } from '@playword/core'
-import assert from 'node:assert'
-import test from 'node:test'
-import { chromium } from 'playwright'
+import { expect, test } from '@playwright/test'
 
-test('Bootstrap Website Test', async function () {
-  // Initialize PlayWord
-  const browser = await chromium.launch()
-  const context = await browser.newContext()
-  const playword = new PlayWord(context)
+test('get started link', async ({ context }) => {
+  const playword = new PlayWord(context, { debug: true, record: 'recordings/getStartLink.json' })
 
-  // Perform page actions
-  await playword.say('Navigate to https://getbootstrap.com')
-  await playword.say('Click the search field')
-  await playword.say('Input "Quick Start" in the search bar')
-  await playword.say('Press enter')
+  await playword.say('go to https://playwright.dev/')
+  await playword.say('click the link "Get started"')
 
-  // Perform an assertion
-  const result = await playword.say('Is "<h1>Hello, world!</h1>" on the page?')
-  assert(result)
-
-  await browser.close()
+  expect(await playword.say('Verify if the installation heading is visible')).toBe(true)
 })
 ```
 
@@ -152,7 +202,7 @@ The input starting with any of the following **case-insensitive** keywords will 
 
 To interact with elements inside frames, simply instruct PlayWord to switch to the desired frame.
 
-```typescript
+```ts
 await playword.say('Go to https://iframetester.com')
 
 await playword.say('Type "https://www.saucedemo.com" in the URL field')
@@ -178,7 +228,7 @@ USERNAME=standard_user
 PASSWORD=secret_sauce
 ```
 
-```typescript
+```ts
 // Load environment variables
 import 'dotenv/config'
 
@@ -191,12 +241,12 @@ await playword.say('Input {PASSWORD} in the password field')
 
 PlayWord supports recording test executions and replaying them later for efficient and consistent testing.
 
-```typescript
+```ts
 // Save recordings to the default path (.playword/recordings.json)
 const playword = new PlayWord(context, { record: true })
 
 // Save recordings to a custom path (Must be `.json`)
-const playword = new PlayWord(context, { record: 'path/to/recordings.json' })
+const playword = new PlayWord(context, { record: 'spec/test-shopping-cart.json' })
 ```
 
 If recordings are available, PlayWord prioritizes using them to execute tests, reducing the need to consume API tokens.
@@ -207,7 +257,7 @@ If a recorded action fails, PlayWord automatically retries it using AI.
 
 To ensure PlayWord uses AI for specific steps during playback, start the input with `[AI]`.
 
-```typescript
+```ts
 await playword.say('[AI] click the "Login" button')
 
 await playword.say('[AI] verify the URL matches "https://www.saucedemo.com/inventory.html"')
@@ -237,24 +287,24 @@ And it captures various user interactions on the webpage as follows:
 - **Navigate**: Triggered when the page navigates to a new URL or is refreshed.
 - **Select**: Triggered after selecting an option from a dropdown menu.
 
-For complex actions and assertions that the Observer cannot directly record, you can manually edit the step descriptions, enabling the AI to accurately capture your intentions.
+For complex actions and assertions that the Observer cannot directly record,
+you can manually edit the step descriptions, enabling the AI to accurately capture your intentions.
 
 ### 📘 Getting Started with Observer
-To start using the Observer, create a PlayWord instance in **headed** mode, pass it to the Observer, and initiate observation with Playwright.
+To start using the Observer, create a PlayWord instance in **headed** mode,
+pass it to the Observer, and initiate observation with Playwright.
 
-```typescript
+```ts
 import { chromium } from 'playwright'
 import { Observer, PlayWord } from '@playword/core'
 
-const browser = await chromium.launch({
-  headless: false // Headed mode is required for displaying the Observer UI
-})
+const browser = await chromium.launch({ headless: false /** Enable headed mode */ })
 const context = await browser.newContext()
 
 const playword = new PlayWord(context)
 const observer = new Observer(playword, {
-  delay: 500, // Delay between each step in milliseconds during the dry-run process
-  recordPath: 'path/to/recordings.json' // Path to save recordings
+  delay: 500,
+  recordPath: 'spec/test-login.json'
 })
 
 // Start the Observer
@@ -264,14 +314,21 @@ await observer.observe()
 await context.newPage()
 ```
 
+### 📜 Observer Options
+
+| Name       | Type   | Default                   | Description                                                         |
+| ---------- | ------ | ------------------------- | ------------------------------------------------------------------- |
+| delay      | number | 250                       | Delay between each step in milliseconds during the dry-run process. |
+| recordPath | string | .playword/recordings.json | Where to save the recordings. (Must be `.json`)                     |
+
 ## 🌟 Why use PlayWord?
 
-| Aspect         | Traditional Testing                                 | PlayWord                                                     |
-| -------------- | --------------------------------------------------- | ------------------------------------------------------------ |
-| Dev Experience | Locating elements is very frustrating               | AI takes care of locating elements. Say goodbye to selectors |
-| Efficiency     | Time is needed for writing both test cases and code | Test cases serve both as documentation and executable tests  |
-| Maintainance   | High maintenance cost due to UI changes             | AI-powered adaption to UI changes                            |
-| Learning Curve | Requires knowledge of testing frameworks and tools  | Just use natural language to execute tests                   |
+| Aspect         | Traditional Testing                                 | PlayWord                                                    |
+| -------------- | --------------------------------------------------- | ----------------------------------------------------------- |
+| Dev Experience | Locating elements is very frustrating               | AI takes care of locating elements. Say goodbye to locators |
+| Dev Speed      | Time is needed for writing both test cases and code | Test cases serve both as documentation and executable tests |
+| Maintainance   | High maintenance cost due to UI changes             | AI-powered adaption to UI changes                           |
+| Learning Curve | Requires knowledge of testing frameworks and tools  | Just use natural language to execute tests                  |
 
 ## 📜 Supported Actions in PlayWord and PlayWord Observer
 
@@ -302,6 +359,4 @@ await context.newPage()
 - Check if the page title is equal to specific text
 - Check if the page URL matches specific RegExp patterns
 
-### More actions will be supported in future releases. 🚀
-
-## Finally, Have Fun with PlayWord! 🎉
+## Enjoy PlayWord and stay tuned for more features in future releases! 🚀🎉

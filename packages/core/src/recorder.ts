@@ -72,17 +72,13 @@ export class Recorder {
     this.recordings[this.position].actions.push(action)
   }
 
-  /**
-   * Clears all recordings and resets the position.
-   */
+  /** Clears all recordings and resets the position. */
   public clear() {
     this.recordings = []
     this.position = 0
   }
 
-  /**
-   * Retrieves the count of recordings.
-   */
+  /** Retrieves the count of recordings. */
   public count() {
     return this.recordings.length
   }
@@ -121,16 +117,12 @@ export class Recorder {
     this.recordings[position] = { input, actions: [] }
   }
 
-  /**
-   * Lists all recordings.
-   */
+  /** Lists all recordings. */
   public list() {
     return this.recordings
   }
 
-  /**
-   * Loads recordings from the file path.
-   */
+  /** Loads recordings from the file path. */
   public async load() {
     if (!(await this.check(this.recordPath))) {
       return

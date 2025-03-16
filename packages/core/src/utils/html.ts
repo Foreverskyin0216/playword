@@ -1,9 +1,7 @@
 import sanitizeHTML from 'sanitize-html'
 import { allowedTags } from './pattern'
 
-/**
- * The custom style sheet to apply to the observer UI.
- */
+/** The custom style sheet to apply to the observer UI. */
 export const observerCSS = `
   .plwd-panel {
     background: rgba(0, 0, 0, .7);
@@ -135,9 +133,9 @@ export const observerCSS = `
   .plwd-accept-btn {
     border-radius: 25px;
     color: #4db6ac !important;
-    font-size: 24px !important;
-    height: 50px;
-    line-height: 50px;
+    font-size: 20px !important;
+    height: 45px;
+    line-height: 45px;
     margin: 8px;
     width: 150px;
   }
@@ -145,9 +143,9 @@ export const observerCSS = `
   .plwd-cancel-btn {
     border-radius: 25px;
     color: #e0e0e0 !important;
-    font-size: 24px !important;
-    height: 50px;
-    line-height: 50px;
+    font-size: 20px !important;
+    height: 45px;
+    line-height: 45px;
     margin: 8px;
     width: 150px;
   }
@@ -396,7 +394,9 @@ export const observerCSS = `
  */
 export const sanitize = (html: string) => {
   return sanitizeHTML(html, {
-    allowedAttributes: { '*': ['aria*', 'data*', 'href', 'id', 'name', 'placeholder', 'title', 'type', 'value'] },
+    allowedAttributes: {
+      '*': ['aria*', 'class', 'data*', 'href', 'id', 'name', 'placeholder', 'title', 'type', 'value']
+    },
     allowedStyles: { '*': { '*': [] } },
     allowedTags
   })

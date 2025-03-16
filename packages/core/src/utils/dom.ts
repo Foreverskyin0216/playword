@@ -20,33 +20,25 @@ export const addClass = (element: HTMLElement, className: string) => {
   element.classList.add(className)
 }
 
-/**
- * Clears all browser caches.
- */
+/** Clears all browser caches. */
 export const clearCaches = async () => {
   const keys = await caches.keys()
   await Promise.all(keys.map((key) => caches.delete(key)))
 }
 
-/**
- * Clears all indexedDB databases.
- */
+/** Clears all indexedDB databases. */
 export const clearIndexedDB = async () => {
   const databases = await indexedDB.databases()
   databases.filter((db) => db.name).map((db) => indexedDB.deleteDatabase(db.name!))
 }
 
-/**
- * Clears the local and session storage.
- */
+/** Clears the local and session storage. */
 export const clearStorage = () => {
   localStorage.clear()
   sessionStorage.clear()
 }
 
-/**
- * Clears all service workers.
- */
+/** Clears all service workers. */
 export const clearServiceWorkers = async () => {
   const registrations = await navigator.serviceWorker.getRegistrations()
   await Promise.all(registrations.map((registration) => registration.unregister()))
@@ -198,7 +190,7 @@ export const setEventListeners = () => {
    */
   const blockEvent = (event: Event) => {
     event.preventDefault()
-    event.stopPropagation()
+    event.stopImmediatePropagation()
   }
 
   /**
@@ -239,9 +231,7 @@ export const setEventListeners = () => {
     return '//' + nodes.join('/')
   }
 
-  /**
-   * Retrieves the source URL for the current frame.
-   */
+  /** Retrieves the source URL for the current frame. */
   const getFrameSrc = () => {
     if (window.self === window.top) return
 
@@ -293,78 +283,106 @@ export const setEventListeners = () => {
     return window.emit({ name: 'click', params: { ...getElementMap(element) } })
   }
 
-  document.addEventListener('change', (event) => {
-    clearTimeout(hoverTimeout)
+  document.addEventListener(
+    'change',
+    (event) => {
+      clearTimeout(hoverTimeout)
 
-    const element = event.target as HTMLSelectElement
+      const element = event.target as HTMLSelectElement
 
-    if (element.nodeName === 'SELECT') {
-      return window.emit({ name: 'select', params: { ...getElementMap(element), option: element.value } })
-    }
+      if (element.nodeName === 'SELECT') {
+        return window.emit({ name: 'select', params: { ...getElementMap(element), option: element.value } })
+      }
 
-    if (element.className === 'plwd-input') {
-      return window.updateInput(element.value)
-    }
-  })
+      if (element.className === 'plwd-input') {
+        return window.updateInput(element.value)
+      }
+    },
+    true
+  )
 
-  document.addEventListener('click', (event) => {
-    const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement
+  document.addEventListener(
+    'click',
+    (event) => {
+      const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement
 
-    clearTimeout(hoverTimeout)
+      clearTimeout(hoverTimeout)
 
-    if (element.className.startsWith('plwd') && element.nodeName !== 'INPUT') {
+      if (element.className.startsWith('plwd') && element.className !== 'plwd-input') {
+        blockEvent(event)
+      }
+    },
+    true
+  )
+
+  document.addEventListener(
+    'keydown',
+    (event) => {
+      const closedPanel = document.querySelector('.plwd-panel:not(.open)')
+      const { activeElement } = document
+
+      clearTimeout(hoverTimeout)
+
+      if (event.key === 'Escape') {
+        return window.stopDryRun()
+      }
+
+      if (activeElement?.className === 'plwd-input' || closedPanel) {
+        return
+      }
+
       blockEvent(event)
-    }
-  })
 
-  document.addEventListener('keydown', (event) => {
-    const closedPanel = document.querySelector('.plwd-panel:not(.open)')
-    const { activeElement } = document
+      if (['A', 'a'].includes(event.key)) {
+        return window.accept()
+      }
 
-    clearTimeout(hoverTimeout)
-
-    if (event.key === 'Escape') {
-      return window.stopDryRun()
-    }
-
-    if (activeElement?.className === 'plwd-input' || closedPanel) {
-      return
-    }
-
-    blockEvent(event)
-
-    if (['A', 'a'].includes(event.key)) {
-      return window.accept()
-    }
-
-    if (['C', 'c'].includes(event.key)) {
-      return window.cancel()
-    }
-  })
+      if (['C', 'c'].includes(event.key)) {
+        return window.cancel()
+      }
+    },
+    true
+  )
 
   document.addEventListener('mousedown', (event) => {
     const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement
-
-    clearTimeout(hoverTimeout)
 
     if (element.className.startsWith('plwd') && element.className !== 'plwd-input') {
       blockEvent(event)
     }
   })
 
-  document.addEventListener('mouseleave', () => {
-    clearTimeout(hoverTimeout)
-  })
+  document.addEventListener(
+    'mouseleave',
+    (event) => {
+      clearTimeout(hoverTimeout)
+      if (document.querySelector('.plwd-panel.open')) {
+        blockEvent(event)
+      }
+    },
+    true
+  )
 
-  document.addEventListener('mouseout', () => {
-    clearTimeout(hoverTimeout)
-  })
+  document.addEventListener(
+    'mouseout',
+    (event) => {
+      clearTimeout(hoverTimeout)
+      if (document.querySelector('.plwd-panel.open')) {
+        blockEvent(event)
+      }
+    },
+    true
+  )
 
   document.addEventListener('mouseover', (event) => {
     clearTimeout(hoverTimeout)
 
     const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement
     if (element.nodeName === 'IFRAME') return
+
+    if (document.querySelector('.plwd-panel.open')) {
+      blockEvent(event)
+    }
 
     hoverTimeout = setTimeout(async () => {
       const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement
@@ -380,7 +398,7 @@ export const setEventListeners = () => {
 
     clearTimeout(hoverTimeout)
 
-    if (element.className.startsWith('plwd') && element.nodeName !== 'INPUT') {
+    if (element.className.startsWith('plwd') && element.className !== 'plwd-input') {
       blockEvent(event)
     }
 

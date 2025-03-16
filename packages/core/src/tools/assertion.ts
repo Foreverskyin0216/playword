@@ -38,7 +38,7 @@ export const assertion = [
       const candidate = await ai.getBestCandidate(input, documents)
       const { xpath } = elements.find(({ html }) => html === documents[candidate].pageContent)!
 
-      recorder?.addAction({ name: 'assertElementContains', params: { text } })
+      recorder?.addAction({ name: 'assertElementContains', params: { text, xpath } })
 
       return (await actions.assertElementContains(ref, { text, xpath }))
         ? 'PASS: Element contains text: ' + text
@@ -70,7 +70,7 @@ export const assertion = [
       const candidate = await ai.getBestCandidate(input, documents)
       const { xpath } = elements.find(({ html }) => html === documents[candidate].pageContent)!
 
-      recorder?.addAction({ name: 'assertElementNotContain', params: { text } })
+      recorder?.addAction({ name: 'assertElementNotContain', params: { text, xpath } })
 
       return (await actions.assertElementNotContain(ref, { text, xpath }))
         ? 'PASS: Element does not contain text: ' + text

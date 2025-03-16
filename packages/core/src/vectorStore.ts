@@ -4,22 +4,16 @@ import type { MemoryVector } from './types'
 import { Document } from '@langchain/core/documents'
 import { VectorStore } from '@langchain/core/vectorstores'
 
-/**
- * In-memory, ephemeral vector store.
- */
+/** In-memory, ephemeral vector store. */
 export class MemoryVectorStore extends VectorStore {
-  /**
-   * Array of vectors stored in memory.
-   */
+  /** Array of vectors stored in memory. */
   vectors: MemoryVector[] = []
 
   constructor(embeddings: EmbeddingsInterface) {
     super(embeddings, {})
   }
 
-  /**
-   * Defines the type of vector store.
-   */
+  /** Defines the type of vector store. */
   _vectorstoreType() {
     return 'memory'
   }
@@ -46,7 +40,7 @@ export class MemoryVectorStore extends VectorStore {
    * @param embeddings `Embeddings` instance used to generate embeddings for texts.
    */
   static async fromTexts(texts: string[], embeddings: EmbeddingsInterface) {
-    const documents = texts.map((text) => new Document({ pageContent: text }))
+    const documents = texts.filter((text) => text).map((text) => new Document({ pageContent: text }))
     return this.fromDocuments(documents, embeddings)
   }
 

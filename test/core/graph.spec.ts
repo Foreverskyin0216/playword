@@ -1,7 +1,7 @@
 import { AIMessage, HumanMessage } from '@langchain/core/messages'
 import { tool } from '@langchain/core/tools'
 import { afterAll, beforeAll, describe, test, expect, vi } from 'vitest'
-import { actionGraph } from '../../packages/core/src/actionGraph'
+import { sayGraph } from '../../packages/core/src/graph'
 
 const { mockUseTools } = vi.hoisted(() => ({
   mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
@@ -16,8 +16,8 @@ vi.mock('../../packages/core/src/tools/page', () => ({
   page: [tool(async () => 'Tool call result', { name: 'tool-call-name' })]
 }))
 
-describe('Spec: Action Graph', () => {
-  describe('Given the action graph', () => {
+describe('Spec: PlayWord Graph', () => {
+  describe('Given the PlayWord graph', () => {
     describe('When the page agent is invoked', () => {
       beforeAll(() => {
         const aiResponse = new AIMessage('response')
@@ -28,7 +28,7 @@ describe('Spec: Action Graph', () => {
       afterAll(() => mockUseTools.mockReset())
 
       test('Then the graph returns the expected result', async () => {
-        const state = await actionGraph.invoke(
+        const state = await sayGraph.invoke(
           {
             messages: [new HumanMessage('Page Action')]
           },
@@ -52,7 +52,7 @@ describe('Spec: Action Graph', () => {
       })
 
       test('Then the graph returns the expected result', async () => {
-        const state = await actionGraph.invoke(
+        const state = await sayGraph.invoke(
           {
             messages: [new HumanMessage('Test something...')]
           },

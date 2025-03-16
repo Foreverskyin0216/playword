@@ -1,4 +1,6 @@
-import type { ClientOptions } from 'openai'
+import type { AnthropicInput } from '@langchain/anthropic'
+import type { GoogleGenerativeAIChatInput } from '@langchain/google-genai'
+import type { ChatOpenAIFields, ClientOptions } from '@langchain/openai'
 
 /**
  * Represents an executable action within the application.
@@ -15,9 +17,7 @@ export interface Action {
    */
   name: string
 
-  /**
-   * Parameters to pass to the action during execution.
-   */
+  /** Parameters to pass to the action during execution. */
   params: Partial<ActionParams>
 
   /**
@@ -47,9 +47,7 @@ export interface ActionParams {
    */
   direction: 'up' | 'down' | 'top' | 'bottom'
 
-  /**
-   * Specifies the duration to wait before performing the action, in milliseconds.
-   */
+  /** Specifies the duration to wait before performing the action, in milliseconds. */
   duration: number
 
   /**
@@ -59,9 +57,7 @@ export interface ActionParams {
    */
   frameNumber: number
 
-  /**
-   * The source of the frame in which to perform the action.
-   */
+  /** The source of the frame in which to perform the action. */
   frameSrc: string
 
   /**
@@ -71,9 +67,7 @@ export interface ActionParams {
    */
   keys: string
 
-  /**
-   * The option to select from a dropdown menu.
-   */
+  /** The option to select from a dropdown menu. */
   option: string
 
   /**
@@ -90,9 +84,7 @@ export interface ActionParams {
    */
   pattern: string
 
-  /**
-   * The text to input into an element.
-   */
+  /** The text to input into an element. */
   text: string
 
   /**
@@ -102,63 +94,49 @@ export interface ActionParams {
    */
   url: string
 
-  /**
-   * The XPath location of the element to interact with.
-   */
+  /** The XPath location of the element to interact with. */
   xpath: string
 }
 
-/**
- * Configuration options for the AI class.
- */
-export type AIOptions = ClientOptions & {
-  /**
-   * The chat model to use for general tasks.
-   *
-   * @default 'gpt-4o-mini'
-   */
-  chat?: string
-  /**
-   * The embeddings model to use for generating embeddings.
-   *
-   * @default 'text-embedding-3-small'
-   */
-  embeddings?: string
-}
-
-/**
- * This interface defines the options that can be passed to the observe command
- */
+/** This interface defines the options that can be passed to the observe command. */
 export interface ObserveOptions {
-  /**
-   * The browser to use for observing.
-   */
-  browser: string
+  /** Additional AI options. */
+  aiOptions: AIOptions
 
   /**
-   * The delay between executing each action during the dry run process.
+   * The browser to use for testing.
+   *
+   * @default 'chrome'
+   */
+  browser: 'chrome' | 'chromium' | 'firefox' | 'msedge' | 'webkit'
+
+  /**
+   * The delay between executing each action during playback.
+   *
+   * @default 250
    */
   delay: number
 
   /**
-   * The environment file to use for observing.
+   * The environment file to use for testing.
+   *
+   * @default '.env'
    */
   envFile: string
 
   /**
    * Where to save the recordings.
+   *
+   * @default '.playword/recordings.json'
    */
   recordPath: string
 
   /**
    * Whether to enable verbose mode.
+   *
+   * @default false
    */
   verbose: boolean
-
-  /**
-   * Additional OpenAI API options.
-   */
-  openaiOptions: AIOptions
 }
 
 /**
@@ -167,58 +145,190 @@ export interface ObserveOptions {
  * This interface includes the input message and the actions performed in one step.
  */
 export interface Recording {
-  /**
-   * Input message to map actions performed.
-   */
-  input: string
-
-  /**
-   * Actions performed in one step.
-   */
+  /** Actions performed in one step. */
   actions: Action[]
+
+  /** Input message to map actions performed. */
+  input: string
 }
 
-/**
- * This interface defines the options that can be passed to the test command
- */
+/** This interface defines the options that can be passed to the test command */
 export interface TestOptions {
   /**
-   * The browser to use for testing.
+   * Configuration options for the AI instance.
+   *
+   * These options allow customization of the API client, such as specifying
+   * an API key or custom endpoint.
+   *
+   * @example
+   * **Initialize with Google and change the default model**
+   * ```ts
+   * const playword = new PlayWord(context, {
+   *   aiOptions: {
+   *     googleApiKey: '<your-google-api-key>',
+   *     model: 'gemini-2.0-flash'
+   *   }
+   * })
+   * ```
+   *
+   * **Initialize with Anthropic and Voyage AI**
+   * ```ts
+   * const playword = new PlayWord(context, {
+   *   aiOptions: {
+   *     anthropicApiKey: 'sk-...',
+   *     voyageAIApiKey: 'pa-...'
+   *   }
+   * })
+   * ```
+   *
+   * **Use a custom OpenAI endpoint**
+   * ```ts
+   * const playword = new PlayWord(context, {
+   *   aiOptions: {
+   *     baseURL: 'https://api.my-openai-clone.com/v1',
+   *     openAIApiKey: '<your-api-key>'
+   *   }
+   * })
+   * ```
+   *
+   * @default {}
    */
-  browser: string
+  aiOptions?: AIOptions
+
+  /**
+   * The browser to use for testing.
+   *
+   * @default 'chrome'
+   */
+  browser: 'chrome' | 'chromium' | 'firefox' | 'msedge' | 'webkit'
 
   /**
    * The delay between executing each action during playback.
+   *
+   * @default 250
    */
   delay: number
 
   /**
    * The environment file to use for testing.
+   *
+   * @default '.env'
    */
   envFile: string
 
   /**
    * Whether to open the browser in headed mode.
+   *
+   * @default false
    */
   headed: boolean
 
   /**
-   * Additional OpenAI API options.
-   */
-  openaiOptions: AIOptions
-
-  /**
-   * Whether to record the test steps.
-   */
-  record: string | boolean
-
-  /**
    * Whether to playback the test steps from a recording file.
+   *
+   * @default false
    */
   playback: boolean
 
   /**
+   * Whether to record the test steps.
+   *
+   * @default false
+   */
+  record: boolean | string
+
+  /**
    * Whether to enable verbose mode.
+   *
+   * @default false
    */
   verbose: boolean
+}
+
+/**
+ * Interface that extends EmbeddingsParams and defines additional
+ * parameters specific to the VoyageEmbeddings class.
+ */
+export interface VoyageEmbeddingsParams {
+  /** The Voyage AI API key. */
+  apiKey?: string
+
+  /**
+   * The maximum number of documents to embed in a single request.
+   *
+   * This is limited by the Voyage AI API to a maximum of 8.
+   *
+   * @default 8
+   */
+  batchSize?: number
+
+  /**
+   * The format of the output embeddings. Can be "float", "base64", or "ubinary".
+   *
+   * @default 'float'
+   */
+  encodingFormat?: 'float' | 'base64' | 'ubinary'
+
+  /**
+   * The endpoint URL for the Voyage AI API.
+   *
+   * @default 'https://api.voyageai.com/v1/embeddings'
+   */
+  endpoint?: string
+
+  /**
+   * Input type for the embeddings request. Can be "query", or "document".
+   *
+   * @default undefined
+   */
+  inputType?: 'query' | 'document'
+
+  /**
+   * The embeddings model to use.
+   *
+   * @default 'voyage-3'
+   */
+  model?: string
+
+  /**
+   * The desired dimension of the output embeddings.
+   *
+   * @default undefined
+   */
+  outputDimension?: number
+
+  /**
+   * The data type of the output embeddings. Can be "float" or "int8".
+   *
+   * @default 'float'
+   */
+  outputDtype?: 'float' | 'int8'
+
+  /**
+   * Whether to truncate the input texts to the maximum length allowed by the model.
+   *
+   * @default true
+   */
+  truncation?: boolean
+}
+
+/** Configuration for the AI class. */
+export type AIOptions = GoogleOptions | OpenAIOptions | AnthropicOptions | VoyageOptions
+
+/** Anthropic configuration options. */
+export type AnthropicOptions = AnthropicInput & ClientOptions
+
+/** Google configuration options. */
+export type GoogleOptions = GoogleGenerativeAIChatInput & {
+  /** The API key for the Google API. */
+  googleApiKey?: string
+}
+
+/** OpenAI configuration options. */
+export type OpenAIOptions = ChatOpenAIFields & ClientOptions
+
+/** Voyage AI configuration options. */
+export type VoyageOptions = VoyageEmbeddingsParams & {
+  /** The Voyage AI API key. */
+  voyageAIApiKey?: string
 }
