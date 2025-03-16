@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/Foreverskyin0216/playword/compare/@playword/cli@0.2.6...@playword/cli@0.3.0) (2025-03-16)
+
+
+### Features
+
+* support multiple models ([3c5b8d1](https://github.com/Foreverskyin0216/playword/commit/3c5b8d179fe526397b08b7f465631707d7d65b63))
+
+
+
+
+
 ## [0.2.6](https://github.com/Foreverskyin0216/playword/compare/@playword/cli@0.2.5...@playword/cli@0.2.6) (2025-03-05)
 
 
