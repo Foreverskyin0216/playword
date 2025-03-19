@@ -3,11 +3,13 @@ import { VoyageEmbeddings } from '../../packages/core/src/embeddings'
 
 const { mockFetch } = vi.hoisted(() => ({ mockFetch: vi.fn() }))
 
-vi.mock('node-fetch', () => ({ default: mockFetch }))
-
 describe('Spec: Embeddings', () => {
   describe('Given the VoyageAI embeddings', () => {
     const voyageEmbeddings = new VoyageEmbeddings({ apiKey: 'mock-voyage-api-key' })
+
+    beforeAll(() => vi.spyOn(global, 'fetch').mockImplementation(mockFetch))
+
+    afterAll(() => vi.clearAllMocks())
 
     describe('When the embedQuery method is called', () => {
       beforeAll(() => {

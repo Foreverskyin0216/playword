@@ -4,10 +4,13 @@
   "description": "Supercharge your web test automation experience with AI",
   "keywords": [
     "ai",
+    "anthropic",
     "automated test",
+    "google",
     "langchain",
     "openai",
-    "playwright"
+    "playwright",
+    "voyageai"
   ],
   "homepage": "https://github.com/Foreverskyin0216/playword/blob/main/packages/core/README.md",
   "repository": {
@@ -38,8 +41,8 @@
     "@langchain/anthropic": "^0.3.15",
     "@langchain/core": "^0.3.42",
     "@langchain/google-genai": "^0.1.11",
-    "@langchain/langgraph": "^0.2.55",
-    "@langchain/openai": "^0.4.4",
+    "@langchain/langgraph": "^0.2.56",
+    "@langchain/openai": "^0.4.5",
     "sanitize-html": "^2.14.0",
     "zod": "^3.24.2"
   },
@@ -47,7 +50,7 @@
     "@types/node": "^22.13.10",
     "@types/sanitize-html": "^2.13.0",
     "jsdom": "^26.0.0",
-    "playwright-core": "^1.51.0",
+    "playwright-core": "^1.51.1",
     "tsup": "^8.4.0"
   },
   "publishConfig": {
