@@ -220,8 +220,6 @@ await playword.say('Type standard_user into the username field')
 Hardcoding sensitive information in your test cases is not a good practice.
 Instead, use custom variables with the syntax `{VARIABLE_NAME}` and define them in your environment settings.
 
-Assume the following environment variables are set in .env
-
 ```bash
 # .env
 USERNAME=standard_user
@@ -323,12 +321,12 @@ await context.newPage()
 
 ## 🌟 Why use PlayWord?
 
-| Aspect         | Traditional Testing                                 | PlayWord                                                    |
-| -------------- | --------------------------------------------------- | ----------------------------------------------------------- |
-| Dev Experience | Locating elements is very frustrating               | AI takes care of locating elements. Say goodbye to locators |
-| Dev Speed      | Time is needed for writing both test cases and code | Test cases serve both as documentation and executable tests |
-| Maintainance   | High maintenance cost due to UI changes             | AI-powered adaption to UI changes                           |
-| Learning Curve | Requires knowledge of testing frameworks and tools  | Just use natural language to execute tests                  |
+| Aspect         | Traditional Testing                                  | PlayWord                                                     |
+| -------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
+| Dev Experience | Locating elements is very frustrating.               | AI takes care of locating elements. Say goodbye to locators. |
+| Dev Speed      | Time is needed for writing both test cases and code. | Test cases serve both as documentation and executable tests. |
+| Maintainance   | High maintenance cost due to UI changes.             | AI-powered adaption to UI changes.                           |
+| Learning Curve | Requires knowledge of testing frameworks and tools.  | Just use natural language to execute tests.                  |
 
 ## 📜 Supported Actions in PlayWord and PlayWord Observer
 

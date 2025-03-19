@@ -3,7 +3,6 @@ import type { VoyageEmbeddingsParams, VoyageRequest, VoyageResponse } from './ty
 import { getEnvironmentVariable } from '@langchain/core/utils/env'
 import { Embeddings } from '@langchain/core/embeddings'
 import { chunkArray } from '@langchain/core/utils/chunk_array'
-import fetch from 'node-fetch'
 
 /** Implementation that generates embeddings using the Voyage AI API. */
 export class VoyageEmbeddings extends Embeddings {
