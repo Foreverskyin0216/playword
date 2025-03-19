@@ -1,6 +1,6 @@
 {
   "name": "@playword/cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Use the PlayWord's features instantly from the command line",
   "keywords": [
     "ai",
@@ -33,7 +33,7 @@
   "dependencies": {
     "@inquirer/confirm": "^5.1.8",
     "@inquirer/input": "^4.1.8",
-    "@playword/core": "^0.3.0",
+    "@playword/core": "^0.3.1",
     "dotenv": "^16.4.7",
     "playwright-core": "^1.51.1",
     "yargs": "^17.7.2"
