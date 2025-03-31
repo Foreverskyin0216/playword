@@ -40,7 +40,7 @@
   "dependencies": {
     "@langchain/anthropic": "^0.3.15",
     "@langchain/core": "^0.3.42",
-    "@langchain/google-genai": "^0.1.11",
+    "@langchain/google-genai": "^0.2.1",
     "@langchain/langgraph": "^0.2.57",
     "@langchain/openai": "^0.4.7",
     "sanitize-html": "^2.15.0",
