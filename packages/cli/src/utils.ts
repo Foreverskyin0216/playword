@@ -1,4 +1,3 @@
-import type { PlayWord } from '@playword/core'
 import type { Recording } from './types'
 
 import { existsSync, readFileSync } from 'fs'
@@ -55,18 +54,4 @@ export const info = (message: string, color: 'green' | 'magenta' | 'red' | 'none
   }
 
   return console.log(`\x1b[${colorMap[color]}m${message}\x1b[0m`)
-}
-
-/**
- * Run the PlayWord's `say` method with the provided input.
- *
- * @param playword The PlayWord instance.
- * @param message The message to pass to the `say` method.
- */
-export const runPlayWord = async (playword: PlayWord, message: string) => {
-  const result = await playword.say(message)
-  if (typeof result === 'boolean') {
-    process.stdout.write('Assert: ')
-    info(result ? 'PASS' : 'FAIL', result ? 'green' : 'red')
-  }
 }

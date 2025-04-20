@@ -92,7 +92,7 @@ export const getElementLocations = (types: string[]) => {
     if (!isAllowed(element)) continue
 
     const clone = element.cloneNode(true) as Element
-    clone.innerHTML = [...clone.childNodes]
+    clone.textContent = [...clone.childNodes]
       .filter((n) => n.nodeType === 3)
       .map((n) => n.nodeValue)
       .join('')

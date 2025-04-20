@@ -7,6 +7,7 @@ import { PlayWord } from '../../packages/core/src'
 
 const {
   mockAll,
+  mockAnalyzeImage,
   mockEvaluate,
   mockFrames,
   mockGoTo,
@@ -20,6 +21,7 @@ const {
   mockWaitForTimeout
 } = vi.hoisted(() => ({
   mockAll: vi.fn(),
+  mockAnalyzeImage: vi.fn(),
   mockEvaluate: vi.fn(),
   mockFrames: vi.fn(),
   mockGoTo: vi.fn(),
@@ -33,6 +35,7 @@ const {
   mockWaitForTimeout: vi.fn()
 }))
 
+vi.mock('timers/promises', () => ({ setTimeout: vi.fn() }))
 vi.mock('fs/promises', async () => ({
   access: (await vi.importActual('fs/promises')).access,
   readFile: (await vi.importActual('fs/promises')).readFile,
@@ -40,10 +43,8 @@ vi.mock('fs/promises', async () => ({
   writeFile: vi.fn()
 }))
 
-vi.mock('timers/promises', () => ({ setTimeout: vi.fn() }))
-
-vi.mock('../../packages/core/src/graph', () => ({ sayGraph: { invoke: mockInvoke } }))
-
+vi.mock('../../packages/core/src/ai', () => ({ AI: vi.fn(() => ({ analyzeImage: mockAnalyzeImage })) }))
+vi.mock('../../packages/core/src/graph', () => ({ playwordGraph: vi.fn(() => ({ invoke: mockInvoke })) }))
 vi.mock('../../packages/core/src/utils', async () => {
   const { aiPattern, variablePattern } = await vi.importActual('../../packages/core/src/utils')
   return { aiPattern, info: vi.fn(), variablePattern }
@@ -65,7 +66,6 @@ describe('Spec: PlayWord', () => {
         isVisible: mockIsVisible,
         textContent: vi.fn().mockResolvedValue('mock-text')
       })),
-      content: vi.fn().mockResolvedValue('mock-snapshot'),
       name: vi.fn().mockReturnValue('mock-frame'),
       waitForSelector: vi.fn(),
       waitForLoadState: mockWaitForLoadState,
@@ -86,11 +86,11 @@ describe('Spec: PlayWord', () => {
         isVisible: mockIsVisible,
         textContent: vi.fn().mockResolvedValue('mock-text')
       })),
-      content: vi.fn().mockResolvedValue('mock-snapshot'),
       on: vi.fn(),
       waitForSelector: vi.fn(),
       waitForLoadState: mockWaitForLoadState,
       waitForTimeout: mockWaitForTimeout,
+      screenshot: vi.fn().mockResolvedValue('mock-screenshot'),
       evaluate: mockEvaluate,
       frames: mockFrames,
       title: mockTitle,
@@ -174,6 +174,7 @@ describe('Spec: PlayWord', () => {
           process.env.VARIABLE = 'mock-variable'
 
           mockAll.mockResolvedValue([{ isVisible: mockIsVisible }])
+          mockAnalyzeImage.mockResolvedValue('mock-text')
           mockEvaluate.mockResolvedValue('mock-result')
           mockIsVisible.mockResolvedValue(true)
           mockTitle.mockResolvedValue('mock-title')
@@ -190,6 +191,7 @@ describe('Spec: PlayWord', () => {
         afterAll(() => {
           delete process.env.VARIABLE
           mockAll.mockReset()
+          mockAnalyzeImage.mockReset()
           mockEvaluate.mockReset()
           mockFrames.mockReset()
           mockIsVisible.mockReset()
@@ -281,6 +283,9 @@ describe('Spec: PlayWord', () => {
 
           result = await playword.say('waitForText')
           expect(result).toBe('Waited for text: mock-text')
+
+          result = await playword.say('getText')
+          expect(result).toEqual('mock-text')
         })
       })
 
@@ -308,6 +313,7 @@ describe('Spec: PlayWord', () => {
     describe('And the action is failed to perform', () => {
       describe('When the action returns "Failed to perform action"', () => {
         beforeAll(() => {
+          mockAnalyzeImage.mockRejectedValue(new Error('mock-error'))
           mockGoTo.mockRejectedValue(new Error('mock-error'))
           mockPress.mockRejectedValue(new Error('mock-error'))
           mockTitle.mockRejectedValue(new Error('mock-error'))
@@ -328,6 +334,7 @@ describe('Spec: PlayWord', () => {
         })
 
         afterAll(() => {
+          mockAnalyzeImage.mockReset()
           mockFrames.mockReset()
           mockGoTo.mockReset()
           mockInvoke.mockReset()
@@ -424,6 +431,9 @@ describe('Spec: PlayWord', () => {
 
           result = await playword.say('waitForText')
           expect(result).toBe('Failed to perform action')
+
+          result = await playword.say('getText')
+          expect(result).toEqual('Failed to perform action')
         })
       })
     })

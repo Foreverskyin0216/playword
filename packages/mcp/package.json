@@ -1,18 +1,15 @@
 {
-  "name": "@playword/cli",
-  "version": "0.3.3",
-  "description": "Use the PlayWord's features instantly from the command line",
+  "name": "@playword/mcp",
+  "version": "0.0.0",
+  "description": "MCP server that provides browser automation capabilities using PlayWord.",
   "keywords": [
     "ai",
-    "anthropic",
     "automated test",
-    "google",
     "langchain",
-    "openai",
-    "playwright",
-    "voyageai"
+    "mcp",
+    "playwright"
   ],
-  "homepage": "https://github.com/Foreverskyin0216/playword/blob/main/packages/cli/README.md",
+  "homepage": "https://github.com/Foreverskyin0216/playword/blob/main/packages/mcp/README.md",
   "repository": {
     "type": "git",
     "url": "https://github.com/Foreverskyin0216/playword.git"
@@ -23,7 +20,7 @@
   "license": "MIT",
   "author": "Zong-Wei Lu <foreverskyin@gmail.com>",
   "bin": {
-    "cli": "./dist/index.js"
+    "mcp": "./dist/index.js"
   },
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -31,15 +28,16 @@
     "dist"
   ],
   "dependencies": {
-    "@inquirer/confirm": "^5.1.9",
-    "@inquirer/input": "^4.1.9",
+    "@modelcontextprotocol/sdk": "^1.10.2",
     "@playword/core": "^0.3.3",
-    "dotenv": "^16.5.0",
     "playwright-core": "^1.52.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "zod": "^3.24.3",
+    "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
     "@langchain/anthropic": "^0.3.19",
+    "@langchain/core": "^0.3.49",
     "@langchain/google-genai": "^0.2.5",
     "@langchain/openai": "^0.5.7",
     "@types/yargs": "^17.0.33",

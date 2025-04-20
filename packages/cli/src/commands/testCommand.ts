@@ -5,7 +5,7 @@ import confirm from '@inquirer/confirm'
 import input from '@inquirer/input'
 import { PlayWord } from '@playword/core'
 import { config } from 'dotenv'
-import { getBrowser, getRecordings, info, runPlayWord } from '../utils'
+import { getBrowser, getRecordings, info } from '../utils'
 
 export default {
   command: 'test',
@@ -102,9 +102,9 @@ export default {
       const context = await br.newContext()
       const playword = new PlayWord(context, { aiOptions, debug: verbose, delay, record })
 
-      if (playback && recordings.length) for (const { input } of recordings) await runPlayWord(playword, input)
+      if (playback && recordings.length) for (const { input } of recordings) await playword.say(input)
       else
-        do await runPlayWord(playword, await input({ message: 'What do you want to do?' }))
+        do await playword.say(await input({ message: 'What do you want to do?' }))
         while (await confirm({ message: 'Continue to next step?' }))
 
       if (record) {

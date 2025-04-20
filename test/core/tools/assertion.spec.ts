@@ -43,8 +43,8 @@ vi.mock('../../../packages/core/src/actions', () => ({
   assertPageUrlMatches: mockAssertPageUrlMatches
 }))
 
-describe('Spec: Assert Tools', () => {
-  describe('Given the assert tools', () => {
+describe('Spec: Assertion Tools', () => {
+  describe('Given the assertion tools', () => {
     const configurable = {
       ref: {
         ai: {
@@ -52,14 +52,13 @@ describe('Spec: Assert Tools', () => {
           getBestCandidate: vi.fn().mockResolvedValue(0),
           searchDocuments: mockSearchDocuments
         },
-        input: 'test',
         page: { evaluate: mockPageEvaluate },
         recorder: { addAction: vi.fn() }
       }
     }
-    const keywords = 'mock-keywords'
     const pattern = 'mock-pattern'
     const text = 'mock-text'
+    const thoughts = 'mock-thoughts'
     const xpath = '//html[1]/body[1]/div[1]/div[1]'
 
     beforeAll(async () => {
@@ -79,12 +78,12 @@ describe('Spec: Assert Tools', () => {
 
       test('Then the result is as expected', async () => {
         mockAssertElementContains.mockResolvedValue(true)
-        const success = await assertElementContainsTool.invoke({ keywords, text }, { configurable })
-        expect(success).toBe('PASS: Element contains text: ' + text)
+        const success = await assertElementContainsTool.invoke({ text, thoughts }, { configurable })
+        expect(success).toBe(true)
 
         mockAssertElementContains.mockResolvedValue(false)
-        const failure = await assertElementContainsTool.invoke({ keywords, text }, { configurable })
-        expect(failure).toBe('FAIL: Element does not contain text: ' + text)
+        const failure = await assertElementContainsTool.invoke({ text, thoughts }, { configurable })
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {
@@ -99,12 +98,12 @@ describe('Spec: Assert Tools', () => {
 
       test('Then the result is as expected', async () => {
         mockAssertElementNotContain.mockResolvedValue(true)
-        const success = await assertElementNotContainTool.invoke({ keywords, text }, { configurable })
-        expect(success).toBe('PASS: Element does not contain text: ' + text)
+        const success = await assertElementNotContainTool.invoke({ text, thoughts }, { configurable })
+        expect(success).toBe(true)
 
         mockAssertElementNotContain.mockResolvedValue(false)
-        const failure = await assertElementNotContainTool.invoke({ keywords, text }, { configurable })
-        expect(failure).toBe('FAIL: Element contains text: ' + text)
+        const failure = await assertElementNotContainTool.invoke({ text, thoughts }, { configurable })
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {
@@ -119,12 +118,12 @@ describe('Spec: Assert Tools', () => {
 
       test('Then the result is as expected', async () => {
         mockAssertElementContentEquals.mockResolvedValue(true)
-        const success = await assertElementContentEqualsTool.invoke({ keywords, text }, { configurable })
-        expect(success).toBe('PASS: Element content is equal to: ' + text)
+        const success = await assertElementContentEqualsTool.invoke({ text, thoughts }, { configurable })
+        expect(success).toBe(true)
 
         mockAssertElementContentEquals.mockResolvedValue(false)
-        const failure = await assertElementContentEqualsTool.invoke({ keywords, text }, { configurable })
-        expect(failure).toBe('FAIL: Element content is not equal to: ' + text)
+        const failure = await assertElementContentEqualsTool.invoke({ text, thoughts }, { configurable })
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {
@@ -139,12 +138,12 @@ describe('Spec: Assert Tools', () => {
 
       test('Then the result is as expected', async () => {
         mockAssertElementContentNotEqual.mockResolvedValue(true)
-        const success = await assertElementContentNotEqualTool.invoke({ keywords, text }, { configurable })
-        expect(success).toBe('PASS: Element content is not equal to: ' + text)
+        const success = await assertElementContentNotEqualTool.invoke({ text, thoughts }, { configurable })
+        expect(success).toBe(true)
 
         mockAssertElementContentNotEqual.mockResolvedValue(false)
-        const failure = await assertElementContentNotEqualTool.invoke({ keywords, text }, { configurable })
-        expect(failure).toBe('FAIL: Element content is equal to: ' + text)
+        const failure = await assertElementContentNotEqualTool.invoke({ text, thoughts }, { configurable })
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {
@@ -163,12 +162,12 @@ describe('Spec: Assert Tools', () => {
 
       test('Then the result is as expected', async () => {
         mockAssertElementVisible.mockResolvedValue(true)
-        const success = await assertElementVisibleTool.invoke({ keywords }, { configurable })
-        expect(success).toBe('PASS: Element is visible')
+        const success = await assertElementVisibleTool.invoke({ thoughts }, { configurable })
+        expect(success).toBe(true)
 
         mockAssertElementVisible.mockResolvedValue(false)
-        const failure = await assertElementVisibleTool.invoke({ keywords }, { configurable })
-        expect(failure).toBe('FAIL: Element is invisible')
+        const failure = await assertElementVisibleTool.invoke({ thoughts }, { configurable })
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {
@@ -187,12 +186,12 @@ describe('Spec: Assert Tools', () => {
 
       test('Then the result is as expected', async () => {
         mockAssertElementNotVisible.mockResolvedValue(true)
-        const success = await assertElementNotVisibleTool.invoke({ keywords }, { configurable })
-        expect(success).toBe('PASS: Element is invisible')
+        const success = await assertElementNotVisibleTool.invoke({ thoughts }, { configurable })
+        expect(success).toBe(true)
 
         mockAssertElementNotVisible.mockResolvedValue(false)
-        const failure = await assertElementNotVisibleTool.invoke({ keywords }, { configurable })
-        expect(failure).toBe('FAIL: Element is visible')
+        const failure = await assertElementNotVisibleTool.invoke({ thoughts }, { configurable })
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {
@@ -208,11 +207,11 @@ describe('Spec: Assert Tools', () => {
       test('Then the result is as expected', async () => {
         mockAssertPageContains.mockResolvedValue(true)
         const success = await assertPageContainsTool.invoke({ text }, { configurable })
-        expect(success).toBe('PASS: Page contains text: ' + text)
+        expect(success).toBe(true)
 
         mockAssertPageContains.mockResolvedValue(false)
         const failure = await assertPageContainsTool.invoke({ text }, { configurable })
-        expect(failure).toBe('FAIL: Page does not contain text: ' + text)
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {
@@ -228,11 +227,11 @@ describe('Spec: Assert Tools', () => {
       test('Then the result is as expected', async () => {
         mockAssertPageNotContain.mockResolvedValue(true)
         const success = await assertPageNotContainTool.invoke({ text }, { configurable })
-        expect(success).toBe('PASS: Page does not contain text: ' + text)
+        expect(success).toBe(true)
 
         mockAssertPageNotContain.mockResolvedValue(false)
         const failure = await assertPageNotContainTool.invoke({ text }, { configurable })
-        expect(failure).toBe('FAIL: Page contains text: ' + text)
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {
@@ -248,11 +247,11 @@ describe('Spec: Assert Tools', () => {
       test('Then the result is as expected', async () => {
         mockAssertPageTitleEquals.mockResolvedValue(true)
         const success = await assertPageTitleEqualsTool.invoke({ text }, { configurable })
-        expect(success).toBe('PASS: Page title is equal to: ' + text)
+        expect(success).toBe(true)
 
         mockAssertPageTitleEquals.mockResolvedValue(false)
         const failure = await assertPageTitleEqualsTool.invoke({ text }, { configurable })
-        expect(failure).toBe('FAIL: Page title is not equal to: ' + text)
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {
@@ -268,11 +267,11 @@ describe('Spec: Assert Tools', () => {
       test('Then the result is as expected', async () => {
         mockAssertPageUrlMatches.mockResolvedValue(true)
         const success = await assertPageUrlMatchesTool.invoke({ pattern }, { configurable })
-        expect(success).toBe('PASS: Page URL matches the pattern: ' + pattern)
+        expect(success).toBe(true)
 
         mockAssertPageUrlMatches.mockResolvedValue(false)
         const failure = await assertPageUrlMatchesTool.invoke({ pattern }, { configurable })
-        expect(failure).toBe('FAIL: Page URL does not match the pattern: ' + pattern)
+        expect(failure).toBe(false)
       })
 
       test('Then the actions are called as expected', () => {

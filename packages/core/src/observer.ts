@@ -42,7 +42,7 @@ export class Observer {
    * Represents the current page action being performed.
    * See {@link Action} for details.
    */
-  private action: Action = { name: '', params: {} }
+  private action: Action = { name: 'click', params: {} }
 
   /**
    * The delay in milliseconds to wait before executing each action during a dry run.
@@ -163,7 +163,7 @@ export class Observer {
      * You can press the **Esc** key to stop the execution during a dry run.
      */
     const dryRun = async () => {
-      utils.info('Starting the dry run process...', 'green', true)
+      utils.debug('Starting the dry run process...', 'green', true)
       this.state.dryRunning = true
       this.state.waitingForUserAction = false
 
@@ -172,10 +172,10 @@ export class Observer {
       for (const recording of this.recorder.list()) {
         if (this.state.dryRunning) {
           const action = recording.actions[0]
-          const result = await actions[action.name as keyof typeof actions](this.playword, action.params)
+          const result = await actions[action.name](this.playword, action.params)
           action.success = Boolean(result === 'Failed to perform the action' ? false : result)
 
-          utils.info((action.success ? 'PASS: ' : 'FAIL: ') + recording.input)
+          utils.debug((action.success ? 'PASS: ' : 'FAIL: ') + recording.input)
           await setTimeout(this.delay)
         }
       }
@@ -183,7 +183,7 @@ export class Observer {
       await notify('Completed', '🚀', '#e5c07b')
 
       this.state.dryRunning = false
-      utils.info('Dry Run Completed')
+      utils.debug('Dry Run Completed')
     }
 
     /** Before accepting the action, leverage AI to adjust the action to match the user's intent. */
@@ -206,7 +206,7 @@ export class Observer {
       }
 
       this.action = JSON.parse(content)
-      utils.info('Input: ' + this.input + '\nAction: ' + JSON.stringify(this.action, null, 2), 'green', true)
+      utils.debug('Input: ' + this.input + '\nAction: ' + JSON.stringify(this.action, null, 2), 'green', true)
 
       return waitForAI(false)
     }

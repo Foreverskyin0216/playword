@@ -31,7 +31,8 @@ const {
   mockMainFrame: vi.fn(),
   mockSetTimeout: vi.fn(),
   mockSummarizeAction: vi.fn(),
-  mockUseTools: vi.fn()
+  mockUseTools: vi.fn(),
+  mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {})
 }))
 
 vi.mock('@langchain/core/tools', () => ({ tool: vi.fn(() => ({ name: 'tool', invoke: mockInvoke })) }))
@@ -53,6 +54,7 @@ describe('Spec: Observer', () => {
 
     const mockPage = {
       locator: vi.fn(() => ({
+        fill: vi.fn(),
         first: vi.fn().mockReturnThis(),
         waitFor: vi.fn(),
         evaluate: mockEvaluate,

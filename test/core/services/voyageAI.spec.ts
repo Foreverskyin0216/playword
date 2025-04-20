@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { VoyageEmbeddings } from '../../packages/core/src/embeddings'
+import { VoyageEmbeddings } from '../../../packages/core/src/services/voyageAI'
 
 const { mockFetch } = vi.hoisted(() => ({ mockFetch: vi.fn() }))
 
@@ -39,7 +39,7 @@ describe('Spec: Embeddings', () => {
 
     describe('When the api key is not provided', () => {
       test('Then an error is thrown', () => {
-        expect(() => new VoyageEmbeddings()).toThrowError('Voyage AI API key not found')
+        expect(() => new VoyageEmbeddings()).toThrowError('VoyageAI API key not found')
       })
     })
   })
