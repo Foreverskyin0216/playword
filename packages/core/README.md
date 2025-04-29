@@ -7,7 +7,7 @@
 
 Supercharge your web test automation experience with AI.
 
-![playword](https://i.ibb.co/cc0xHf1Z/playword.gif)
+![playword](https://i.ibb.co/m5n4jHJJ/playword.gif)
 
 ## 📦 Installation
 
@@ -35,13 +35,36 @@ For ease of use, I recommend running this package with `npx`.
 
 ```bash
 # Run a PlayWord test
-npx @playword/cli test --headed --verbose -b webkit
+npx @playword/cli test --headed --verbose --browser msedge
 
 # Start the Observer
-npx @playword/cli observe -b chromium -v
+npx @playword/cli observe -b firefox -v
 ```
 
 See [documentation](https://github.com/Foreverskyin0216/playword/tree/main/packages/cli) for usage examples and options.
+
+### @playword/mcp
+
+The `@playword/mcp` package provides a Model Context Protocol (MCP) server that allows you to run PlayWord for browser automation.
+
+**Example Config**
+```json
+{
+  "mcpServers": {
+    "playword": {
+      "command": "npx",
+      "args": [
+        "@playword/mcp"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "sk-..."
+      }
+    }
+  }
+}
+```
+
+See [documentation](https://github.com/Foreverskyin0216/playword/tree/main/packages/mcp) for usage examples and options.
 
 ## 📘 Getting Started
 
@@ -70,9 +93,9 @@ const context = await browser.newContext()
 
 const playword = new PlayWord(context, {
   aiOptions: {
-    baseURL: 'https://...', // Custom API endpoint (If applicable)
+    baseURL: 'https://...', // Custom API endpoint.
     openAIApiKey: 'sk-...',
-    model: 'gpt-4o' // If not specified, the default model is gpt-4o-mini.
+    model: 'gpt-4.1' // gpt-4o-mini as default.
   }
 })
 ```
@@ -91,7 +114,7 @@ export GOOGLE_API_KEY="AI..."
 const playword = new PlayWord(context, {
   aiOptions: {
     googleApiKey: 'AI...',
-    model: 'gemini-2.0-flash' // If not specified, the default model is gemini-2.0-flash-lite.
+    model: 'gemini-2.0-flash' // gemini-2.0-flash-lite as default.
   }
 })
 ```
@@ -119,7 +142,7 @@ const playword = new PlayWord(context, {
   aiOptions: {
     anthropicApiKey: 'sk-...',
     voyageAIApiKey: 'pa-...',
-    model: 'claude-3-7-sonnet-latest' // If not specified, the default model is claude-3-5-haiku-latest.
+    model: 'claude-3-7-sonnet-latest' // claude-3-5-haiku-latest as default.
   }
 })
 ```
@@ -133,26 +156,29 @@ const playword = new PlayWord(context, {
 | delay     | number            | 250     | Delay between each step in milliseconds.                              |
 | record    | boolean \| string | false   | Whether to record actions performed and where to save the recordings. |
 
-## 💬 Communicate with Browser
+## 💬 Browser Interaction
 
-In its basic usage, you can use the `say` method to interact with the page.
-
-No need to worry about locating elements or performing interactions—**PlayWord handles all of that for you**.
+Simply use the `say` method to interact with the page. That's it!
 
 ```ts
 await playword.say('Navigate to https://www.google.com')
+await playword.say('Type "Hello, World!" in the search bar and press enter')
+```
 
-await playword.say('Type "Hello, World!" in the search bar')
+## 🔍 Query
 
-await playword.say('Press enter')
+You can request information from a webpage, and PlayWord will search for the requested information on the page by taking a screenshot and return the result.
+
+```ts
+await playword.say('Go to https://www.saucedemo.com')
+const response = await playword.say('Get the title of the page')
+console.log(response) // "Swag Labs"
 ```
 
 ### ✅ Assertion
 
-PlayWord uses keywords to identify whether a step is an assertion.
-This approach ensures more stable results compared to relying solely on AI judgment.
-
-**Using PlayWord within Playwright Test**
+If you want to validate something on a webpage,
+PlayWord will return `true` or `false` based on the validation criteria you specify.
 
 ```ts
 import { PlayWord } from '@playword/core'
@@ -164,39 +190,10 @@ test('get started link', async ({ context }) => {
   await playword.say('go to https://playwright.dev/')
   await playword.say('click the link "Get started"')
 
-  expect(await playword.say('Verify if the installation heading is visible')).toBe(true)
+  const response = await playword.say('Is the installation heading visible?')
+  expect(response).toBe(true)
 })
 ```
-
-The input starting with any of the following **case-insensitive** keywords will be recognized as an assertion:
-
-- are
-- assert
-- assure
-- can
-- check
-- compare
-- confirm
-- could
-- did
-- do
-- does
-- ensure
-- expect
-- guarantee
-- has
-- have
-- is
-- match
-- satisfy
-- shall
-- should
-- test
-- then
-- was
-- were
-- validate
-- verify
 
 ### 🖼️ Frame Handling
 
@@ -204,15 +201,12 @@ To interact with elements inside frames, simply instruct PlayWord to switch to t
 
 ```ts
 await playword.say('Go to https://iframetester.com')
-
-await playword.say('Type "https://www.saucedemo.com" in the URL field')
-
-await playword.say('Click the render button')
+await playword.say('Type "https://www.saucedemo.com" in the URL field and click the "redner" button')
 
 await playword.say('Switch to the frame with the url "https://www.saucedemo.com"')
 
 // Perform actions inside the frame
-await playword.say('Type standard_user into the username field')
+await playword.say('Type standard_user into the username field, secret_sauce in the password field')
 ```
 
 ### 🔧 Custom Variables
@@ -231,13 +225,16 @@ PASSWORD=secret_sauce
 import 'dotenv/config'
 
 // {USERNAME} and {PASSWORD} will be replaced with the values from the environment
-await playword.say('Input {USERNAME} in the username field')
-await playword.say('Input {PASSWORD} in the password field')
+await playword.say('Input {USERNAME} in the username field, {PASSWORD} in the password field')
 ```
 
 ## 🔴 Recordings
 
 PlayWord supports recording test executions and replaying them later for efficient and consistent testing.
+
+If recordings are available, PlayWord prioritizes using them to execute tests, reducing the need to consume API tokens.
+
+If a recorded action fails, PlayWord automatically retries it using AI.
 
 ```ts
 // Save recordings to the default path (.playword/recordings.json)
@@ -247,17 +244,12 @@ const playword = new PlayWord(context, { record: true })
 const playword = new PlayWord(context, { record: 'spec/test-shopping-cart.json' })
 ```
 
-If recordings are available, PlayWord prioritizes using them to execute tests, reducing the need to consume API tokens.
-
-If a recorded action fails, PlayWord automatically retries it using AI.
-
 ### ✨ Using AI during Playback
 
 To ensure PlayWord uses AI for specific steps during playback, start the input with `[AI]`.
 
 ```ts
 await playword.say('[AI] click the "Login" button')
-
 await playword.say('[AI] verify the URL matches "https://www.saucedemo.com/inventory.html"')
 ```
 
@@ -265,7 +257,7 @@ await playword.say('[AI] verify the URL matches "https://www.saucedemo.com/inven
 
 The Observer module tracks user interactions on web pages and swiftly generates accurate test steps using AI.
 
-![observer](https://i.ibb.co/3FGGnZL/observer.gif)
+![observer](https://i.ibb.co/LzLS1vqK/observer.png)
 
 Upon activation, Playwright injects the Observer UI into every launched browser webpage.
 As you manually interact with the page, the AI interprets your actions, generates corresponding test steps, and records action details.
@@ -309,7 +301,7 @@ const observer = new Observer(playword, {
 await observer.observe()
 
 // Open a new page to observe
-await context.newPage()
+await playword.say('Go to https://www.microsoft.com')
 ```
 
 ### 📜 Observer Options
@@ -356,5 +348,9 @@ await context.newPage()
 - Check if the page does not contain specific text
 - Check if the page title is equal to specific text
 - Check if the page URL matches specific RegExp patterns
+
+### Query
+
+- Get specific information based on screenshots
 
 ## Enjoy PlayWord and stay tuned for more features in future releases! 🚀🎉

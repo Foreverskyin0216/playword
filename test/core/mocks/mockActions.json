@@ -305,5 +305,16 @@
         }
       }
     ]
+  },
+  {
+    "input": "getText",
+    "actions": [
+      {
+        "name": "getText",
+        "params": {
+          "input": "mock-input"
+        }
+      }
+    ]
   }
 ]

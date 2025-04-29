@@ -7,7 +7,6 @@ import { TestCommand } from '../../packages/cli/src/commands'
 
 const { mockConfirm, mockSay } = vi.hoisted(() => ({
   mockConfirm: vi.fn(),
-  mockStdoutWrite: vi.spyOn(process.stdout, 'write').mockImplementation(() => true),
   mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
   mockConsoleError: vi.spyOn(console, 'error').mockImplementation(() => {}),
   mockSay: vi.fn()
@@ -56,10 +55,8 @@ describe('Spec: Test Command', () => {
         global.process = {
           ...originalProcess,
           exit: vi.fn((code) => {
-            if (code !== 0) {
-              throw new Error('exit with ' + code)
-            }
-          }) as unknown as never
+            if (code !== 0) throw new Error('exit with ' + code)
+          }) as never
         }
         process.chdir(join(__dirname, 'mocks'))
         mockConfirm.mockResolvedValue(false)
@@ -73,26 +70,32 @@ describe('Spec: Test Command', () => {
 
       test('Then the command should work as expected with the browser option', async () => {
         mockSay.mockResolvedValue(true)
-        await TestCommand.handler({ ...defaultOptions, browser: 'chromium' })
-        await TestCommand.handler({ ...defaultOptions, browser: 'chrome' })
-        await TestCommand.handler({ ...defaultOptions, browser: 'msedge' })
-        await TestCommand.handler({ ...defaultOptions, browser: 'firefox' })
-        await TestCommand.handler({ ...defaultOptions, browser: 'webkit' })
+        await Promise.all([
+          TestCommand.handler({ ...defaultOptions, browser: 'chromium' }),
+          TestCommand.handler({ ...defaultOptions, browser: 'chrome' }),
+          TestCommand.handler({ ...defaultOptions, browser: 'msedge' }),
+          TestCommand.handler({ ...defaultOptions, browser: 'firefox' }),
+          TestCommand.handler({ ...defaultOptions, browser: 'webkit' })
+        ])
         await expect(
-          TestCommand.handler({ ...defaultOptions, browser: 'invalid' } as unknown as TestOptions)
+          TestCommand.handler({ ...defaultOptions, browser: 'invalid' as TestOptions['browser'] })
         ).rejects.toThrow('exit with 1')
       })
 
       test('Then the command should work as expected with the env-file option', async () => {
         mockSay.mockResolvedValue(false)
-        await TestCommand.handler({ ...defaultOptions, envFile: '.env' })
-        await TestCommand.handler({ ...defaultOptions, envFile: '' })
+        await Promise.all([
+          TestCommand.handler({ ...defaultOptions, envFile: '.env' }),
+          TestCommand.handler({ ...defaultOptions, envFile: '' })
+        ])
       })
 
       test('Then the command should work as expected with the record option', async () => {
         mockConfirm.mockResolvedValue(false)
-        await TestCommand.handler({ ...defaultOptions, record: true, playback: true })
-        await TestCommand.handler({ ...defaultOptions, record: 'invalid' })
+        await Promise.all([
+          TestCommand.handler({ ...defaultOptions, record: true, playback: true }),
+          TestCommand.handler({ ...defaultOptions, record: 'invalid' })
+        ])
       })
     })
   })

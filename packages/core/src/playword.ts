@@ -2,9 +2,8 @@ import type { BrowserContext, Frame, Page } from 'playwright-core'
 import type { ActionResult, PlayWordInterface, PlayWordOptions, Recording } from './types'
 
 import { HumanMessage } from '@langchain/core/messages'
-import { randomUUID } from 'crypto'
 import { setTimeout } from 'timers/promises'
-import { sayGraph } from './graph'
+import { playwordGraph } from './graph'
 import * as actions from './actions'
 import { AI } from './ai'
 import { Recorder } from './recorder'
@@ -37,9 +36,6 @@ import * as utils from './utils'
  * ```
  */
 export class PlayWord implements PlayWordInterface {
-  /** Use the thread ID to keep track of the conversation for LangGraph. */
-  private threadId = randomUUID()
-
   /** AI instance to interact with the OpenAI API. */
   ai: AI
 
@@ -112,6 +108,11 @@ export class PlayWord implements PlayWordInterface {
    */
   stepCount = 0
 
+  /**
+   * Cache for storing retrieved data during tool calls.
+   */
+  cache: ActionResult[] = []
+
   constructor(
     public context: BrowserContext,
     { debug = false, delay = 250, aiOptions = {}, record = false }: PlayWordOptions = {}
@@ -167,33 +168,27 @@ export class PlayWord implements PlayWordInterface {
     }
   }
 
-  /** Invoke the say method graph to perform actions. */
-  private async useSayGraph() {
+  /** Invoke the PlayWord graph to perform actions. */
+  private async usePlayWordGraph() {
     utils.info('[AI] ' + this.input, 'green', true)
 
     this.recorder?.initStep(this.stepCount, this.input)
 
-    const { messages } = await sayGraph.invoke(
+    const { messages } = await playwordGraph().invoke(
       {
         messages: [new HumanMessage(this.input)]
       },
       {
-        configurable: { ref: this, thread_id: this.threadId }
+        configurable: { ref: this }
       }
     )
 
     const response = messages[messages.length - 1].content.toString()
-    let result: ActionResult = response
-
-    if (['true', 'false'].includes(response)) {
-      result = response === 'true'
-    } else {
-      utils.info('Result: ' + response, 'green')
-    }
+    utils.info('[RETURN] ' + response, 'green')
 
     this.recorder?.save()
 
-    return result
+    return ['true', 'false'].includes(response) ? response === 'true' : response
   }
 
   /**
@@ -214,7 +209,7 @@ export class PlayWord implements PlayWordInterface {
 
       if (result.toString().startsWith('Failed')) {
         utils.info('Retrying with AI...', 'magenta')
-        return this.useSayGraph()
+        return this.usePlayWordGraph()
       }
 
       this.recorder?.addAction({ name, params })
@@ -257,7 +252,7 @@ export class PlayWord implements PlayWordInterface {
     const recording = this.recorder?.list().find((r, i) => r.input === this.input && i === this.stepCount)
 
     if (utils.aiPattern.test(message) || !recording) {
-      return this.useSayGraph()
+      return this.usePlayWordGraph()
     }
 
     return this.useRecording(recording)

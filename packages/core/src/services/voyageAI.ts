@@ -1,12 +1,12 @@
-import type { VoyageEmbeddingsParams, VoyageRequest, VoyageResponse } from './types'
+import type { VoyageEmbeddingsParams, VoyageRequest, VoyageResponse } from '../types'
 
 import { getEnvironmentVariable } from '@langchain/core/utils/env'
 import { Embeddings } from '@langchain/core/embeddings'
 import { chunkArray } from '@langchain/core/utils/chunk_array'
 
-/** Implementation that generates embeddings using the Voyage AI API. */
+/** Implementation that generates embeddings using the VoyageAI API. */
 export class VoyageEmbeddings extends Embeddings {
-  /** The Voyage AI API key. */
+  /** The VoyageAI API key. */
   private apiKey?: string
 
   /** The headers for the request. */
@@ -15,14 +15,14 @@ export class VoyageEmbeddings extends Embeddings {
   /**
    * The maximum number of documents to embed in a single request.
    *
-   * This is limited by the Voyage AI API to a maximum of 8.
+   * This is limited by the VoyageAI API to a maximum of 8.
    *
    * @default 8
    */
   batchSize: number
 
   /**
-   * The endpoint URL for the Voyage AI API.
+   * The endpoint URL for the VoyageAI API.
    *
    * @default 'https://api.voyageai.com/v1/embeddings'
    */
@@ -76,11 +76,35 @@ export class VoyageEmbeddings extends Embeddings {
     this.truncation = params?.truncation ?? true
 
     if (!this.apiKey) {
-      throw new Error('Voyage AI API key not found')
+      throw new Error('VoyageAI API key not found')
     }
   }
 
-  async embedDocuments(documents: string[]): Promise<number[][]> {
+  /**
+   * Makes a request to the VoyageAI API to generate embeddings for an array of texts.
+   *
+   * @param request - An object with properties to configure the request.
+   */
+  private async callVoyageAPI(request: VoyageRequest) {
+    /**
+     * Send a request to the VoyageAI API.
+     *
+     * @param endpoint Voyage API endpoint
+     * @param payload Request payload
+     */
+    const sendRequest = async (endpoint: string, payload: RequestInit) => {
+      const response = await fetch(endpoint, payload)
+      const json = await response.json()
+      return json as VoyageResponse
+    }
+
+    const body = JSON.stringify(request)
+    const headers = { Authorization: 'Bearer ' + this.apiKey, ...this.headers }
+
+    return this.caller.call(sendRequest, this.endpoint, { body, headers, method: 'POST' })
+  }
+
+  public async embedDocuments(documents: string[]): Promise<number[][]> {
     const batches = chunkArray(documents, this.batchSize)
 
     const batchRequests = batches.map((batch) => {
@@ -93,7 +117,7 @@ export class VoyageEmbeddings extends Embeddings {
         truncation: this.truncation
       }
 
-      return this.useVoyageAPI(request)
+      return this.callVoyageAPI(request)
     })
 
     const batchResponses = await Promise.all(batchRequests)
@@ -102,7 +126,7 @@ export class VoyageEmbeddings extends Embeddings {
     return vectors
   }
 
-  async embedQuery(document: string): Promise<number[]> {
+  public async embedQuery(document: string): Promise<number[]> {
     const request = {
       input: document,
       input_type: this.inputType,
@@ -112,27 +136,8 @@ export class VoyageEmbeddings extends Embeddings {
       truncation: this.truncation
     }
 
-    const response = await this.useVoyageAPI(request)
+    const response = await this.callVoyageAPI(request)
 
     return response.data[0].embedding
-  }
-
-  /**
-   * Makes a request to the Voyage AI API to generate embeddings for an array of texts.
-   *
-   * @param request - An object with properties to configure the request.
-   */
-  private async useVoyageAPI(request: VoyageRequest) {
-    return this.caller.call(async () => {
-      const payload = {
-        body: JSON.stringify(request),
-        headers: { Authorization: 'Bearer ' + this.apiKey, ...this.headers },
-        method: 'POST'
-      }
-
-      const response = await fetch(this.endpoint, payload)
-
-      return (await response.json()) as VoyageResponse
-    })
   }
 }

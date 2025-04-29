@@ -264,7 +264,24 @@ export const click = async (ref: PlayWordInterface, params: Partial<ActionParams
     await locator.click({ timeout: 5000 })
 
     return 'Performed the click action'
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
+    return 'Failed to perform the action'
+  }
+}
+
+/**
+ * Get the text content on the page based on the provided screenshot.
+ *
+ * @param ref The PlayWord instance.
+ */
+export const getText = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
+  try {
+    const screenshot = await ref.page!.screenshot({ type: 'jpeg', quality: 100 })
+    const encodedImg = 'data:image/jpeg;base64,' + screenshot.toString('base64')
+    return await ref.ai.analyzeImage(encodedImg, params.input!)
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -279,7 +296,8 @@ export const goto = async (ref: PlayWordInterface, params: Partial<ActionParams>
   try {
     await ref.page?.goto(params.url!)
     return 'Navigated to ' + params.url
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -303,7 +321,8 @@ export const hover = async (ref: PlayWordInterface, params: Partial<ActionParams
     }
 
     return 'Performed the hover action'
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -324,7 +343,8 @@ export const input = async (ref: PlayWordInterface, params: Partial<ActionParams
     await locator.fill(text, { timeout: 5000 })
 
     return 'Performed the input action'
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -339,7 +359,8 @@ export const pressKeys = async (ref: PlayWordInterface, params: Partial<ActionPa
   try {
     await ref.page?.keyboard.press(params.keys!)
     return 'Pressed keys ' + params.keys
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -374,7 +395,8 @@ export const scroll = async (ref: PlayWordInterface, params: Partial<ActionParam
       default:
         return `Unsupported scroll target ${params.direction}`
     }
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -394,7 +416,8 @@ export const select = async (ref: PlayWordInterface, params: Partial<ActionParam
     await locator.selectOption({ value: params.option! }, { timeout: 5000 })
 
     return 'Performed the select action'
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -409,7 +432,8 @@ export const sleep = async (ref: PlayWordInterface, params: Partial<ActionParams
   try {
     await ref.page?.waitForTimeout(params.duration!)
     return 'Slept for ' + params.duration! + ' milliseconds'
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -429,7 +453,8 @@ export const switchFrame = async (ref: PlayWordInterface, params: Partial<Action
     }
 
     return 'Switched to frame'
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -444,7 +469,8 @@ export const switchPage = async (ref: PlayWordInterface, params: Partial<ActionP
   try {
     ref.page = ref.context.pages()[params.pageNumber || 0]
     return 'Switched to page'
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }
@@ -465,7 +491,8 @@ export const waitForText = async (ref: PlayWordInterface, params: Partial<Action
     await handle.waitForSelector('text=' + text, { state: 'visible', timeout: 30000 })
 
     return 'Waited for text: ' + text
-  } catch {
+  } catch (error) {
+    utils.info(error.message, 'red')
     return 'Failed to perform the action'
   }
 }

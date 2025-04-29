@@ -171,7 +171,7 @@ export interface TestOptions {
    * })
    * ```
    *
-   * **Initialize with Anthropic and Voyage AI**
+   * **Initialize with Anthropic and VoyageAI**
    * ```ts
    * const playword = new PlayWord(context, {
    *   aiOptions: {
@@ -250,13 +250,13 @@ export interface TestOptions {
  * parameters specific to the VoyageEmbeddings class.
  */
 export interface VoyageEmbeddingsParams {
-  /** The Voyage AI API key. */
+  /** The VoyageAI API key. */
   apiKey?: string
 
   /**
    * The maximum number of documents to embed in a single request.
    *
-   * This is limited by the Voyage AI API to a maximum of 8.
+   * This is limited by the VoyageAI API to a maximum of 8.
    *
    * @default 8
    */
@@ -270,7 +270,7 @@ export interface VoyageEmbeddingsParams {
   encodingFormat?: 'float' | 'base64' | 'ubinary'
 
   /**
-   * The endpoint URL for the Voyage AI API.
+   * The endpoint URL for the VoyageAI API.
    *
    * @default 'https://api.voyageai.com/v1/embeddings'
    */
@@ -327,8 +327,8 @@ export type GoogleOptions = GoogleGenerativeAIChatInput & {
 /** OpenAI configuration options. */
 export type OpenAIOptions = ChatOpenAIFields & ClientOptions
 
-/** Voyage AI configuration options. */
+/** VoyageAI configuration options. */
 export type VoyageOptions = VoyageEmbeddingsParams & {
-  /** The Voyage AI API key. */
+  /** The VoyageAI API key. */
   voyageAIApiKey?: string
 }

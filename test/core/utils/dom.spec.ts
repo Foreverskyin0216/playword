@@ -1,6 +1,8 @@
+import type { MockInstance } from 'vitest'
+
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { type MockInstance, afterAll, afterEach, beforeAll, describe, test, expect, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, test, expect, vi } from 'vitest'
 import * as utils from '../../../packages/core/src/utils'
 
 /**
@@ -836,30 +838,31 @@ describe('Spec: DOM Utils', () => {
 
   describe('Given the setTestCasePreview function', () => {
     const timeline = document.querySelector('.plwd-timeline') as HTMLDivElement
-    const mockRecordings = [
-      {
-        input: 'input-value',
-        actions: [
-          {
-            name: 'click',
-            params: { xpath: '//html[1]/body[1]/button[1]' },
-            success: true
-          }
-        ]
-      },
-      {
-        input: 'input-value',
-        actions: [
-          {
-            name: 'hover',
-            params: { xpath: '//html[1]/body[1]/span[1]' },
-            success: false
-          }
-        ]
-      }
-    ]
 
-    beforeAll(() => utils.setTestCasePreview(timeline, mockRecordings))
+    beforeAll(() =>
+      utils.setTestCasePreview(timeline, [
+        {
+          input: 'input-value',
+          actions: [
+            {
+              name: 'click',
+              params: { xpath: '//html[1]/body[1]/button[1]' },
+              success: true
+            }
+          ]
+        },
+        {
+          input: 'input-value',
+          actions: [
+            {
+              name: 'hover',
+              params: { xpath: '//html[1]/body[1]/span[1]' },
+              success: false
+            }
+          ]
+        }
+      ])
+    )
 
     describe('When the recordings are set', () => {
       test('Then it should display the recordings in the timeline', () => {

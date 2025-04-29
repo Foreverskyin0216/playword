@@ -38,19 +38,19 @@
     }
   },
   "dependencies": {
-    "@langchain/anthropic": "^0.3.15",
-    "@langchain/core": "^0.3.42",
-    "@langchain/google-genai": "^0.2.1",
-    "@langchain/langgraph": "^0.2.57",
-    "@langchain/openai": "^0.4.7",
-    "sanitize-html": "^2.15.0",
-    "zod": "^3.24.2"
+    "@langchain/anthropic": "^0.3.19",
+    "@langchain/core": "^0.3.49",
+    "@langchain/google-genai": "^0.2.5",
+    "@langchain/langgraph": "^0.2.67",
+    "@langchain/openai": "^0.5.7",
+    "sanitize-html": "^2.16.0",
+    "zod": "^3.24.3"
   },
   "devDependencies": {
-    "@types/node": "^22.13.11",
-    "@types/sanitize-html": "^2.13.0",
-    "jsdom": "^26.0.0",
-    "playwright-core": "^1.51.1",
+    "@types/node": "^22.15.3",
+    "@types/sanitize-html": "^2.15.0",
+    "jsdom": "^26.1.0",
+    "playwright-core": "^1.52.0",
     "tsup": "^8.4.0"
   },
   "publishConfig": {

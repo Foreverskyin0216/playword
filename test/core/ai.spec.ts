@@ -1,7 +1,8 @@
 import { Document } from '@langchain/core/documents'
-import { AIMessage, HumanMessage } from '@langchain/core/messages'
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages'
 import { afterAll, beforeAll, describe, test, expect, vi } from 'vitest'
-import { AI, CANDIDATE_LIST_REFERENCE, DETERMINE_ASSERTION_RESULT, SUMMARIZE_ACTION } from '../../packages/core/src/ai'
+import { AI } from '../../packages/core/src/ai'
+import * as prompts from '../../packages/core/src/prompts'
 
 const { mockFromTexts, mockMemoryVectorStore, mockOpenAIEmbeddings, mockInvoke } = vi.hoisted(() => ({
   mockFromTexts: vi.fn(),
@@ -27,38 +28,46 @@ vi.mock('@langchain/openai', () => ({
 vi.mock('../../packages/core/src/vectorStore', () => ({ MemoryVectorStore: mockMemoryVectorStore }))
 
 describe('Spec: AI', () => {
-  let ai: AI
+  let ai: AI = new AI({ openAIApiKey: 'mock-openai-api-key' })
 
   describe('Given the AI class with OpenAI configuration', () => {
-    describe('When the useTools method is called', () => {
-      beforeAll(() => {
-        ai = new AI({ openAIApiKey: 'mock-openai-api-key' })
-        mockInvoke.mockResolvedValue(new AIMessage('response'))
-      })
+    describe('When the analyzeImage method is called', () => {
+      const image = 'image-url'
+      const input = 'Input'
+
+      beforeAll(() => mockInvoke.mockResolvedValue({ data: 'response' }))
 
       afterAll(() => mockInvoke.mockReset())
 
       test('Then the result is returned', async () => {
-        const { content } = await ai.useTools([], [new HumanMessage('test')])
-        expect(content).toBe('response')
+        const result = await ai.analyzeImage(image, input)
+        expect(result).toBe('response')
+      })
+
+      test('Then the mockParse method is called', () => {
+        expect(mockInvoke).toBeCalledWith([
+          new SystemMessage(prompts.ANALYZE_IMAGE),
+          {
+            role: 'user',
+            content: [
+              { image_url: { url: image }, type: 'image_url' },
+              { text: 'User input: ' + input, type: 'text' }
+            ]
+          }
+        ])
       })
     })
 
-    describe('When the searchDocuments method is called', () => {
-      beforeAll(() => {
-        process.env.OPENAI_API_KEY = 'mock-openai-api-key'
-        ai = new AI()
-        mockInvoke.mockResolvedValue([new Document({ pageContent: 'Document 1' })])
-      })
+    describe('When the classifyAction method is called', () => {
+      const message = new HumanMessage('Input')
 
-      afterAll(() => {
-        delete process.env.OPENAI_API_KEY
-        mockInvoke.mockReset()
-      })
+      beforeAll(() => mockInvoke.mockResolvedValue({ type: 'operation' }))
+
+      afterAll(() => mockInvoke.mockReset())
 
       test('Then the result is returned', async () => {
-        const docs = await ai.searchDocuments('query')
-        expect(docs).toEqual([new Document({ pageContent: 'Document 1' })])
+        const result = await ai.classifyAction(message)
+        expect(result).toBe('operation')
       })
     })
 
@@ -67,27 +76,6 @@ describe('Spec: AI', () => {
         const texts = ['Document 1', 'Document 2']
         await ai.embedTexts(texts)
         expect(mockFromTexts).toBeCalledWith(texts, mockOpenAIEmbeddings)
-      })
-    })
-
-    describe('When the parseResult method is called', () => {
-      const messages = [new HumanMessage('Assertion')]
-
-      beforeAll(() => mockInvoke.mockResolvedValue({ result: true }))
-
-      afterAll(() => mockInvoke.mockReset())
-
-      test('Then the result is returned', async () => {
-        const result = await ai.parseResult(messages)
-        expect(result).toBe(true)
-      })
-
-      test('Then the mockParse method is called', () => {
-        expect(mockInvoke).toBeCalledWith([
-          { role: 'system', content: DETERMINE_ASSERTION_RESULT },
-          { role: 'user', content: 'User: Assertion' },
-          { role: 'assistant', content: 'AI: Assertion' }
-        ])
       })
     })
 
@@ -109,12 +97,30 @@ describe('Spec: AI', () => {
           {
             role: 'user',
             content: [
-              { type: 'text', text: CANDIDATE_LIST_REFERENCE },
+              { type: 'text', text: prompts.CANDIDATE_LIST_REFERENCE },
               { type: 'text', text: 'User input: ' + input },
               { type: 'text', text: 'Elements: Index 0: Document 1\nIndex 1: Document 2' }
             ]
           }
         ])
+      })
+    })
+
+    describe('When the searchDocuments method is called', () => {
+      beforeAll(() => {
+        process.env.OPENAI_API_KEY = 'mock-openai-api-key'
+        ai = new AI({ openAIApiKey: 'mock-openai-api-key' })
+        mockInvoke.mockResolvedValue([new Document({ pageContent: 'Document 1' })])
+      })
+
+      afterAll(() => {
+        delete process.env.OPENAI_API_KEY
+        mockInvoke.mockReset()
+      })
+
+      test('Then the result is returned', async () => {
+        const docs = await ai.searchDocuments('query')
+        expect(docs).toEqual([new Document({ pageContent: 'Document 1' })])
       })
     })
 
@@ -135,11 +141,22 @@ describe('Spec: AI', () => {
           {
             role: 'user',
             content: [
-              { type: 'text', text: SUMMARIZE_ACTION },
+              { type: 'text', text: prompts.SUMMARIZE_ACTION },
               { type: 'text', text: action }
             ]
           }
         ])
+      })
+    })
+
+    describe('When the useTools method is called', () => {
+      beforeAll(() => mockInvoke.mockResolvedValue(new AIMessage('response')))
+
+      afterAll(() => mockInvoke.mockReset())
+
+      test('Then the result is returned', async () => {
+        const { content } = await ai.useTools([], [new HumanMessage('test')])
+        expect(content).toBe('response')
       })
     })
   })

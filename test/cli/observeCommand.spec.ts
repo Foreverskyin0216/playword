@@ -6,7 +6,6 @@ import yargs from 'yargs'
 import { ObserveCommand } from '../../packages/cli/src/commands'
 
 const { mockObserve } = vi.hoisted(() => ({
-  mockStdoutWrite: vi.spyOn(process.stdout, 'write').mockImplementation(() => true),
   mockConsoleLog: vi.spyOn(console, 'log').mockImplementation(() => {}),
   mockConsoleError: vi.spyOn(console, 'error').mockImplementation(() => {}),
   mockObserve: vi.fn()
