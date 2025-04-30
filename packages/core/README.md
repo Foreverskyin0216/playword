@@ -15,7 +15,7 @@ Choose the package that best suits your needs.
 
 ### @playword/core
 
-The `@playword/core` package provides the core features of PlayWord and can be used as **Node.js** modules.
+The `@playword/core` package provides the core features of PlayWord and can be used as a **Node.js** package.
 
 It includes the following modules:
 

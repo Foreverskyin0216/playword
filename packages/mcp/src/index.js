@@ -23,6 +23,7 @@ const {
   headless = false
 } = yargs(hideBin(argv))
   .option('ai-options', {
+    alias: 'o',
     type: 'array',
     coerce: (options) =>
       options.reduce((acc, option) => {
