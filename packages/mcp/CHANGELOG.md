@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.1](https://github.com/Foreverskyin0216/playword/compare/@playword/mcp@0.1.0...@playword/mcp@0.1.1) (2025-04-30)
+
+**Note:** Version bump only for package @playword/mcp
+
+
+
+
+
 # 0.1.0 (2025-04-29)
 
 
