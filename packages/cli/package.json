@@ -41,7 +41,7 @@
   "devDependencies": {
     "@langchain/anthropic": "^0.3.19",
     "@langchain/google-genai": "^0.2.5",
-    "@langchain/openai": "^0.5.7",
+    "@langchain/openai": "^0.5.8",
     "@types/yargs": "^17.0.33",
     "tsup": "^8.4.0"
   },

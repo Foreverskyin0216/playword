@@ -40,11 +40,30 @@ To use this tool, you need to provide an API key for one of the supported LLM pr
 
 ### Options
 
-| Property       | Alias | Type   | Default    | Description                                                                                          |
-| -------------- | ----- | ------ | ---------- | ---------------------------------------------------------------------------------------------------- |
-| `--ai-options` | `-o`  | list   | **[]**     | Additional AI options. e.g.<br>`--ai-options openAIApiKey=sk-... baseURL=https://... model=gpt-4.1`. |
-| `--browser`    | `-b`  | string | **chrome** | Which browser to use. Available browsers: `chrome`, `chromium`, `firefox`, `msedge`, and `webkit`.   |
-| `--headless`   | `-h`  | bool   | **false**  | Whether to run the browser in headless mode.                                                         |
+| Property       | Alias | Type   | Default    | Description                                                                                        |
+| -------------- | ----- | ------ | ---------- | -------------------------------------------------------------------------------------------------- |
+| `--ai-options` | `-o`  | list   | **[]**     | Additional AI options (See below).                                                                 |
+| `--browser`    | `-b`  | string | **chrome** | Which browser to use. Available browsers: `chrome`, `chromium`, `firefox`, `msedge`, and `webkit`. |
+| `--headless`   | `-h`  | bool   | **false**  | Whether to run the browser in headless mode.                                                       |
+
+#### Example for `--ai-options`
+
+```json
+{
+  "mcpServers": {
+    "playword": {
+      "command": "npx",
+      "args": [
+        "@playword/mcp",
+        "--ai-options",
+        "openAIApiKey=sk-...",
+        "model=gpt-4.1",
+        "baseURL=https://..."
+      ]
+    }
+  }
+}
+```
 
 ### Supported Interactions
 
