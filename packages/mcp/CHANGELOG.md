@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.3](https://github.com/Foreverskyin0216/playword/compare/@playword/mcp@0.1.1...@playword/mcp@0.1.3) (2025-05-17)
+
+
+### Bug Fixes
+
+* fix the frame switch issue ([71aaf27](https://github.com/Foreverskyin0216/playword/commit/71aaf277785a0cea0a791d747e352b512a0d570f))
+
+
+
+
+
 ## [0.1.2](https://github.com/Foreverskyin0216/playword/compare/@playword/mcp@0.1.1...@playword/mcp@0.1.2) (2025-05-17)
 
 
