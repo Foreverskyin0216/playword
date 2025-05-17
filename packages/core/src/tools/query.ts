@@ -2,6 +2,7 @@ import type { DynamicStructuredTool } from '@langchain/core/tools'
 import type { ToolConfig } from '../types'
 
 import { tool } from '@langchain/core/tools'
+import { z } from 'zod'
 import * as actions from '../actions'
 import * as utils from '../utils'
 
@@ -24,7 +25,8 @@ export const query = [
     },
     {
       name: 'GetText',
-      description: 'Get specified information from the webpage'
+      description: 'Get specified information from the webpage',
+      schema: z.object({})
     }
   )
 ] as unknown as DynamicStructuredTool[]

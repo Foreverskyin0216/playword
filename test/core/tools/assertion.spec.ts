@@ -43,6 +43,18 @@ vi.mock('../../../packages/core/src/actions', () => ({
   assertPageUrlMatches: mockAssertPageUrlMatches
 }))
 
+vi.mock('../../../packages/core/src/utils', async () => ({
+  allowedTags: [],
+  debug: vi.fn(),
+  getElementLocations: vi.fn(),
+  getHandle: vi.fn(() => ({
+    evaluate: mockPageEvaluate,
+    frames: vi.fn(() => [{ name: vi.fn().mockReturnValue('mock'), url: vi.fn().mockReturnValue('https://mock.url') }]),
+    waitForLoadState: vi.fn()
+  })),
+  sanitize: (await vi.importActual('../../../packages/core/src/utils')).sanitize
+}))
+
 describe('Spec: Assertion Tools', () => {
   describe('Given the assertion tools', () => {
     const configurable = {
