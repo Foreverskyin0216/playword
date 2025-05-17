@@ -27,11 +27,12 @@ export const operation = [
   tool(
     async ({ thoughts }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, utils.allowedTags)
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 
@@ -69,11 +70,12 @@ export const operation = [
   tool(
     async ({ duration, thoughts }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, utils.allowedTags)
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 
@@ -98,11 +100,12 @@ export const operation = [
   tool(
     async ({ thoughts, text }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, ['input', 'textarea'])
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, ['input', 'textarea'])
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 
@@ -163,11 +166,12 @@ export const operation = [
   tool(
     async ({ option, thoughts }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, ['select'])
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, ['select'])
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 

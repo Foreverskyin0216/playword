@@ -1,6 +1,6 @@
 {
   "name": "@playword/core",
-  "version": "0.4.1",
+  "version": "0.4.4",
   "description": "Supercharge your web test automation experience with AI",
   "keywords": [
     "ai",
@@ -38,20 +38,20 @@
     }
   },
   "dependencies": {
-    "@langchain/anthropic": "^0.3.19",
-    "@langchain/core": "^0.3.50",
-    "@langchain/google-genai": "^0.2.5",
-    "@langchain/langgraph": "^0.2.67",
-    "@langchain/openai": "^0.5.8",
-    "sanitize-html": "^2.16.0",
-    "zod": "^3.24.3"
+    "@langchain/anthropic": "^0.3.20",
+    "@langchain/core": "^0.3.56",
+    "@langchain/google-genai": "^0.2.9",
+    "@langchain/langgraph": "^0.2.72",
+    "@langchain/openai": "^0.5.10",
+    "sanitize-html": "^2.17.0",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
-    "@types/node": "^22.15.3",
-    "@types/sanitize-html": "^2.15.0",
+    "@types/node": "^22.15.18",
+    "@types/sanitize-html": "^2.16.0",
     "jsdom": "^26.1.0",
     "playwright-core": "^1.52.0",
-    "tsup": "^8.4.0"
+    "tsup": "^8.5.0"
   },
   "publishConfig": {
     "access": "public",

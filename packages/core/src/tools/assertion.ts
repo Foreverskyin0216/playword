@@ -25,11 +25,12 @@ export const assertion = [
   tool(
     async ({ text, thoughts }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, utils.allowedTags)
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 
@@ -54,11 +55,12 @@ export const assertion = [
   tool(
     async ({ text, thoughts }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, utils.allowedTags)
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 
@@ -83,11 +85,12 @@ export const assertion = [
   tool(
     async ({ text, thoughts }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, utils.allowedTags)
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 
@@ -112,11 +115,12 @@ export const assertion = [
   tool(
     async ({ text, thoughts }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, utils.allowedTags)
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 
@@ -141,11 +145,12 @@ export const assertion = [
   tool(
     async ({ thoughts }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, utils.allowedTags)
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 
@@ -167,11 +172,12 @@ export const assertion = [
   tool(
     async ({ thoughts }, { configurable }) => {
       const { ref } = configurable as ToolConfig
-      const { ai, page, recorder } = ref
+      const { ai, recorder } = ref
 
       utils.debug('Thoughts: ' + thoughts, 'magenta')
 
-      const resource = await page!.evaluate(utils.getElementLocations, utils.allowedTags)
+      const handle = await utils.getHandle(ref)
+      const resource = await handle.evaluate(utils.getElementLocations, utils.allowedTags)
       const elements = resource.map(({ html, xpath }) => ({ html: utils.sanitize(html), xpath }))
       await ai.embedTexts(elements.map(({ html }) => html))
 

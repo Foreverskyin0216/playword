@@ -1,7 +1,7 @@
 # @playword/mcp
 
-[![NPM Version](https://img.shields.io/npm/v/@playword/mcp)](https://www.npmjs.com/package/@playword/mcp)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-yellow)](https://nodejs.org/en/download/package-manager)
+[![NPM Version](https://img.shields.io/npm/v/@playword/mcp?color=blue&logo=npm)](https://www.npmjs.com/package/@playword/mcp)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-yellow?logo=javascript)](https://nodejs.org/en/download/package-manager)
 [![CI](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml/badge.svg)](https://github.com/Foreverskyin0216/playword/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Foreverskyin0216/playword/graph/badge.svg)](https://codecov.io/gh/Foreverskyin0216/playword)
 

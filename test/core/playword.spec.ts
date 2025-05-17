@@ -46,8 +46,8 @@ vi.mock('fs/promises', async () => ({
 vi.mock('../../packages/core/src/ai', () => ({ AI: vi.fn(() => ({ analyzeImage: mockAnalyzeImage })) }))
 vi.mock('../../packages/core/src/graph', () => ({ playwordGraph: vi.fn(() => ({ invoke: mockInvoke })) }))
 vi.mock('../../packages/core/src/utils', async () => {
-  const { aiPattern, variablePattern } = await vi.importActual('../../packages/core/src/utils')
-  return { aiPattern, info: vi.fn(), variablePattern }
+  const { aiPattern, getHandle, variablePattern } = await vi.importActual('../../packages/core/src/utils')
+  return { aiPattern, getHandle, info: vi.fn(), variablePattern }
 })
 
 describe('Spec: PlayWord', () => {

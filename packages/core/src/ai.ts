@@ -10,7 +10,7 @@ import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
 import { z } from 'zod'
 import { VoyageEmbeddings } from './services'
 import * as prompts from './prompts'
-import { MemoryVectorStore } from './vectorStore'
+import { MemoryVectorStore } from './store'
 
 /**
  * Services for handling PlayWord's AI functionalities.
@@ -70,7 +70,7 @@ export class AI {
     const instruction = new SystemMessage(prompts.ANALYZE_IMAGE)
     const schema = z.object({ data: z.string().describe('The data extracted from the image that the user requested.') })
 
-    const { data } = await this.llm.withStructuredOutput(schema).invoke([
+    const { data } = await this.llm.withStructuredOutput(schema, { strict: true }).invoke([
       instruction,
       {
         role: 'user',
@@ -93,7 +93,7 @@ export class AI {
     const instruction = new SystemMessage(prompts.CLASSIFY_ACTION)
     const schema = z.object({ type: z.enum(['assertion', 'operation', 'query']) })
 
-    const { type } = await this.llm.withStructuredOutput(schema).invoke([instruction, message])
+    const { type } = await this.llm.withStructuredOutput(schema, { strict: true }).invoke([instruction, message])
 
     return type
   }
@@ -118,7 +118,7 @@ export class AI {
     const candidates = 'Elements: ' + docs.map((doc, index) => `Index ${index}: ${doc.pageContent}`).join('\n')
     const schema = z.object({ index: z.enum(docs.map((_, index) => index.toString()) as [string]) })
 
-    const { index } = await this.llm.withStructuredOutput(schema).invoke([
+    const { index } = await this.llm.withStructuredOutput(schema, { strict: true }).invoke([
       {
         role: 'user',
         content: [
@@ -151,7 +151,7 @@ export class AI {
   public async summarizeAction(action: string) {
     const schema = z.object({ summary: z.string().describe('A concise summary of the action described in the JSON.') })
 
-    const { summary } = await this.llm.withStructuredOutput(schema).invoke([
+    const { summary } = await this.llm.withStructuredOutput(schema, { strict: true }).invoke([
       {
         role: 'user',
         content: [
@@ -172,7 +172,7 @@ export class AI {
    */
   public async useTools(tools: DynamicStructuredTool[], messages: (AIMessage | HumanMessage | ToolMessage)[]) {
     return this.llm
-      .bindTools(tools, { maxConcurrency: 1, tool_choice: 'any' })
+      .bindTools(tools, { maxConcurrency: 1, strict: true })
       .invoke([new SystemMessage(prompts.TOOL_CALL), ...messages])
   }
 }
