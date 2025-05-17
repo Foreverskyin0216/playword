@@ -28,20 +28,20 @@
     "dist"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.10.2",
+    "@modelcontextprotocol/sdk": "^1.11.4",
     "@playword/core": "^0.4.1",
     "playwright-core": "^1.52.0",
     "yargs": "^17.7.2",
-    "zod": "^3.24.3",
+    "zod": "^3.24.4",
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
-    "@langchain/anthropic": "^0.3.19",
-    "@langchain/core": "^0.3.50",
-    "@langchain/google-genai": "^0.2.5",
-    "@langchain/openai": "^0.5.8",
+    "@langchain/anthropic": "^0.3.20",
+    "@langchain/core": "^0.3.56",
+    "@langchain/google-genai": "^0.2.9",
+    "@langchain/openai": "^0.5.10",
     "@types/yargs": "^17.0.33",
-    "tsup": "^8.4.0"
+    "tsup": "^8.5.0"
   },
   "publishConfig": {
     "access": "public",

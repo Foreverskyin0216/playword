@@ -1,6 +1,6 @@
 import { SyntheticEmbeddings } from '@langchain/core/utils/testing'
 import { describe, expect, test } from 'vitest'
-import { MemoryVectorStore } from '../../packages/core/src/vectorStore'
+import { MemoryVectorStore } from '../../packages/core/src/store'
 
 describe('Spec: VectorStore', () => {
   describe('When the MemoryVectorStore is queried', () => {
