@@ -1,6 +1,6 @@
 {
   "name": "@playword/mcp",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "MCP server that provides browser automation capabilities using PlayWord.",
   "keywords": [
     "ai",
@@ -29,7 +29,7 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",
-    "@playword/core": "^0.4.1",
+    "@playword/core": "^0.4.3",
     "playwright-core": "^1.52.0",
     "yargs": "^17.7.2",
     "zod": "^3.24.4",
