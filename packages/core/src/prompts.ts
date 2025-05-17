@@ -1,3 +1,7 @@
+export const ANALYZE_HTML = `I will provide a HTML string and a user input.
+Your task is to analyze the HTML and retrieve the relevant information from it to fulfill the user input.
+Just return the relevant information without any additional text and explanation.`
+
 export const ANALYZE_IMAGE = `I will provide an image and a user input.
 Your task is to analyze the image and retrieve the relevant information from it to fulfill the user input.
 Just return the relevant information without any additional text and explanation.`

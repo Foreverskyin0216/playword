@@ -84,7 +84,8 @@ export const classifier = [
     async (_, { configurable }) => JSON.stringify({ name: 'assertElementVisible', params: configurable.action.params }),
     {
       name: 'AssertElementVisible',
-      description: 'Call to verify that an element is visible'
+      description: 'Call to verify that an element is visible',
+      schema: z.object({})
     }
   ),
 
@@ -93,7 +94,8 @@ export const classifier = [
       JSON.stringify({ name: 'assertElementNotVisible', params: configurable.action.params }),
     {
       name: 'AssertElementNotVisible',
-      description: 'Call to verify that an element is not visible'
+      description: 'Call to verify that an element is not visible',
+      schema: z.object({})
     }
   ),
 
@@ -123,7 +125,8 @@ export const classifier = [
 
   tool(async (_, { configurable }) => JSON.stringify({ name: 'click', params: configurable.action.params }), {
     name: 'Click',
-    description: 'Call to handle the click event'
+    description: 'Call to handle the click event',
+    schema: z.object({})
   }),
 
   tool(async ({ url }) => JSON.stringify({ name: 'goto', params: { url } }), {

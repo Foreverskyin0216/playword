@@ -204,7 +204,7 @@ export class PlayWord implements PlayWordInterface {
     this.recorder?.initStep(this.stepCount, this.input)
 
     for (const { name, params } of recording.actions) {
-      result = await actions[name as keyof typeof actions](this, params)
+      result = await actions[name](this, params)
       utils.info(result.toString())
 
       if (result.toString().startsWith('Failed')) {
