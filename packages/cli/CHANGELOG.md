@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.4](https://github.com/Foreverskyin0216/playword/compare/@playword/cli@0.4.1...@playword/cli@0.4.4) (2025-05-17)
+
+
+### Bug Fixes
+
+* fix the frame switch issue ([90a284a](https://github.com/Foreverskyin0216/playword/commit/90a284a4fa2063fe0e41759247be2a7c6255861d))
+
+
+
+
+
 ## [0.4.3](https://github.com/Foreverskyin0216/playword/compare/@playword/cli@0.4.1...@playword/cli@0.4.3) (2025-05-17)
 
 
