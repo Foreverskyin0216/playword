@@ -1,30 +1,5 @@
 import type { ActionParams, PlayWordInterface } from './types'
-
-import { setTimeout } from 'timers/promises'
 import * as utils from './utils'
-
-/**
- * Get the handle used to interact with the page or frame.
- *
- * If the frame source is provided, wait for the frame to load and get the handle of the frame.
- * If the frame source is not provided, get the handle of the page.
- *
- * @param ref The PlayWord instance.
- * @param params The parameters for the action.
- */
-const getHandle = async (ref: PlayWordInterface, params: Partial<ActionParams> = {}) => {
-  ref.frame = undefined
-
-  if (params.frameSrc && (await waitForFrame(ref, params.frameSrc))) {
-    const frame = ref.page?.frames().find((frame) => frame.url() === params.frameSrc)
-    ref.frame = frame
-  }
-
-  const handle = ref.frame || ref.page!
-  await handle.waitForLoadState('domcontentloaded')
-
-  return handle
-}
 
 /**
  * Get the input variable from the environment variables.
@@ -33,31 +8,8 @@ const getHandle = async (ref: PlayWordInterface, params: Partial<ActionParams> =
  */
 const getInputVariable = (input: string) => {
   const matched = input.match(utils.variablePattern)
-
-  if (!matched) {
-    return input
-  }
-
-  return process.env[matched[0]] || input
-}
-
-/**
- * Wait for the frame to load.
- *
- * @param ref The PlayWord instance.
- * @param frameSrc The source of the frame to wait for.
- * @param timeout The timeout in milliseconds. Default is 30 seconds.
- */
-const waitForFrame = async (ref: PlayWordInterface, frameSrc: string, timeout = 30000) => {
-  const start = Date.now()
-  let isFound = false
-
-  while (!isFound && Date.now() - start < timeout) {
-    isFound = Boolean(ref.page?.frames().some((f) => f.url() === frameSrc))
-    await setTimeout(500)
-  }
-
-  return isFound
+  if (!matched) return input
+  else return process.env[matched[0]] || input
 }
 
 /**
@@ -68,7 +20,7 @@ const waitForFrame = async (ref: PlayWordInterface, frameSrc: string, timeout = 
  */
 export const assertElementContains = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
 
@@ -88,7 +40,7 @@ export const assertElementContains = async (ref: PlayWordInterface, params: Part
  */
 export const assertElementNotContain = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
 
@@ -108,7 +60,7 @@ export const assertElementNotContain = async (ref: PlayWordInterface, params: Pa
  */
 export const assertElementContentEquals = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
 
@@ -128,7 +80,7 @@ export const assertElementContentEquals = async (ref: PlayWordInterface, params:
  */
 export const assertElementContentNotEqual = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
 
@@ -148,7 +100,7 @@ export const assertElementContentNotEqual = async (ref: PlayWordInterface, param
  */
 export const assertElementVisible = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
     await locator.waitFor({ state: 'visible', timeout: 5000 })
@@ -167,7 +119,7 @@ export const assertElementVisible = async (ref: PlayWordInterface, params: Parti
  */
 export const assertElementNotVisible = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
     await locator.waitFor({ state: 'hidden', timeout: 5000 })
@@ -186,7 +138,7 @@ export const assertElementNotVisible = async (ref: PlayWordInterface, params: Pa
  */
 export const assertPageContains = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const text = getInputVariable(params.text!)
 
     const locators = await handle.getByText(text).all()
@@ -206,7 +158,7 @@ export const assertPageContains = async (ref: PlayWordInterface, params: Partial
  */
 export const assertPageNotContain = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const text = getInputVariable(params.text!)
 
     const locators = await handle.getByText(text).all()
@@ -257,7 +209,7 @@ export const assertPageUrlMatches = async (ref: PlayWordInterface, params: Parti
  */
 export const click = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
     await locator.waitFor({ state: 'visible', timeout: 5000 })
@@ -310,7 +262,7 @@ export const goto = async (ref: PlayWordInterface, params: Partial<ActionParams>
  */
 export const hover = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
     await locator.waitFor({ state: 'visible', timeout: 5000 })
@@ -335,7 +287,7 @@ export const hover = async (ref: PlayWordInterface, params: Partial<ActionParams
  */
 export const input = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
     const text = getInputVariable(params.text!)
 
@@ -373,7 +325,7 @@ export const pressKeys = async (ref: PlayWordInterface, params: Partial<ActionPa
  */
 export const scroll = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
 
     switch (params.direction) {
       case 'up':
@@ -409,7 +361,7 @@ export const scroll = async (ref: PlayWordInterface, params: Partial<ActionParam
  */
 export const select = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const locator = handle.locator(params.xpath!).first()
 
     await locator.waitFor({ state: 'visible', timeout: 5000 })
@@ -485,7 +437,7 @@ export const switchPage = async (ref: PlayWordInterface, params: Partial<ActionP
  */
 export const waitForText = async (ref: PlayWordInterface, params: Partial<ActionParams>) => {
   try {
-    const handle = await getHandle(ref, params)
+    const handle = await utils.getHandle(ref, params)
     const text = getInputVariable(params.text!)
 
     await handle.waitForSelector('text=' + text, { state: 'visible', timeout: 30000 })

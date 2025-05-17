@@ -25,7 +25,7 @@ vi.mock('@langchain/openai', () => ({
   OpenAIEmbeddings: vi.fn()
 }))
 
-vi.mock('../../packages/core/src/vectorStore', () => ({ MemoryVectorStore: mockMemoryVectorStore }))
+vi.mock('../../packages/core/src/store', () => ({ MemoryVectorStore: mockMemoryVectorStore }))
 
 describe('Spec: AI', () => {
   let ai: AI = new AI({ openAIApiKey: 'mock-openai-api-key' })

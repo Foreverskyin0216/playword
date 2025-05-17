@@ -1,6 +1,3 @@
-import sanitizeHTML from 'sanitize-html'
-import { allowedTags } from './pattern'
-
 /** The custom style sheet to apply to the observer UI. */
 export const observerCSS = `
   .plwd-panel {
@@ -386,18 +383,3 @@ export const observerCSS = `
     }
   }
 `
-
-/**
- * Sanitizes the HTML to reduce the size of the HTML snapshot.
- *
- * @param html The original HTML snapshot.
- */
-export const sanitize = (html: string) => {
-  return sanitizeHTML(html, {
-    allowedAttributes: {
-      '*': ['aria*', 'class', 'data*', 'href', 'id', 'name', 'placeholder', 'title', 'type', 'value']
-    },
-    allowedStyles: { '*': { '*': [] } },
-    allowedTags
-  })
-}
