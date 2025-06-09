@@ -31,7 +31,7 @@
     "@modelcontextprotocol/sdk": "^1.11.4",
     "@playword/core": "^0.4.5",
     "playwright-core": "^1.52.0",
-    "yargs": "^17.7.2",
+    "yargs": "^18.0.0",
     "zod": "^3.24.4",
     "zod-to-json-schema": "^3.24.5"
   },
