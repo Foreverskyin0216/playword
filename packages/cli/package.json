@@ -36,7 +36,7 @@
     "@playword/core": "^0.4.5",
     "dotenv": "^16.5.0",
     "playwright-core": "^1.52.0",
-    "yargs": "^17.7.2"
+    "yargs": "^18.0.0"
   },
   "devDependencies": {
     "@langchain/anthropic": "^0.3.20",
