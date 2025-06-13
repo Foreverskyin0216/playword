@@ -1,6 +1,6 @@
 {
   "name": "@playword/mcp",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "MCP server that provides browser automation capabilities using PlayWord.",
   "keywords": [
     "ai",
