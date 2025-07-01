@@ -1,3 +1,4 @@
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import type { Document } from '@langchain/core/documents'
 import type { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages'
 import type { DynamicStructuredTool } from '@langchain/core/tools'
@@ -19,7 +20,7 @@ import { MemoryVectorStore } from './store'
  */
 export class AI {
   /** The chat model to use for the general tasks. */
-  private llm: ChatGoogleGenerativeAI | ChatOpenAI | ChatAnthropic
+  private llm: BaseChatModel
 
   /** The vector store to store the embedded documents. */
   private store: MemoryVectorStore
@@ -171,7 +172,7 @@ export class AI {
    * @param messages The messages to send to the AI.
    */
   public async useTools(tools: DynamicStructuredTool[], messages: (AIMessage | HumanMessage | ToolMessage)[]) {
-    return this.llm
+    return (this.llm as ChatOpenAI | ChatAnthropic | ChatGoogleGenerativeAI)
       .bindTools(tools, { maxConcurrency: 1, strict: true })
       .invoke([new SystemMessage(prompts.TOOL_CALL), ...messages])
   }
