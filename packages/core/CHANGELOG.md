@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.7](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.4.6...@playword/core@0.4.7) (2025-07-01)
+
+
+### Bug Fixes
+
+* fix package issues ([98ad95c](https://github.com/Foreverskyin0216/playword/commit/98ad95c55351838817b0f7c850372094b8914da7))
+
+
+
+
+
 ## [0.4.6](https://github.com/Foreverskyin0216/playword/compare/@playword/core@0.4.5...@playword/core@0.4.6) (2025-06-16)
 
 **Note:** Version bump only for package @playword/core
