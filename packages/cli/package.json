@@ -34,7 +34,7 @@
     "@inquirer/confirm": "^5.1.10",
     "@inquirer/input": "^4.1.10",
     "@playword/core": "^0.4.7",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.0.1",
     "playwright-core": "^1.52.0",
     "yargs": "^18.0.0"
   },
