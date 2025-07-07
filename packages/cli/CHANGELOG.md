@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.9](https://github.com/Foreverskyin0216/playword/compare/@playword/cli@0.4.8...@playword/cli@0.4.9) (2025-07-07)
+
+**Note:** Version bump only for package @playword/cli
+
+
+
+
+
 ## [0.4.8](https://github.com/Foreverskyin0216/playword/compare/@playword/cli@0.4.7...@playword/cli@0.4.8) (2025-07-01)
 
 **Note:** Version bump only for package @playword/cli
