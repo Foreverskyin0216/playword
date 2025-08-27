@@ -2,7 +2,7 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import type { Document } from '@langchain/core/documents'
 import type { AIMessage, HumanMessage, ToolMessage } from '@langchain/core/messages'
 import type { DynamicStructuredTool } from '@langchain/core/tools'
-import type { AIOptions, GoogleOptions, VoyageOptions } from './types'
+import type { AIOptions, GoogleOptions, OpenAIOptions, VoyageOptions } from './types'
 
 import { ChatAnthropic } from '@langchain/anthropic'
 import { SystemMessage } from '@langchain/core/messages'
@@ -32,12 +32,20 @@ export class AI {
     if ('googleApiKey' in opts || process.env.GOOGLE_API_KEY) {
       const apiKey = (opts as GoogleOptions).googleApiKey ?? process.env.GOOGLE_API_KEY
       embeddings = new GoogleGenerativeAIEmbeddings({ apiKey, model: 'text-embedding-004' })
-      llm = new ChatGoogleGenerativeAI({ ...opts, apiKey, model: opts.model ?? 'gemini-2.0-flash-lite' })
+      llm = new ChatGoogleGenerativeAI({
+        ...(opts as GoogleOptions),
+        apiKey,
+        model: opts.model ?? 'gemini-2.0-flash-lite'
+      })
     }
 
     if ('openAIApiKey' in opts || process.env.OPENAI_API_KEY) {
-      embeddings = new OpenAIEmbeddings({ ...opts, configuration: opts, model: 'text-embedding-3-small' })
-      llm = new ChatOpenAI({ ...opts, configuration: opts, model: opts.model ?? 'gpt-4o-mini' })
+      embeddings = new OpenAIEmbeddings({
+        ...(opts as OpenAIOptions),
+        configuration: opts,
+        model: 'text-embedding-3-small'
+      })
+      llm = new ChatOpenAI({ ...(opts as OpenAIOptions), configuration: opts, model: opts.model ?? 'gpt-4o-mini' })
     }
 
     if ('anthropicApiKey' in opts || process.env.ANTHROPIC_API_KEY) {
