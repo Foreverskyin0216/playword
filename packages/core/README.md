@@ -7,7 +7,7 @@
 
 Supercharge your web test automation experience with AI.
 
-![playword](https://i.ibb.co/m5n4jHJJ/playword.gif)
+![playword](https://i.ibb.co/jZR4B0tS/playword.gif)
 
 ## 📦 Installation
 

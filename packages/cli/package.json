@@ -31,17 +31,17 @@
     "dist"
   ],
   "dependencies": {
-    "@inquirer/confirm": "^5.1.10",
-    "@inquirer/input": "^4.1.10",
+    "@inquirer/confirm": "^5.1.16",
+    "@inquirer/input": "^4.2.2",
     "@playword/core": "^0.4.10",
-    "dotenv": "^17.0.1",
-    "playwright-core": "^1.52.0",
+    "dotenv": "^17.2.1",
+    "playwright-core": "^1.55.0",
     "yargs": "^18.0.0"
   },
   "devDependencies": {
-    "@langchain/anthropic": "^0.3.20",
-    "@langchain/google-genai": "^0.2.9",
-    "@langchain/openai": "^0.6.2",
+    "@langchain/anthropic": "^0.3.26",
+    "@langchain/google-genai": "^0.2.16",
+    "@langchain/openai": "^0.6.9",
     "@types/yargs": "^17.0.33",
     "tsup": "^8.5.0"
   },
