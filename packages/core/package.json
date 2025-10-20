@@ -38,7 +38,7 @@
     }
   },
   "dependencies": {
-    "@langchain/anthropic": "^0.3.26",
+    "@langchain/anthropic": "^1.0.0",
     "@langchain/core": "^0.3.72",
     "@langchain/google-genai": "^0.2.16",
     "@langchain/langgraph": "^0.4.6",
